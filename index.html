@@ -547,16 +547,16 @@
   });
 
   newBoardBtn.addEventListener('click', async function () {
-    const name = window.prompt('Nombre del nuevo proyecto:', 'Nuevo proyecto');
-    if (!name) return;
     const { data, error } = await sb
       .from('boards')
-      .insert({ owner_id: currentUser.id, name: name, data: defaultTree() })
+      .insert({ owner_id: currentUser.id, name: 'Nuevo proyecto', data: defaultTree() })
       .select('id, name, owner_id')
       .single();
     if (error) { alert('No se pudo crear: ' + error.message); return; }
     boards.push(data);
     await switchBoard(data.id);
+    boardNameInput.focus();
+    boardNameInput.select();
   });
 
   boardNameInput.addEventListener('change', async function () {
