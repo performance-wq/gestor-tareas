@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor de tareas</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #2b2b2b;
+    --muted: #9a9a9a;
+    --line: #ececec;
+    --accent: #4a7dff;
+    --hover: #f5f6f8;
+    --danger: #e5484d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+  }
+  .app {
+    width: 100%;
+    max-width: 760px;
+    padding: 48px 24px 120px;
+    display: none;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .user-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .signout-btn {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .signout-btn:hover { background: var(--hover); color: var(--text); }
+  .hint {
+    color: var(--muted);
+    font-size: 12.5px;
+    margin: 0 0 28px;
+    line-height: 1.6;
+  }
+  .hint kbd {
+    background: var(--hover);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: inherit;
+    font-size: 11.5px;
+  }
+  #outline { }
+  .node { position: relative; }
+  .row {
+    display: flex;
+    align-items: flex-start;
+    padding: 3px 6px 3px 0;
+    border-radius: 4px;
+  }
+  .row:hover { background: var(--hover); }
+  .caret {
+    width: 18px;
+    flex: 0 0 18px;
+    text-align: center;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    font-size: 10px;
+    line-height: 24px;
+    visibility: hidden;
+  }
+  .node.has-children > .row .caret { visibility: visible; }
+  .caret.hidden { visibility: hidden; cursor: default; }
+  .bullet {
+    flex: 0 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+  }
+  .bullet::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #b7b7b7;
+    display: block;
+  }
+  .bullet.has-children::before {
+    background: var(--accent);
+  }
+  .text {
+    flex: 1;
+    min-width: 0;
+    line-height: 24px;
+    padding: 0 4px;
+    outline: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .text:empty::before {
+    content: attr(data-placeholder);
+    color: var(--muted);
+  }
+  .children {
+    margin-left: 8px;
+    border-left: 1px solid var(--line);
+  }
+  .toolbar {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .add-btn {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .add-btn:hover { background: var(--hover); color: var(--text); }
+  .save-status {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer {
+    margin-top: 40px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  /* Auth screen */
+  #authScreen {
+    width: 100%;
+    max-width: 360px;
+    padding: 80px 24px;
+  }
+  #authScreen h1 {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  #authScreen p.sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 24px;
+  }
+  .field {
+    margin-bottom: 12px;
+  }
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .field input {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .primary-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .primary-btn:hover { opacity: 0.9; }
+  .primary-btn:disabled { opacity: 0.6; cursor: default; }
+  .switch-mode {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .switch-mode a {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .auth-msg {
+    font-size: 13px;
+    margin-top: 12px;
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+  .auth-msg.error {
+    background: #fdecec;
+    color: var(--danger);
+  }
+  .auth-msg.info {
+    background: #eef4ff;
+    color: var(--accent);
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="authScreen">
+  <h1>Mis tareas</h1>
+  <p class="sub" id="authSub">Inicia sesión para acceder a tus tareas.</p>
+
+  <div class="field">
+    <label for="authEmail">Correo</label>
+    <input type="email" id="authEmail" autocomplete="email" placeholder="tu@correo.com">
+  </div>
+  <div class="field">
+    <label for="authPassword">Contraseña</label>
+    <input type="password" id="authPassword" autocomplete="current-password" placeholder="••••••••">
+  </div>
+
+  <button class="primary-btn" id="authSubmit">Iniciar sesión</button>
+
+  <div class="switch-mode">
+    <span id="switchText">¿No tienes cuenta?</span>
+    <a id="switchLink">Crear una</a>
+  </div>
+
+  <div id="authMsg"></div>
+</div>
+
+<div class="app" id="appScreen">
+  <div class="topbar">
+    <h1>Mis tareas</h1>
+    <div class="user-bar">
+      <span id="userEmail"></span>
+      <button class="signout-btn" id="signOutBtn">Cerrar sesión</button>
+    </div>
+  </div>
+  <p class="hint">
+    <kbd>Enter</kbd> nueva línea &nbsp;·&nbsp;
+    <kbd>Tab</kbd> indentar &nbsp;·&nbsp;
+    <kbd>Shift</kbd>+<kbd>Tab</kbd> quitar indentado &nbsp;·&nbsp;
+    <kbd>Backspace</kbd> al inicio fusiona con la línea anterior &nbsp;·&nbsp;
+    clic en el triángulo para colapsar
+  </p>
+  <div id="outline"></div>
+  <div class="toolbar">
+    <button class="add-btn" id="addRoot">+ Agregar elemento</button>
+    <span class="save-status" id="saveStatus"></span>
+  </div>
+  <footer id="count"></footer>
+</div>
+
+<script>
+(function () {
+  // ---- Supabase setup ----
+  const SUPABASE_URL = 'https://hwisrkincpkkdqrxuoch.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_TnJBE9EIVVra1x22ilN25Q_qgfMG1EC';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const authScreen = document.getElementById('authScreen');
+  const appScreen = document.getElementById('appScreen');
+  const authEmail = document.getElementById('authEmail');
+  const authPassword = document.getElementById('authPassword');
+  const authSubmit = document.getElementById('authSubmit');
+  const authMsg = document.getElementById('authMsg');
+  const authSub = document.getElementById('authSub');
+  const switchText = document.getElementById('switchText');
+  const switchLink = document.getElementById('switchLink');
+  const userEmailEl = document.getElementById('userEmail');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const saveStatusEl = document.getElementById('saveStatus');
+
+  let authMode = 'signin'; // 'signin' | 'signup'
+  let currentUser = null;
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    authMsg.innerHTML = '';
+    if (mode === 'signin') {
+      authSub.textContent = 'Inicia sesión para acceder a tus tareas.';
+      authSubmit.textContent = 'Iniciar sesión';
+      switchText.textContent = '¿No tienes cuenta?';
+      switchLink.textContent = 'Crear una';
+    } else {
+      authSub.textContent = 'Crea una cuenta para empezar.';
+      authSubmit.textContent = 'Crear cuenta';
+      switchText.textContent = '¿Ya tienes cuenta?';
+      switchLink.textContent = 'Iniciar sesión';
+    }
+  }
+
+  switchLink.addEventListener('click', function () {
+    setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+  });
+
+  function showAuthMsg(text, type) {
+    authMsg.innerHTML = '<div class="auth-msg ' + type + '">' + text + '</div>';
+  }
+
+  authSubmit.addEventListener('click', async function () {
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+    if (!email || !password) {
+      showAuthMsg('Completa correo y contraseña.', 'error');
+      return;
+    }
+    authSubmit.disabled = true;
+    authMsg.innerHTML = '';
+    try {
+      if (authMode === 'signin') {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } else {
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) throw error;
+        if (data && data.user && !data.session) {
+          showAuthMsg('Cuenta creada. Revisa tu correo para confirmar antes de iniciar sesión.', 'info');
+        }
+      }
+    } catch (err) {
+      showAuthMsg(err.message || 'Algo salió mal.', 'error');
+    } finally {
+      authSubmit.disabled = false;
+    }
+  });
+
+  signOutBtn.addEventListener('click', async function () {
+    await sb.auth.signOut();
+  });
+
+  sb.auth.onAuthStateChange(function (event, session) {
+    if (session && session.user) {
+      currentUser = session.user;
+      authScreen.classList.add('hidden');
+      appScreen.style.display = 'block';
+      userEmailEl.textContent = currentUser.email;
+      loadBoard();
+    } else {
+      currentUser = null;
+      appScreen.style.display = 'none';
+      authScreen.classList.remove('hidden');
+      setAuthMode('signin');
+    }
+  });
+
+  // ---- Outline app ----
+  const outlineEl = document.getElementById('outline');
+  const countEl = document.getElementById('count');
+
+  function uid() {
+    return 'n' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+
+  function defaultTree() {
+    return [{ id: uid(), text: '', children: [], collapsed: false }];
+  }
+
+  let tree = defaultTree();
+  let saveTimer = null;
+
+  async function loadBoard() {
+    if (!currentUser) return;
+    saveStatusEl.textContent = 'Cargando...';
+    const { data, error } = await sb
+      .from('boards')
+      .select('data')
+      .eq('user_id', currentUser.id)
+      .maybeSingle();
+
+    if (error) {
+      saveStatusEl.textContent = 'Error al cargar: ' + error.message;
+      tree = defaultTree();
+      render();
+      return;
+    }
+
+    if (data && Array.isArray(data.data) && data.data.length) {
+      tree = data.data;
+    } else {
+      tree = defaultTree();
+      await sb.from('boards').upsert(
+        { user_id: currentUser.id, data: tree, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      );
+    }
+    saveStatusEl.textContent = '';
+    render();
+  }
+
+  function save() {
+    clearTimeout(saveTimer);
+    saveStatusEl.textContent = 'Guardando...';
+    saveTimer = setTimeout(async function () {
+      if (!currentUser) return;
+      const { error } = await sb.from('boards').upsert(
+        { user_id: currentUser.id, data: tree, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      );
+      saveStatusEl.textContent = error ? ('Error al guardar: ' + error.message) : 'Guardado';
+      if (!error) {
+        setTimeout(function () { if (saveStatusEl.textContent === 'Guardado') saveStatusEl.textContent = ''; }, 1500);
+      }
+    }, 400);
+  }
+
+  // Returns the path from root to the node with the given id.
+  // Each entry: { nodes: <array containing the node>, index: <index within that array> }
+  function findPath(id, nodes, trail) {
+    nodes = nodes || tree;
+    trail = trail || [];
+    for (let i = 0; i < nodes.length; i++) {
+      const newTrail = trail.concat([{ nodes: nodes, index: i }]);
+      if (nodes[i].id === id) return newTrail;
+      if (nodes[i].children.length) {
+        const res = findPath(id, nodes[i].children, newTrail);
+        if (res) return res;
+      }
+    }
+    return null;
+  }
+
+  function visibleOrder(nodes, out) {
+    nodes = nodes || tree;
+    out = out || [];
+    nodes.forEach(function (n) {
+      out.push(n.id);
+      if (n.children.length && !n.collapsed) visibleOrder(n.children, out);
+    });
+    return out;
+  }
+
+  function countAll(nodes) {
+    nodes = nodes || tree;
+    let c = 0;
+    nodes.forEach(function (n) {
+      c += 1;
+      if (n.children.length) c += countAll(n.children);
+    });
+    return c;
+  }
+
+  function indent(id) {
+    const path = findPath(id);
+    if (!path) return;
+    const last = path[path.length - 1];
+    if (last.index === 0) return;
+    const node = last.nodes.splice(last.index, 1)[0];
+    const prevSibling = last.nodes[last.index - 1];
+    prevSibling.children.push(node);
+    prevSibling.collapsed = false;
+  }
+
+  function outdent(id) {
+    const path = findPath(id);
+    if (!path || path.length < 2) return;
+    const last = path[path.length - 1];
+    const parentInfo = path[path.length - 2];
+    const node = last.nodes.splice(last.index, 1)[0];
+    parentInfo.nodes.splice(parentInfo.index + 1, 0, node);
+  }
+
+  function getCaretOffset(el) {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return 0;
+    const range = sel.getRangeAt(0);
+    const preRange = range.cloneRange();
+    preRange.selectNodeContents(el);
+    preRange.setEnd(range.endContainer, range.endOffset);
+    return preRange.toString().length;
+  }
+
+  function setCaretOffset(el, offset) {
+    const range = document.createRange();
+    const sel = window.getSelection();
+    let node = el.firstChild;
+    if (!node) {
+      node = document.createTextNode('');
+      el.appendChild(node);
+    }
+    const len = node.textContent.length;
+    const off = Math.max(0, Math.min(offset, len));
+    range.setStart(node, off);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function focusNode(id, offset) {
+    requestAnimationFrame(function () {
+      const el = outlineEl.querySelector('.text[data-id="' + id + '"]');
+      if (el) {
+        el.focus();
+        setCaretOffset(el, offset || 0);
+      }
+    });
+  }
+
+  function renderNode(node, depth) {
+    const wrap = document.createElement('div');
+    wrap.className = 'node' + (node.children.length ? ' has-children' : '');
+    wrap.dataset.id = node.id;
+
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.paddingLeft = (depth * 20) + 'px';
+
+    const caret = document.createElement('span');
+    caret.className = 'caret' + (node.children.length ? '' : ' hidden');
+    caret.textContent = node.collapsed ? '▸' : '▾';
+    caret.addEventListener('click', function () {
+      node.collapsed = !node.collapsed;
+      save();
+      render();
+    });
+
+    const bullet = document.createElement('span');
+    bullet.className = 'bullet' + (node.children.length ? ' has-children' : '');
+
+    const text = document.createElement('div');
+    text.className = 'text';
+    text.contentEditable = 'true';
+    text.dataset.id = node.id;
+    text.dataset.placeholder = 'Escribe algo...';
+    text.textContent = node.text;
+
+    row.appendChild(caret);
+    row.appendChild(bullet);
+    row.appendChild(text);
+    wrap.appendChild(row);
+
+    if (node.children.length && !node.collapsed) {
+      const childrenEl = document.createElement('div');
+      childrenEl.className = 'children';
+      node.children.forEach(function (c) {
+        childrenEl.appendChild(renderNode(c, depth + 1));
+      });
+      wrap.appendChild(childrenEl);
+    }
+
+    return wrap;
+  }
+
+  function render() {
+    if (tree.length === 0) {
+      tree.push({ id: uid(), text: '', children: [], collapsed: false });
+    }
+    outlineEl.innerHTML = '';
+    tree.forEach(function (n) {
+      outlineEl.appendChild(renderNode(n, 0));
+    });
+    countEl.textContent = countAll(tree) + ' elemento(s)';
+  }
+
+  outlineEl.addEventListener('input', function (e) {
+    const el = e.target.closest('.text');
+    if (!el) return;
+    const path = findPath(el.dataset.id);
+    if (!path) return;
+    const last = path[path.length - 1];
+    last.nodes[last.index].text = el.textContent;
+    save();
+  });
+
+  outlineEl.addEventListener('keydown', function (e) {
+    const el = e.target.closest('.text');
+    if (!el) return;
+    const id = el.dataset.id;
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const offset = getCaretOffset(el);
+      const fullText = el.textContent;
+      const before = fullText.slice(0, offset);
+      const after = fullText.slice(offset);
+      const path = findPath(id);
+      const last = path[path.length - 1];
+      const node = last.nodes[last.index];
+      node.text = before;
+      const newNode = { id: uid(), text: after, children: [], collapsed: false };
+      if (node.children.length && !node.collapsed && offset === fullText.length) {
+        node.children.unshift(newNode);
+      } else {
+        last.nodes.splice(last.index + 1, 0, newNode);
+      }
+      save();
+      render();
+      focusNode(newNode.id, 0);
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      const offset = getCaretOffset(el);
+      if (e.shiftKey) outdent(id); else indent(id);
+      save();
+      render();
+      focusNode(id, offset);
+    } else if (e.key === 'Backspace') {
+      const offset = getCaretOffset(el);
+      if (offset === 0) {
+        const order = visibleOrder();
+        const idx = order.indexOf(id);
+        if (idx === 0) return;
+        e.preventDefault();
+        const prevId = order[idx - 1];
+        const path = findPath(id);
+        const last = path[path.length - 1];
+        const node = last.nodes[last.index];
+        const prevPath = findPath(prevId);
+        const prevLast = prevPath[prevPath.length - 1];
+        const prevNode = prevLast.nodes[prevLast.index];
+        const mergeOffset = prevNode.text.length;
+        prevNode.text = prevNode.text + node.text;
+        prevNode.children = prevNode.children.concat(node.children);
+        if (node.children.length) prevNode.collapsed = false;
+        last.nodes.splice(last.index, 1);
+        save();
+        render();
+        focusNode(prevId, mergeOffset);
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const order = visibleOrder();
+      const idx = order.indexOf(id);
+      if (idx > 0) {
+        const offset = getCaretOffset(el);
+        focusNode(order[idx - 1], offset);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const order = visibleOrder();
+      const idx = order.indexOf(id);
+      if (idx < order.length - 1) {
+        const offset = getCaretOffset(el);
+        focusNode(order[idx + 1], offset);
+      }
+    }
+  });
+
+  document.getElementById('addRoot').addEventListener('click', function () {
+    const newNode = { id: uid(), text: '', children: [], collapsed: false };
+    tree.push(newNode);
+    save();
+    render();
+    focusNode(newNode.id, 0);
+  });
+
+  setAuthMode('signin');
+})();
+</script>
+</body>
+</html>
