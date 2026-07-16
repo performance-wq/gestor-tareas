@@ -264,6 +264,95 @@
     font-size: 12px;
   }
 
+  .danger-btn { color: var(--danger); border-color: #f6d3d4; }
+  .danger-btn:hover { background: #fdecec; }
+  .view-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .view-btn { border: none; border-radius: 0; }
+  .view-btn.active { background: var(--accent); color: #fff; }
+  .notify-banner {
+    background: #fff4e5;
+    color: #8a5a00;
+    border: 1px solid #ffe0a3;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .meta-toggle {
+    flex: 0 0 auto;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 4px;
+    margin-left: 4px;
+  }
+  .meta-toggle:hover { background: var(--hover); }
+  .due-badge {
+    flex: 0 0 auto;
+    font-size: 11px;
+    border-radius: 10px;
+    padding: 1px 7px;
+    margin-left: 6px;
+    background: var(--hover);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .due-badge.overdue { background: #fdecec; color: var(--danger); }
+  .due-badge.today { background: #fff4e5; color: #8a5a00; }
+  .tag-chip {
+    flex: 0 0 auto;
+    font-size: 11px;
+    border-radius: 10px;
+    padding: 1px 8px;
+    margin-left: 6px;
+    background: #eef4ff;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .meta-panel {
+    display: none;
+    margin: 4px 0 6px 38px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fafafa;
+    font-size: 12.5px;
+  }
+  .meta-panel.open { display: block; }
+  .meta-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .meta-row label { color: var(--muted); min-width: 66px; }
+  .meta-row input[type="date"] {
+    border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; font-family: inherit; font-size: 12.5px;
+  }
+  .meta-row input[type="text"] {
+    border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; font-family: inherit; font-size: 12.5px; flex: 1; min-width: 100px;
+  }
+  .meta-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .meta-tag-chip { background: #eef4ff; color: var(--accent); border-radius: 10px; padding: 1px 6px 1px 8px; display: inline-flex; align-items: center; gap: 4px; }
+  .meta-tag-chip button { border: none; background: none; color: var(--accent); cursor: pointer; font-size: 12px; padding: 0; }
+  .meta-flags label { display: inline-flex; align-items: center; gap: 4px; min-width: auto; color: var(--text); }
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 6px;
+  }
+  .quadrant { border: 1px solid var(--line); border-radius: 8px; padding: 10px; min-height: 120px; }
+  .quadrant h4 { margin: 0 0 8px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .q1 { border-top: 3px solid var(--danger); }
+  .q2 { border-top: 3px solid var(--accent); }
+  .q3 { border-top: 3px solid #eab308; }
+  .q4 { border-top: 3px solid var(--muted); }
+  .qcard {
+    font-size: 13px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: var(--hover);
+    margin-bottom: 6px;
+  }
+  .qcard.done { text-decoration: line-through; color: var(--muted); }
+
   /* Auth screen */
   #authScreen {
     width: 100%;
@@ -344,7 +433,14 @@
     <select class="board-picker" id="boardPicker"></select>
     <button class="small-btn" id="newBoardBtn">+ Nuevo proyecto</button>
     <button class="small-btn" id="shareBtn">Compartir</button>
+    <button class="small-btn danger-btn" id="deleteBoardBtn">Eliminar proyecto</button>
+    <span class="view-switch">
+      <button class="small-btn view-btn active" id="viewListBtn">Lista</button>
+      <button class="small-btn view-btn" id="viewMatrixBtn">Matriz</button>
+    </span>
   </div>
+
+  <div class="notify-banner hidden" id="notifyBanner"></div>
 
   <div class="share-panel" id="sharePanel">
     <h3>Miembros de este proyecto</h3>
@@ -363,6 +459,12 @@
     clic en el punto de color para cambiar color
   </p>
   <div id="outline"></div>
+  <div id="matrixView" class="matrix-grid hidden">
+    <div class="quadrant q1"><h4>Urgente e importante</h4><div class="qlist" data-q="q1"></div></div>
+    <div class="quadrant q2"><h4>Importante, no urgente</h4><div class="qlist" data-q="q2"></div></div>
+    <div class="quadrant q3"><h4>Urgente, no importante</h4><div class="qlist" data-q="q3"></div></div>
+    <div class="quadrant q4"><h4>Ni urgente ni importante</h4><div class="qlist" data-q="q4"></div></div>
+  </div>
   <div class="toolbar">
     <button class="add-btn" id="addRoot">+ Agregar elemento</button>
     <span class="save-status" id="saveStatus"></span>
@@ -402,6 +504,11 @@
   const addMemberBtn = document.getElementById('addMemberBtn');
   const outlineEl = document.getElementById('outline');
   const countEl = document.getElementById('count');
+  const deleteBoardBtn = document.getElementById('deleteBoardBtn');
+  const viewListBtn = document.getElementById('viewListBtn');
+  const viewMatrixBtn = document.getElementById('viewMatrixBtn');
+  const matrixViewEl = document.getElementById('matrixView');
+  const notifyBanner = document.getElementById('notifyBanner');
 
   let authMode = 'signin';
   let currentUser = null;
@@ -410,6 +517,8 @@
   let members = [];
   let tree = [];
   let saveTimer = null;
+  let currentView = 'list';
+  let openMetaId = null;
 
   // ---------------- Auth ----------------
 
@@ -490,7 +599,7 @@
   }
 
   function defaultTree() {
-    return [{ id: uid(), text: '', children: [], collapsed: false, done: false, color: null, assignee: null }];
+    return [{ id: uid(), text: '', children: [], collapsed: false, done: false, color: null, assignee: null, tags: [], dueDate: null, urgent: false, important: false }];
   }
 
   function ensureFields(nodes) {
@@ -498,6 +607,10 @@
       if (typeof n.done === 'undefined') n.done = false;
       if (typeof n.color === 'undefined') n.color = null;
       if (typeof n.assignee === 'undefined') n.assignee = null;
+      if (!n.tags) n.tags = [];
+      if (typeof n.dueDate === 'undefined') n.dueDate = null;
+      if (typeof n.urgent === 'undefined') n.urgent = false;
+      if (typeof n.important === 'undefined') n.important = false;
       if (!n.children) n.children = [];
       ensureFields(n.children);
     });
@@ -568,6 +681,33 @@
     renderBoardPicker();
     await sb.from('boards').update({ name: newName }).eq('id', currentBoard.id);
   });
+
+  deleteBoardBtn.addEventListener('click', async function () {
+    if (!currentBoard) return;
+    if (boards.length <= 1) {
+      alert('No puedes eliminar tu único proyecto. Crea otro primero.');
+      return;
+    }
+    const ok = confirm('¿Eliminar "' + currentBoard.name + '"? Esto borra todas sus tareas permanentemente.');
+    if (!ok) return;
+    const idToDelete = currentBoard.id;
+    const { error } = await sb.from('boards').delete().eq('id', idToDelete);
+    if (error) { alert('No se pudo eliminar: ' + error.message); return; }
+    boards = boards.filter(function (b) { return b.id !== idToDelete; });
+    await switchBoard(boards[0].id);
+  });
+
+  viewListBtn.addEventListener('click', function () { setView('list'); });
+  viewMatrixBtn.addEventListener('click', function () { setView('matrix'); });
+
+  function setView(v) {
+    currentView = v;
+    viewListBtn.classList.toggle('active', v === 'list');
+    viewMatrixBtn.classList.toggle('active', v === 'matrix');
+    outlineEl.classList.toggle('hidden', v !== 'list');
+    matrixViewEl.classList.toggle('hidden', v !== 'matrix');
+    render();
+  }
 
   async function switchBoard(boardId) {
     const { data, error } = await sb.from('boards').select('*').eq('id', boardId).single();
@@ -774,6 +914,131 @@
     });
   }
 
+  // ---------------- Due dates / tags helpers ----------------
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function dueStatus(dueDate) {
+    if (!dueDate) return null;
+    const t = todayStr();
+    if (dueDate < t) return 'overdue';
+    if (dueDate === t) return 'today';
+    return 'upcoming';
+  }
+
+  function flattenAll(nodes, out) {
+    nodes = nodes || tree;
+    out = out || [];
+    nodes.forEach(function (n) {
+      out.push(n);
+      if (n.children.length) flattenAll(n.children, out);
+    });
+    return out;
+  }
+
+  function renderNotifyBanner() {
+    const all = flattenAll();
+    const overdue = all.filter(function (n) { return !n.done && dueStatus(n.dueDate) === 'overdue'; });
+    const today = all.filter(function (n) { return !n.done && dueStatus(n.dueDate) === 'today'; });
+    if (!overdue.length && !today.length) {
+      notifyBanner.classList.add('hidden');
+      notifyBanner.textContent = '';
+      return;
+    }
+    const parts = [];
+    if (overdue.length) parts.push(overdue.length + ' tarea(s) vencida(s)');
+    if (today.length) parts.push(today.length + ' que vence(n) hoy');
+    notifyBanner.textContent = '⏰ Tienes ' + parts.join(' y ') + '. (Aviso in-app; el correo de recordatorio requiere activar notificaciones por email — ver instrucciones)';
+    notifyBanner.classList.remove('hidden');
+  }
+
+  function renderMetaPanel(node) {
+    const panel = document.createElement('div');
+    panel.className = 'meta-panel' + (openMetaId === node.id ? ' open' : '');
+
+    const dateRow = document.createElement('div');
+    dateRow.className = 'meta-row';
+    const dateLabel = document.createElement('label');
+    dateLabel.textContent = 'Vence:';
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.value = node.dueDate || '';
+    dateInput.addEventListener('change', function () {
+      node.dueDate = dateInput.value || null;
+      save();
+      render();
+    });
+    dateRow.appendChild(dateLabel);
+    dateRow.appendChild(dateInput);
+
+    const flagsRow = document.createElement('div');
+    flagsRow.className = 'meta-row meta-flags';
+    const urgentLabel = document.createElement('label');
+    const urgentCb = document.createElement('input');
+    urgentCb.type = 'checkbox';
+    urgentCb.checked = !!node.urgent;
+    urgentCb.addEventListener('change', function () { node.urgent = urgentCb.checked; save(); render(); });
+    urgentLabel.appendChild(urgentCb);
+    urgentLabel.appendChild(document.createTextNode('Urgente'));
+    const importantLabel = document.createElement('label');
+    const importantCb = document.createElement('input');
+    importantCb.type = 'checkbox';
+    importantCb.checked = !!node.important;
+    importantCb.addEventListener('change', function () { node.important = importantCb.checked; save(); render(); });
+    importantLabel.appendChild(importantCb);
+    importantLabel.appendChild(document.createTextNode('Importante'));
+    flagsRow.appendChild(urgentLabel);
+    flagsRow.appendChild(importantLabel);
+
+    const tagsRow = document.createElement('div');
+    tagsRow.className = 'meta-row';
+    const tagsLabel = document.createElement('label');
+    tagsLabel.textContent = 'Etiquetas:';
+    const tagsWrap = document.createElement('div');
+    tagsWrap.className = 'meta-tags';
+    (node.tags || []).forEach(function (tag, i) {
+      const chip = document.createElement('span');
+      chip.className = 'meta-tag-chip';
+      chip.textContent = tag;
+      const rm = document.createElement('button');
+      rm.textContent = '×';
+      rm.addEventListener('click', function () {
+        node.tags.splice(i, 1);
+        save();
+        render();
+      });
+      chip.appendChild(rm);
+      tagsWrap.appendChild(chip);
+    });
+    const tagInput = document.createElement('input');
+    tagInput.type = 'text';
+    tagInput.placeholder = 'nueva etiqueta + Enter';
+    tagInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = tagInput.value.trim();
+        if (val) {
+          node.tags = node.tags || [];
+          node.tags.push(val);
+          tagInput.value = '';
+          save();
+          render();
+        }
+      }
+    });
+    tagsWrap.appendChild(tagInput);
+    tagsRow.appendChild(tagsLabel);
+    tagsRow.appendChild(tagsWrap);
+
+    panel.appendChild(dateRow);
+    panel.appendChild(flagsRow);
+    panel.appendChild(tagsRow);
+    return panel;
+  }
+
   // ---------------- Rendering ----------------
 
   function renderNode(node, depth) {
@@ -846,8 +1111,36 @@
     row.appendChild(checkbox);
     row.appendChild(colorDot);
     row.appendChild(text);
+
+    (node.tags || []).forEach(function (tag) {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.textContent = tag;
+      row.appendChild(chip);
+    });
+
+    if (node.dueDate) {
+      const badge = document.createElement('span');
+      const status = dueStatus(node.dueDate);
+      badge.className = 'due-badge' + (status === 'overdue' ? ' overdue' : status === 'today' ? ' today' : '');
+      badge.textContent = node.dueDate;
+      row.appendChild(badge);
+    }
+
     row.appendChild(assigneeSelect);
+
+    const metaToggle = document.createElement('span');
+    metaToggle.className = 'meta-toggle';
+    metaToggle.textContent = '⋯';
+    metaToggle.title = 'Etiquetas, fecha y prioridad';
+    metaToggle.addEventListener('click', function () {
+      openMetaId = openMetaId === node.id ? null : node.id;
+      render();
+    });
+    row.appendChild(metaToggle);
+
     wrap.appendChild(row);
+    wrap.appendChild(renderMetaPanel(node));
 
     if (node.children.length && !node.collapsed) {
       const childrenEl = document.createElement('div');
@@ -863,7 +1156,7 @@
 
   function render() {
     if (tree.length === 0) {
-      tree.push({ id: uid(), text: '', children: [], collapsed: false, done: false, color: null, assignee: null });
+      tree.push({ id: uid(), text: '', children: [], collapsed: false, done: false, color: null, assignee: null, tags: [], dueDate: null, urgent: false, important: false });
     }
     outlineEl.innerHTML = '';
     tree.forEach(function (n) {
@@ -871,6 +1164,34 @@
     });
     const counts = countAll(tree);
     countEl.textContent = counts.total + ' elemento(s) · ' + counts.done + ' completada(s)';
+    renderNotifyBanner();
+    if (currentView === 'matrix') renderMatrix();
+  }
+
+  function renderMatrix() {
+    const qlists = {
+      q1: matrixViewEl.querySelector('[data-q="q1"]'),
+      q2: matrixViewEl.querySelector('[data-q="q2"]'),
+      q3: matrixViewEl.querySelector('[data-q="q3"]'),
+      q4: matrixViewEl.querySelector('[data-q="q4"]')
+    };
+    Object.keys(qlists).forEach(function (k) { qlists[k].innerHTML = ''; });
+    const all = flattenAll();
+    all.forEach(function (n) {
+      if (!n.text.trim()) return;
+      const key = n.urgent && n.important ? 'q1' : (!n.urgent && n.important ? 'q2' : (n.urgent && !n.important ? 'q3' : 'q4'));
+      const card = document.createElement('div');
+      card.className = 'qcard' + (n.done ? ' done' : '');
+      card.textContent = n.text + (n.dueDate ? ' · ' + n.dueDate : '');
+      card.title = 'Clic para abrir en la lista y editar';
+      card.addEventListener('click', function () {
+        setView('list');
+        openMetaId = n.id;
+        render();
+        focusNode(n.id, n.text.length);
+      });
+      qlists[key].appendChild(card);
+    });
   }
 
   outlineEl.addEventListener('input', function (e) {
@@ -898,7 +1219,7 @@
       const last = path[path.length - 1];
       const node = last.nodes[last.index];
       node.text = before;
-      const newNode = { id: uid(), text: after, children: [], collapsed: false, done: false, color: null, assignee: null };
+      const newNode = { id: uid(), text: after, children: [], collapsed: false, done: false, color: null, assignee: null, tags: [], dueDate: null, urgent: false, important: false };
       if (node.children.length && !node.collapsed && offset === fullText.length) {
         node.children.unshift(newNode);
       } else {
@@ -957,7 +1278,7 @@
   });
 
   document.getElementById('addRoot').addEventListener('click', function () {
-    const newNode = { id: uid(), text: '', children: [], collapsed: false, done: false, color: null, assignee: null };
+    const newNode = { id: uid(), text: '', children: [], collapsed: false, done: false, color: null, assignee: null, tags: [], dueDate: null, urgent: false, important: false };
     tree.push(newNode);
     save();
     render();
