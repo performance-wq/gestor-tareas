@@ -210,8 +210,6 @@
   .quadrant.drag-over { border-color: var(--accent2); box-shadow: 0 0 24px rgba(53,229,255,0.3); }
   .q1::before { background: linear-gradient(90deg, var(--danger), var(--overdue)); }
   .q2::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
-  .q3::before { background: linear-gradient(90deg, var(--warn), #ffd23f); }
-  .q4::before { background: linear-gradient(90deg, var(--muted), #5a5480); }
   .quadrant h4 {
     margin: 4px 0 10px;
     font-size: 13px;
@@ -289,6 +287,70 @@
   .due-badge.d-soon { background: rgba(255,159,67,0.18); color: #ffc48a; border-color: rgba(255,159,67,0.4); }
   .due-badge.d-later { background: rgba(46,230,166,0.15); color: #8ff5d2; border-color: rgba(46,230,166,0.35); }
   .due-badge.d-overdue { background: rgba(255,47,208,0.2); color: #ffb3f0; border-color: rgba(255,47,208,0.55); animation: pulseGlow 1.6s ease-in-out infinite; }
+
+  /* ---------- Subtasks ---------- */
+  .card-chevron {
+    flex: 0 0 auto; width: 16px; height: 20px; margin-right: 2px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--muted); font-size: 10px; user-select: none;
+    transition: transform 0.2s ease, color 0.15s ease;
+  }
+  .card-chevron:hover { color: var(--accent2); }
+  .card-chevron.expanded { transform: rotate(90deg); }
+  .card-chevron.hidden-chevron { visibility: hidden; cursor: default; }
+
+  .progress-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .progress-track {
+    flex: 1; height: 5px; border-radius: 3px; overflow: hidden;
+    background: rgba(255,255,255,0.08);
+  }
+  .progress-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    box-shadow: 0 0 8px rgba(53,229,255,0.4);
+    transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  .progress-count { font-size: 10.5px; color: var(--muted); white-space: nowrap; font-weight: 600; }
+
+  .subtasks {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.28s ease;
+  }
+  .subtasks.expanded { max-height: 1000px; }
+  .subtasks-inner { padding: 8px 0 2px 24px; display: flex; flex-direction: column; gap: 5px; }
+  .subtask {
+    display: flex; align-items: flex-start; gap: 7px;
+    animation: fadeInUp 0.18s ease;
+  }
+  .subtask-check {
+    flex: 0 0 14px; width: 14px; height: 14px; margin-top: 2px;
+    border: 1px solid var(--line); border-radius: 4px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #07050f; user-select: none;
+    transition: all 0.15s ease;
+  }
+  .subtask-check.checked { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; box-shadow: 0 0 8px rgba(176,107,255,0.4); }
+  .subtask-text {
+    flex: 1; min-width: 0; line-height: 18px; font-size: 12.5px;
+    outline: none; white-space: pre-wrap; word-break: break-word; color: var(--text);
+  }
+  .subtask-text:empty::before { content: attr(data-placeholder); color: var(--muted); }
+  .subtask.done .subtask-text { text-decoration: line-through; color: var(--muted); }
+  .subtask-rm {
+    flex: 0 0 auto; border: none; background: none; color: var(--muted);
+    cursor: pointer; font-size: 13px; padding: 0 2px; border-radius: 4px;
+    opacity: 0; transition: opacity 0.15s ease, color 0.15s ease;
+  }
+  .subtask:hover .subtask-rm { opacity: 1; }
+  .subtask-rm:hover { color: var(--danger); }
+  .subtask-add {
+    margin-left: 24px; margin-top: 6px;
+    border: none; background: none; color: var(--muted);
+    cursor: pointer; font-size: 11.5px; padding: 3px 0; text-align: left;
+    transition: color 0.15s ease;
+  }
+  .subtask-add:hover { color: var(--accent2); }
 
   .meta-panel {
     display: none;
@@ -404,19 +466,9 @@
       <button class="qadd" data-q="q1">+ Nueva tarea</button>
     </div>
     <div class="quadrant q2" data-q="q2">
-      <h4>🎯 Importante, no urgente</h4>
+      <h4>📌 Importante, no urgente</h4>
       <div class="qlist" data-q="q2"></div>
       <button class="qadd" data-q="q2">+ Nueva tarea</button>
-    </div>
-    <div class="quadrant q3" data-q="q3">
-      <h4>⚡ Urgente, no importante</h4>
-      <div class="qlist" data-q="q3"></div>
-      <button class="qadd" data-q="q3">+ Nueva tarea</button>
-    </div>
-    <div class="quadrant q4" data-q="q4">
-      <h4>🌙 Ni urgente ni importante</h4>
-      <div class="qlist" data-q="q4"></div>
-      <button class="qadd" data-q="q4">+ Nueva tarea</button>
     </div>
   </div>
 
@@ -537,7 +589,11 @@
   function uid() { return 't' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
 
   function newTask(urgent, important) {
-    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: !!urgent, important: !!important, assignee: null };
+    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: !!urgent, important: !!important, assignee: null, subtasks: [], collapsed: false };
+  }
+
+  function newSubtask() {
+    return { id: uid(), text: '', done: false };
   }
 
   function ensureFields(list) {
@@ -548,6 +604,18 @@
       if (typeof t.urgent === 'undefined') t.urgent = false;
       if (typeof t.important === 'undefined') t.important = false;
       if (typeof t.assignee === 'undefined') t.assignee = null;
+      if (!Array.isArray(t.subtasks)) t.subtasks = [];
+      if (typeof t.collapsed === 'undefined') t.collapsed = false;
+      t.subtasks.forEach(function (s) {
+        if (typeof s.done === 'undefined') s.done = false;
+        if (typeof s.text === 'undefined') s.text = '';
+        if (!s.id) s.id = uid();
+      });
+      // Migración: la matriz ahora solo tiene 2 columnas (q1 = urgente+importante, q2 = importante).
+      // Las tareas de las columnas eliminadas (urgente/no-importante y ni/ni) se reubican:
+      //  - si eran importantes -> q2 ; si no -> q1, para que ninguna tarea desaparezca.
+      if (!t.important && !t.urgent) { t.urgent = true; t.important = true; }
+      else if (t.urgent && !t.important) { t.important = true; }
     });
     return list || [];
   }
@@ -816,6 +884,23 @@
 
   // ---------------- Card + Matrix rendering ----------------
 
+  // ---------------- Subtask helpers ----------------
+
+  function subProgress(task) {
+    const subs = task.subtasks || [];
+    const total = subs.length;
+    const done = subs.filter(function (s) { return s.done; }).length;
+    return { total: total, done: done };
+  }
+
+  // Mantiene sincronizado el estado de la tarea principal con sus subtareas:
+  // si hay subtareas y todas están completas -> la tarea se marca hecha.
+  // si hay subtareas y alguna está pendiente -> la tarea se desmarca.
+  function syncParentDone(task) {
+    const p = subProgress(task);
+    if (p.total > 0) task.done = (p.done === p.total);
+  }
+
   function renderCard(task) {
     const card = document.createElement('div');
     card.className = 'card' + (task.done ? ' done' : '');
@@ -832,10 +917,23 @@
     const top = document.createElement('div');
     top.className = 'card-top';
 
+    const hasSubs = (task.subtasks || []).length > 0;
+
+    const chevron = document.createElement('span');
+    chevron.className = 'card-chevron' + (hasSubs ? '' : ' hidden-chevron') + (!task.collapsed && hasSubs ? ' expanded' : '');
+    chevron.textContent = '▶';
+    chevron.title = 'Expandir / contraer subtareas';
+    chevron.addEventListener('click', function () { task.collapsed = !task.collapsed; save(); render(); });
+
     const checkbox = document.createElement('span');
     checkbox.className = 'checkbox' + (task.done ? ' checked' : '');
     checkbox.textContent = task.done ? '✓' : '';
-    checkbox.addEventListener('click', function () { task.done = !task.done; save(); render(); });
+    checkbox.addEventListener('click', function () {
+      task.done = !task.done;
+      // Al marcar/desmarcar el padre, se refleja en todas sus subtareas.
+      (task.subtasks || []).forEach(function (s) { s.done = task.done; });
+      save(); render();
+    });
 
     const text = document.createElement('div');
     text.className = 'card-text';
@@ -852,6 +950,7 @@
     menu.textContent = '⋯';
     menu.addEventListener('click', function () { openMetaId = openMetaId === task.id ? null : task.id; render(); });
 
+    top.appendChild(chevron);
     top.appendChild(checkbox);
     top.appendChild(text);
     top.appendChild(menu);
@@ -875,20 +974,122 @@
       card.appendChild(metaRow);
     }
 
+    // Barra de progreso (solo si hay subtareas)
+    const prog = subProgress(task);
+    if (prog.total > 0) {
+      const progRow = document.createElement('div');
+      progRow.className = 'progress-row';
+      const track = document.createElement('div');
+      track.className = 'progress-track';
+      const fill = document.createElement('div');
+      fill.className = 'progress-fill';
+      fill.style.width = Math.round((prog.done / prog.total) * 100) + '%';
+      track.appendChild(fill);
+      const count = document.createElement('span');
+      count.className = 'progress-count';
+      count.textContent = prog.done + '/' + prog.total;
+      progRow.appendChild(track);
+      progRow.appendChild(count);
+      card.appendChild(progRow);
+    }
+
+    // Contenedor de subtareas (expandible)
+    const subsWrap = document.createElement('div');
+    subsWrap.className = 'subtasks' + (!task.collapsed && prog.total > 0 ? ' expanded' : '');
+    const subsInner = document.createElement('div');
+    subsInner.className = 'subtasks-inner';
+
+    (task.subtasks || []).forEach(function (sub, idx) {
+      const subEl = document.createElement('div');
+      subEl.className = 'subtask' + (sub.done ? ' done' : '');
+
+      const scheck = document.createElement('span');
+      scheck.className = 'subtask-check' + (sub.done ? ' checked' : '');
+      scheck.textContent = sub.done ? '✓' : '';
+      scheck.addEventListener('click', function () {
+        sub.done = !sub.done;
+        syncParentDone(task);
+        save(); render();
+      });
+
+      const stext = document.createElement('div');
+      stext.className = 'subtask-text';
+      stext.contentEditable = 'true';
+      stext.dataset.placeholder = 'Subtarea...';
+      stext.dataset.subid = sub.id;
+      stext.textContent = sub.text;
+      stext.addEventListener('input', function () { sub.text = stext.textContent; save(); });
+      stext.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          // Enter en una subtarea crea otra debajo (flujo tipo Notion)
+          const ns = newSubtask();
+          task.subtasks.splice(idx + 1, 0, ns);
+          task.collapsed = false;
+          syncParentDone(task);
+          save(); render();
+          requestAnimationFrame(function () {
+            const el = matrixViewEl.querySelector('.subtask-text[data-subid="' + ns.id + '"]');
+            if (el) el.focus();
+          });
+        } else if (e.key === 'Backspace' && stext.textContent === '') {
+          e.preventDefault();
+          task.subtasks.splice(idx, 1);
+          syncParentDone(task);
+          save(); render();
+        }
+      });
+
+      const srm = document.createElement('button');
+      srm.className = 'subtask-rm';
+      srm.textContent = '×';
+      srm.title = 'Eliminar subtarea';
+      srm.addEventListener('click', function () {
+        task.subtasks.splice(idx, 1);
+        syncParentDone(task);
+        save(); render();
+      });
+
+      subEl.appendChild(scheck);
+      subEl.appendChild(stext);
+      subEl.appendChild(srm);
+      subsInner.appendChild(subEl);
+    });
+
+    subsWrap.appendChild(subsInner);
+    card.appendChild(subsWrap);
+
+    // Botón "+ Subtarea" (siempre disponible, no requiere abrir modales)
+    const addSub = document.createElement('button');
+    addSub.className = 'subtask-add';
+    addSub.textContent = '+ Subtarea';
+    addSub.addEventListener('click', function () {
+      const ns = newSubtask();
+      task.subtasks = task.subtasks || [];
+      task.subtasks.push(ns);
+      task.collapsed = false;
+      syncParentDone(task);
+      save(); render();
+      requestAnimationFrame(function () {
+        const el = matrixViewEl.querySelector('.subtask-text[data-subid="' + ns.id + '"]');
+        if (el) el.focus();
+      });
+    });
+    card.appendChild(addSub);
+
     card.appendChild(renderMetaPanel(task));
     return card;
   }
 
   function quadrantKey(t) {
-    return t.urgent && t.important ? 'q1' : (!t.urgent && t.important ? 'q2' : (t.urgent && !t.important ? 'q3' : 'q4'));
+    // Solo 2 columnas: q1 = urgente e importante, q2 = importante (no urgente).
+    return t.urgent && t.important ? 'q1' : 'q2';
   }
 
   function render() {
     const qlists = {
       q1: matrixViewEl.querySelector('.qlist[data-q="q1"]'),
-      q2: matrixViewEl.querySelector('.qlist[data-q="q2"]'),
-      q3: matrixViewEl.querySelector('.qlist[data-q="q3"]'),
-      q4: matrixViewEl.querySelector('.qlist[data-q="q4"]')
+      q2: matrixViewEl.querySelector('.qlist[data-q="q2"]')
     };
     Object.keys(qlists).forEach(function (k) { qlists[k].innerHTML = ''; });
     tasks.forEach(function (t) { qlists[quadrantKey(t)].appendChild(renderCard(t)); });
@@ -913,8 +1114,9 @@
       const task = tasks.find(function (t) { return t.id === dragId; });
       if (!task) return;
       const q = list.dataset.q;
-      task.urgent = (q === 'q1' || q === 'q3');
-      task.important = (q === 'q1' || q === 'q2');
+      // q1 = urgente e importante ; q2 = importante, no urgente
+      task.urgent = (q === 'q1');
+      task.important = true;
       dragId = null;
       save();
       render();
@@ -924,7 +1126,8 @@
   matrixViewEl.querySelectorAll('.qadd').forEach(function (btn) {
     btn.addEventListener('click', function () {
       const q = btn.dataset.q;
-      const t = newTask(q === 'q1' || q === 'q3', q === 'q1' || q === 'q2');
+      // q1 = urgente e importante ; q2 = importante, no urgente
+      const t = newTask(q === 'q1', true);
       tasks.push(t);
       openMetaId = null;
       save();
