@@ -374,6 +374,73 @@
   .tnode-children-inner { overflow: hidden; margin-left: 15px; padding-left: 10px; border-left: 1px solid var(--line); }
   .lvl-1 > .tnode-children.expanded > .tnode-children-inner { margin-top: 6px; }
 
+  /* ---------- Drag & drop del árbol ---------- */
+  .tnode-grip {
+    flex: 0 0 auto; width: 13px; margin-top: 2px; margin-left: -2px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: grab; color: var(--muted); font-size: 12px; line-height: 1;
+    opacity: 0; transition: opacity 0.15s ease, color 0.15s ease; user-select: none;
+  }
+  .tnode-row:hover .tnode-grip { opacity: 0.55; }
+  .tnode-grip:hover { opacity: 1; color: var(--accent2); }
+  .tnode-grip:active { cursor: grabbing; }
+  .tnode.dragging { opacity: 0.4; }
+
+  .tnode-row { position: relative; }
+  .tnode-row.drop-before::before,
+  .tnode-row.drop-after::after {
+    content: ''; position: absolute; left: 4px; right: 4px; height: 2px; z-index: 3;
+    background: var(--accent2); border-radius: 2px; box-shadow: 0 0 6px var(--accent2);
+  }
+  .tnode-row.drop-before::before { top: -3px; }
+  .tnode-row.drop-after::after { bottom: -3px; }
+  .tnode-row.drop-inside { background: rgba(53,229,255,0.14); box-shadow: inset 0 0 0 1px var(--accent2); }
+
+  /* ---------- Selector de etiquetas (picker) ---------- */
+  .tag-add-btn {
+    font-size: 11px; border-radius: 8px; padding: 2px 8px; cursor: pointer;
+    background: transparent; color: var(--muted); border: 1px dashed var(--line);
+    transition: all 0.15s ease;
+  }
+  .tag-add-btn:hover { color: var(--accent2); border-color: var(--accent2); }
+  .tag-picker {
+    margin-top: 8px; border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px; background: rgba(0,0,0,0.35); animation: fadeInUp 0.15s ease;
+    max-height: 220px; overflow-y: auto;
+  }
+  .tag-opt {
+    display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 7px;
+    cursor: pointer; font-size: 12.5px; transition: background 0.12s ease;
+  }
+  .tag-opt:hover { background: rgba(255,255,255,0.05); }
+  .tag-swatch { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
+  .tag-opt-name { flex: 1; }
+  .tag-opt-check { color: var(--accent2); font-size: 12px; }
+  .tag-picker-new { display: flex; gap: 6px; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .tag-picker-new input {
+    flex: 1; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px;
+    font-size: 12px; font-family: inherit; background: var(--panel-strong); color: var(--text);
+  }
+  .meta-tag-chip button { border: none; background: none; cursor: pointer; font-size: 12px; padding: 0 0 0 3px; color: inherit; }
+
+  /* ---------- Administrador de etiquetas ---------- */
+  .tags-panel {
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 16px; font-size: 13px; display: none; background: var(--panel);
+    animation: fadeInUp 0.2s ease;
+  }
+  .tags-panel.open { display: block; }
+  .tags-panel h3 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .tags-empty { color: var(--muted); font-size: 12.5px; }
+  .tagmgr-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .tagmgr-row:last-child { border-bottom: none; }
+  .tagmgr-row input[type="color"] { width: 26px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer; flex: 0 0 auto; }
+  .tagmgr-row input[type="text"] { flex: 1; min-width: 110px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; font-size: 12.5px; font-family: inherit; background: var(--panel-strong); color: var(--text); }
+  .tagmgr-merge { padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; font-size: 12px; background: var(--panel); color: var(--muted); font-family: inherit; }
+  .tagmgr-merge option { background: #12102a; color: var(--text); }
+  .tagmgr-del { color: var(--danger); background: none; border: 1px solid rgba(255,77,109,0.4); border-radius: 7px; padding: 5px 9px; font-size: 12px; cursor: pointer; }
+  .tagmgr-del:hover { background: rgba(255,77,109,0.12); }
+
   .meta-panel {
     display: none;
     margin-top: 8px;
@@ -466,11 +533,17 @@
     <select class="board-picker" id="boardPicker"></select>
     <button class="btn" id="newBoardBtn">+ Nuevo proyecto</button>
     <button class="btn" id="shareBtn">Compartir</button>
+    <button class="btn" id="tagsBtn">Etiquetas</button>
     <button class="btn danger" id="deleteBoardBtn">Eliminar proyecto</button>
     <span class="save-status" id="saveStatus"></span>
   </div>
 
   <div class="notify-banner hidden" id="notifyBanner"></div>
+
+  <div class="tags-panel" id="tagsPanel">
+    <h3>Etiquetas del proyecto</h3>
+    <div id="tagsList"></div>
+  </div>
 
   <div class="share-panel" id="sharePanel">
     <h3>Miembros de este proyecto</h3>
@@ -528,6 +601,9 @@
   const matrixViewEl = document.getElementById('matrixView');
   const notifyBanner = document.getElementById('notifyBanner');
   const countEl = document.getElementById('count');
+  const tagsBtn = document.getElementById('tagsBtn');
+  const tagsPanel = document.getElementById('tagsPanel');
+  const tagsListEl = document.getElementById('tagsList');
 
   let authMode = 'signin';
   let currentUser = null;
@@ -535,8 +611,10 @@
   let currentBoard = null;
   let members = [];
   let tasks = [];
+  let tagCatalog = [];
   let saveTimer = null;
   let openMetaId = null;
+  let openTagPickerId = null;
   let dragId = null;
 
   // ---------------- Auth ----------------
@@ -722,7 +800,20 @@
     if (error || !data) { saveStatusEl.textContent = 'Error al cargar proyecto.'; return; }
     currentBoard = data;
     localStorage.setItem('lastBoard_' + currentUser.id, currentBoard.id);
-    tasks = ensureFields(Array.isArray(currentBoard.data) ? currentBoard.data : []);
+    // Compatibilidad: data puede ser un array (formato antiguo: solo tareas)
+    // o un objeto { tasks, tags } (formato nuevo con catálogo de etiquetas).
+    const raw = currentBoard.data;
+    let loadedTasks, loadedTags;
+    if (Array.isArray(raw)) { loadedTasks = raw; loadedTags = []; }
+    else if (raw && typeof raw === 'object') {
+      loadedTasks = Array.isArray(raw.tasks) ? raw.tasks : [];
+      loadedTags = Array.isArray(raw.tags) ? raw.tags : [];
+    } else { loadedTasks = []; loadedTags = []; }
+    tasks = ensureFields(loadedTasks);
+    tagCatalog = normalizeTags(loadedTags);
+    // Garantiza que toda etiqueta usada en alguna tarea exista en el catálogo.
+    flattenTasks(tasks).forEach(function (n) { (n.tags || []).forEach(function (name) { ensureTag(name); }); });
+    openTagPickerId = null;
     boardNameInput.value = currentBoard.name;
     renderBoardPicker();
     await loadMembers();
@@ -778,6 +869,71 @@
 
   shareBtn.addEventListener('click', function () { sharePanel.classList.toggle('open'); });
 
+  // ---------------- Administrador de etiquetas ----------------
+
+  function renderTagsManager() {
+    tagsListEl.innerHTML = '';
+    if (!tagCatalog.length) {
+      const empty = document.createElement('div');
+      empty.className = 'tags-empty';
+      empty.textContent = 'Aún no hay etiquetas. Se crean al agregar una etiqueta desde el menú ⋯ de cualquier tarea.';
+      tagsListEl.appendChild(empty);
+      return;
+    }
+    tagCatalog.forEach(function (t) {
+      const row = document.createElement('div');
+      row.className = 'tagmgr-row';
+
+      const color = document.createElement('input');
+      color.type = 'color';
+      color.value = t.color;
+      color.title = 'Color';
+      color.addEventListener('change', function () { setTagColor(t.name, color.value); save(); render(); });
+
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.value = t.name;
+      name.addEventListener('change', function () {
+        const nv = name.value.trim();
+        if (nv && nv !== t.name) { renameTag(t.name, nv); save(); render(); }
+        else name.value = t.name;
+      });
+
+      const merge = document.createElement('select');
+      merge.className = 'tagmgr-merge';
+      const opt0 = document.createElement('option');
+      opt0.value = '';
+      opt0.textContent = 'Fusionar en…';
+      merge.appendChild(opt0);
+      tagCatalog.forEach(function (o) {
+        if (o.name === t.name) return;
+        const op = document.createElement('option');
+        op.value = o.name;
+        op.textContent = o.name;
+        merge.appendChild(op);
+      });
+      merge.addEventListener('change', function () {
+        if (merge.value) { mergeTag(t.name, merge.value); save(); render(); }
+      });
+
+      const del = document.createElement('button');
+      del.className = 'tagmgr-del';
+      del.textContent = 'Eliminar';
+      del.addEventListener('click', function () { deleteTag(t.name); save(); render(); });
+
+      row.appendChild(color);
+      row.appendChild(name);
+      row.appendChild(merge);
+      row.appendChild(del);
+      tagsListEl.appendChild(row);
+    });
+  }
+
+  tagsBtn.addEventListener('click', function () {
+    tagsPanel.classList.toggle('open');
+    if (tagsPanel.classList.contains('open')) renderTagsManager();
+  });
+
   addMemberBtn.addEventListener('click', async function () {
     const email = memberEmailInput.value.trim();
     if (!email) return;
@@ -799,7 +955,7 @@
     saveStatusEl.textContent = 'Guardando...';
     saveTimer = setTimeout(async function () {
       if (!currentBoard) return;
-      const { error } = await sb.from('boards').update({ data: tasks, updated_at: new Date().toISOString() }).eq('id', currentBoard.id);
+      const { error } = await sb.from('boards').update({ data: { tasks: tasks, tags: tagCatalog }, updated_at: new Date().toISOString() }).eq('id', currentBoard.id);
       saveStatusEl.textContent = error ? ('Error al guardar: ' + error.message) : 'Guardado';
       if (!error) setTimeout(function () { if (saveStatusEl.textContent === 'Guardado') saveStatusEl.textContent = ''; }, 1500);
     }, 400);
@@ -885,28 +1041,79 @@
       const chip = document.createElement('span');
       chip.className = 'meta-tag-chip';
       chip.textContent = tag;
+      styleChip(chip, tagColor(tag));
       const rm = document.createElement('button');
       rm.textContent = '×';
       rm.addEventListener('click', function () { task.tags.splice(i, 1); save(); render(); });
       chip.appendChild(rm);
       tagsWrap.appendChild(chip);
     });
-    const tagInput = document.createElement('input');
-    tagInput.type = 'text';
-    tagInput.placeholder = 'nueva etiqueta + Enter';
-    tagInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const val = tagInput.value.trim();
-        if (val) { task.tags = task.tags || []; task.tags.push(val); tagInput.value = ''; save(); render(); }
-      }
+    // Botón para abrir el selector de etiquetas reutilizables.
+    const addTagBtn = document.createElement('button');
+    addTagBtn.className = 'tag-add-btn';
+    addTagBtn.textContent = '＋ Etiqueta';
+    addTagBtn.addEventListener('click', function () {
+      openTagPickerId = openTagPickerId === task.id ? null : task.id;
+      render();
     });
-    tagsWrap.appendChild(tagInput);
+    tagsWrap.appendChild(addTagBtn);
     tagsRow.appendChild(tagsLabel);
     tagsRow.appendChild(tagsWrap);
 
     panel.appendChild(dateRow);
     panel.appendChild(tagsRow);
+
+    // Selector: elige de las etiquetas ya creadas o crea una nueva.
+    if (openTagPickerId === task.id) {
+      const picker = document.createElement('div');
+      picker.className = 'tag-picker';
+      if (!tagCatalog.length) {
+        const empty = document.createElement('div');
+        empty.className = 'tags-empty';
+        empty.textContent = 'Aún no hay etiquetas. Crea la primera abajo.';
+        picker.appendChild(empty);
+      }
+      tagCatalog.forEach(function (t) {
+        const opt = document.createElement('div');
+        opt.className = 'tag-opt';
+        const sw = document.createElement('span');
+        sw.className = 'tag-swatch';
+        sw.style.background = t.color;
+        const nm = document.createElement('span');
+        nm.className = 'tag-opt-name';
+        nm.textContent = t.name;
+        opt.appendChild(sw);
+        opt.appendChild(nm);
+        if ((task.tags || []).indexOf(t.name) >= 0) {
+          const ck = document.createElement('span');
+          ck.className = 'tag-opt-check';
+          ck.textContent = '✓';
+          opt.appendChild(ck);
+        }
+        opt.addEventListener('click', function () { toggleTaskTag(task, t.name); save(); render(); });
+        picker.appendChild(opt);
+      });
+      const newRow = document.createElement('div');
+      newRow.className = 'tag-picker-new';
+      const newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.placeholder = 'Crear nueva etiqueta + Enter';
+      newInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const val = newInput.value.trim();
+          if (val) { toggleTaskTag(task, val); newInput.value = ''; save(); render(); }
+        }
+      });
+      newRow.appendChild(newInput);
+      picker.appendChild(newRow);
+      panel.appendChild(picker);
+      requestAnimationFrame(function () {
+        const el = matrixViewEl.querySelector('.tnode[data-id="' + task.id + '"] .tag-picker-new input');
+        if (el && document.activeElement !== el) el.focus();
+      });
+    }
+
     return panel;
   }
 
@@ -916,11 +1123,11 @@
 
   // Icono según el nivel de profundidad (identidad visual por jerarquía).
   function levelIcon(level) {
-    if (level === 1) return '📁';
-    if (level === 2) return '📂';
-    if (level === 3) return '📄';
-    if (level === 4) return '📝';
-    return '•';
+    if (level === 1) return '📁'; // carpeta / proyecto
+    if (level === 2) return '📌'; // tarea
+    if (level === 3) return '✔';  // checklist
+    if (level === 4) return '📝'; // nota
+    return '•';                    // bullet simple
   }
 
   // Progreso según los hijos DIRECTOS de un nodo.
@@ -986,6 +1193,138 @@
     });
   }
 
+  // ---------------- Etiquetas reutilizables ----------------
+
+  // Paleta consistente: cada etiqueta conserva su color.
+  const TAG_COLORS = ['#b06bff', '#35e5ff', '#2ee6a6', '#ff9f43', '#ff4d6d', '#ff2fd0', '#5b8cff', '#f7d154', '#22d3ee', '#a3e635'];
+
+  function hexA(hex, a) {
+    const h = (hex || '#948bc4').replace('#', '');
+    const n = parseInt(h.length === 3 ? h.replace(/(.)/g, '$1$1') : h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  function findTag(name) { return tagCatalog.find(function (t) { return t.name === name; }); }
+  function nextTagColor() { return TAG_COLORS[tagCatalog.length % TAG_COLORS.length]; }
+  // Crea la etiqueta en el catálogo si no existe y la deja disponible globalmente.
+  function ensureTag(name) {
+    name = (name || '').trim();
+    if (!name) return null;
+    let t = findTag(name);
+    if (!t) { t = { name: name, color: nextTagColor() }; tagCatalog.push(t); }
+    return t;
+  }
+  function tagColor(name) { const t = findTag(name); return t ? t.color : '#948bc4'; }
+  function normalizeTags(list) {
+    const out = [];
+    (list || []).forEach(function (t) {
+      if (t && t.name && !out.some(function (x) { return x.name === t.name; })) {
+        out.push({ name: String(t.name), color: t.color || TAG_COLORS[out.length % TAG_COLORS.length] });
+      }
+    });
+    return out;
+  }
+  function styleChip(el, color) {
+    el.style.background = hexA(color, 0.16);
+    el.style.color = color;
+    el.style.borderColor = hexA(color, 0.5);
+  }
+  function dedupeTags(n) { if (n.tags) n.tags = n.tags.filter(function (x, i) { return n.tags.indexOf(x) === i; }); }
+  function toggleTaskTag(task, name) {
+    task.tags = task.tags || [];
+    const i = task.tags.indexOf(name);
+    if (i >= 0) task.tags.splice(i, 1);
+    else { ensureTag(name); task.tags.push(name); }
+  }
+  function setTagColor(name, color) { const t = findTag(name); if (t) t.color = color; }
+  function renameTag(oldName, newName) {
+    newName = (newName || '').trim();
+    if (!newName || newName === oldName) return;
+    const t = findTag(oldName);
+    if (t) t.name = newName;
+    tagCatalog = normalizeTags(tagCatalog); // deduplica si el nuevo nombre ya existía
+    flattenTasks(tasks).forEach(function (n) {
+      if (n.tags) { n.tags = n.tags.map(function (x) { return x === oldName ? newName : x; }); dedupeTags(n); }
+    });
+  }
+  function deleteTag(name) {
+    tagCatalog = tagCatalog.filter(function (t) { return t.name !== name; });
+    flattenTasks(tasks).forEach(function (n) { if (n.tags) n.tags = n.tags.filter(function (x) { return x !== name; }); });
+  }
+  function mergeTag(from, into) {
+    if (from === into) return;
+    flattenTasks(tasks).forEach(function (n) {
+      if (n.tags) { n.tags = n.tags.map(function (x) { return x === from ? into : x; }); dedupeTags(n); }
+    });
+    tagCatalog = tagCatalog.filter(function (t) { return t.name !== from; });
+  }
+
+  // ---------------- Drag & drop: mover nodos en el árbol ----------------
+
+  // Devuelve { node, list, index } de un nodo en cualquier nivel.
+  function findCtx(id, list) {
+    list = list || tasks;
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === id) return { node: list[i], list: list, index: i };
+      const deep = findCtx(id, list[i].subtasks || []);
+      if (deep) return deep;
+    }
+    return null;
+  }
+  function findNode(id) { const c = findCtx(id); return c ? c.node : null; }
+  function isSelfOrDescendant(node, id) {
+    if (node.id === id) return true;
+    return (node.subtasks || []).some(function (c) { return isSelfOrDescendant(c, id); });
+  }
+  // No se puede soltar sobre sí mismo ni dentro de su propia descendencia.
+  function canDrop(dId, targetId) {
+    if (!dId || !targetId || dId === targetId) return false;
+    const dn = findNode(dId);
+    return dn ? !isSelfOrDescendant(dn, targetId) : false;
+  }
+  // Mueve un nodo relativo a un objetivo: 'before'/'after' (hermano) o 'inside' (hijo).
+  function moveNode(dId, targetId, zone) {
+    if (!canDrop(dId, targetId)) return;
+    const dctx = findCtx(dId);
+    if (!dctx) return;
+    const drag = dctx.node;
+    dctx.list.splice(dctx.index, 1);
+    const tctx = findCtx(targetId);
+    if (!tctx) { dctx.list.splice(dctx.index, 0, drag); return; }
+    if (zone === 'inside') {
+      tctx.node.subtasks = tctx.node.subtasks || [];
+      tctx.node.subtasks.push(drag);
+      tctx.node.collapsed = false;
+    } else {
+      const idx = tctx.index + (zone === 'after' ? 1 : 0);
+      tctx.list.splice(idx, 0, drag);
+      // Si queda como hermano de nivel superior, hereda el cuadrante del objetivo.
+      if (tctx.list === tasks) { drag.urgent = tctx.node.urgent; drag.important = tctx.node.important; }
+    }
+  }
+  // Mueve un nodo al nivel superior en una columna concreta (soltar en zona vacía).
+  function moveNodeToColumn(dId, q) {
+    const dctx = findCtx(dId);
+    if (!dctx) return;
+    const drag = dctx.node;
+    dctx.list.splice(dctx.index, 1);
+    drag.urgent = (q === 'q1');
+    drag.important = true;
+    tasks.push(drag);
+  }
+  function clearDropIndicators() {
+    matrixViewEl.querySelectorAll('.drop-before, .drop-after, .drop-inside').forEach(function (el) {
+      el.classList.remove('drop-before', 'drop-after', 'drop-inside');
+    });
+  }
+  function zoneFromEvent(rowEl, e) {
+    const r = rowEl.getBoundingClientRect();
+    const y = e.clientY - r.top;
+    const h = r.height || 1;
+    if (y < h * 0.30) return 'before';
+    if (y > h * 0.70) return 'after';
+    return 'inside';
+  }
+
   // Renderiza un nodo y, recursivamente, TODOS sus descendientes. Es el mismo
   // componente en cualquier nivel: cada nodo puede editarse, completarse,
   // colapsarse/expandirse, tener sus propias subtareas, etiquetas, fecha y eliminarse.
@@ -997,19 +1336,47 @@
     wrap.className = 'tnode lvl-' + Math.min(level, 5) + (isRoot ? ' card' : '');
     wrap.dataset.id = node.id;
 
-    // Solo las tareas raíz se arrastran entre cuadrantes (urgente/importante).
-    if (isRoot) {
-      wrap.draggable = true;
-      wrap.addEventListener('dragstart', function (e) {
-        dragId = node.id;
-        wrap.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      wrap.addEventListener('dragend', function () { wrap.classList.remove('dragging'); dragId = null; });
-    }
-
     const row = document.createElement('div');
     row.className = 'tnode-row' + (node.done ? ' done' : '');
+
+    // Zonas de drop: soltar arriba/abajo (hermano) o al centro (anidar como hijo).
+    row.addEventListener('dragover', function (e) {
+      if (!dragId) return;
+      // Mientras el cursor está sobre un nodo, la columna no debe capturar el drop.
+      e.stopPropagation();
+      if (!canDrop(dragId, node.id)) return; // objetivo inválido: sin indicador ni drop
+      e.preventDefault();
+      clearDropIndicators();
+      row.classList.add('drop-' + zoneFromEvent(row, e));
+    });
+    row.addEventListener('drop', function (e) {
+      if (!dragId) return;
+      e.stopPropagation();
+      if (!canDrop(dragId, node.id)) { clearDropIndicators(); return; }
+      e.preventDefault();
+      const zone = zoneFromEvent(row, e);
+      clearDropIndicators();
+      moveNode(dragId, node.id, zone);
+      dragId = null;
+      save();
+      render();
+    });
+
+    // Manija de arrastre (aparece en hover). Solo la manija inicia el drag,
+    // así el texto editable no interfiere con la selección.
+    const grip = document.createElement('span');
+    grip.className = 'tnode-grip';
+    grip.textContent = '⠿';
+    grip.title = 'Arrastra para mover';
+    grip.draggable = true;
+    grip.addEventListener('dragstart', function (e) {
+      dragId = node.id;
+      wrap.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', node.id); } catch (_) {}
+      try { e.dataTransfer.setDragImage(wrap, 12, 12); } catch (_) {}
+    });
+    grip.addEventListener('dragend', function () { wrap.classList.remove('dragging'); clearDropIndicators(); dragId = null; });
 
     function toggleCollapse() { if (hasKids) { node.collapsed = !node.collapsed; save(); render(); } }
 
@@ -1071,6 +1438,7 @@
     menu.title = 'Opciones';
     menu.addEventListener('click', function () { openMetaId = openMetaId === node.id ? null : node.id; render(); });
 
+    row.appendChild(grip);
     row.appendChild(chevron);
     row.appendChild(icon);
     row.appendChild(check);
@@ -1087,6 +1455,7 @@
         const chip = document.createElement('span');
         chip.className = 'tag-chip';
         chip.textContent = tag;
+        styleChip(chip, tagColor(tag));
         metaRow.appendChild(chip);
       });
       if (node.dueDate) {
@@ -1149,6 +1518,7 @@
     tasks.forEach(function (t) { qlists[quadrantKey(t)].appendChild(renderNode(t, 1)); });
     const all = flattenTasks(tasks);
     countEl.textContent = all.length + ' tarea(s) · ' + all.filter(function (t) { return t.done; }).length + ' completada(s)';
+    if (tagsPanel.classList.contains('open')) renderTagsManager();
     renderNotifyBanner();
   }
 
@@ -1156,7 +1526,9 @@
 
   matrixViewEl.querySelectorAll('.qlist').forEach(function (list) {
     list.addEventListener('dragover', function (e) {
+      if (!dragId) return;
       e.preventDefault();
+      clearDropIndicators();
       list.closest('.quadrant').classList.add('drag-over');
     });
     list.addEventListener('dragleave', function () {
@@ -1166,13 +1538,11 @@
       e.preventDefault();
       list.closest('.quadrant').classList.remove('drag-over');
       if (!dragId) return;
-      const task = tasks.find(function (t) { return t.id === dragId; });
-      if (!task) return;
-      const q = list.dataset.q;
-      // q1 = urgente e importante ; q2 = importante, no urgente
-      task.urgent = (q === 'q1');
-      task.important = true;
+      // Soltar en zona vacía de una columna: mueve la tarea a nivel superior
+      // con ese cuadrante (urgente/importante). Sirve también para "sacar" subtareas.
+      moveNodeToColumn(dragId, list.dataset.q);
       dragId = null;
+      clearDropIndicators();
       save();
       render();
     });
