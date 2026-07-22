@@ -92,6 +92,18 @@
   .pill.on { background: rgba(46,230,166,0.15); color: #8ff5d2; border: 1px solid rgba(46,230,166,0.35); }
   .pill.off { background: rgba(255,77,109,0.15); color: #ff8fa3; border: 1px solid rgba(255,77,109,0.35); }
   .empty { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+
+  /* Bloque por empresa (cuenta / tenant) */
+  .account-block { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
+  .account-block:last-child { margin-bottom: 0; }
+  .account-head {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 11px 14px; background: var(--panel-strong); border-bottom: 1px solid var(--line);
+  }
+  .account-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .account-head .btn { margin-left: auto; }
+  .account-block table { padding: 0 4px; }
+  .account-block td { padding: 10px 10px; }
   .muted-cell { color: var(--muted); }
   @media (max-width: 640px) { .hide-sm { display: none; } }
 </style>
@@ -271,75 +283,121 @@
 
   // ---------------- Listado ----------------
 
+  // Los clientes se listan agrupados por empresa (cuenta / tenant): cada
+  // empresa es un espacio de trabajo aislado y puede tener varios usuarios.
   async function loadClients() {
     const box = $('clientsBox');
-    const { data, error } = await sb
-      .from('profiles')
-      .select('id, email, company, full_name, active, role, created_at')
-      .eq('role', 'client')
-      .order('created_at', { ascending: false });
 
+    const [{ data: accounts, error: accErr }, { data: users, error: usrErr }] = await Promise.all([
+      sb.from('accounts').select('id, name, active, created_at').order('created_at', { ascending: false }),
+      sb.from('profiles').select('id, email, company, full_name, active, role, account_id, created_at').eq('role', 'client')
+    ]);
+
+    const error = accErr || usrErr;
     if (error) { box.innerHTML = '<div class="msg error">' + error.message + '</div>'; return; }
 
-    const rows = data || [];
-    $('clientCount').textContent = rows.length ? '· ' + rows.length : '';
-    if (!rows.length) {
+    const rows = users || [];
+    // Solo interesan las cuentas que tienen al menos un cliente.
+    const grupos = (accounts || [])
+      .map(function (a) { return { cuenta: a, usuarios: rows.filter(function (u) { return u.account_id === a.id; }) }; })
+      .filter(function (g) { return g.usuarios.length > 0; });
+
+    $('clientCount').textContent = grupos.length ? '· ' + grupos.length + ' empresa(s), ' + rows.length + ' usuario(s)' : '';
+
+    if (!grupos.length) {
       box.innerHTML = '<div class="empty">Todavía no hay clientes. Crea la primera cuenta arriba.</div>';
       return;
     }
 
-    const table = document.createElement('table');
-    table.innerHTML =
-      '<thead><tr><th>Correo</th><th class="hide-sm">Empresa</th><th class="hide-sm">Alta</th><th>Estado</th><th></th></tr></thead>';
-    const tbody = document.createElement('tbody');
-
-    rows.forEach(function (c) {
-      const tr = document.createElement('tr');
-
-      const tdMail = document.createElement('td');
-      tdMail.textContent = c.email;
-      if (c.full_name) {
-        const s = document.createElement('div');
-        s.className = 'hint';
-        s.textContent = c.full_name;
-        tdMail.appendChild(s);
-      }
-
-      const tdCompany = document.createElement('td');
-      tdCompany.className = 'hide-sm muted-cell';
-      tdCompany.textContent = c.company || '—';
-
-      const tdDate = document.createElement('td');
-      tdDate.className = 'hide-sm muted-cell';
-      tdDate.textContent = c.created_at ? String(c.created_at).slice(0, 10) : '—';
-
-      const tdState = document.createElement('td');
-      const pill = document.createElement('span');
-      pill.className = 'pill ' + (c.active ? 'on' : 'off');
-      pill.textContent = c.active ? 'Activa' : 'Desactivada';
-      tdState.appendChild(pill);
-
-      const tdAct = document.createElement('td');
-      tdAct.style.textAlign = 'right';
-      const btn = document.createElement('button');
-      btn.className = 'btn' + (c.active ? ' danger' : '');
-      btn.textContent = c.active ? 'Desactivar' : 'Activar';
-      btn.addEventListener('click', function () { toggleActive(c, btn); });
-      tdAct.appendChild(btn);
-
-      tr.appendChild(tdMail); tr.appendChild(tdCompany); tr.appendChild(tdDate);
-      tr.appendChild(tdState); tr.appendChild(tdAct);
-      tbody.appendChild(tr);
-    });
-
-    table.appendChild(tbody);
     box.innerHTML = '';
-    box.appendChild(table);
+    grupos.forEach(function (g) {
+      const bloque = document.createElement('div');
+      bloque.className = 'account-block';
+
+      // Cabecera de la empresa
+      const head = document.createElement('div');
+      head.className = 'account-head';
+
+      const nombre = document.createElement('span');
+      nombre.className = 'account-name';
+      nombre.textContent = g.cuenta.name;
+
+      const pill = document.createElement('span');
+      pill.className = 'pill ' + (g.cuenta.active ? 'on' : 'off');
+      pill.textContent = g.cuenta.active ? 'Activa' : 'Desactivada';
+
+      const meta = document.createElement('span');
+      meta.className = 'hint';
+      meta.textContent = g.usuarios.length + ' usuario(s)';
+
+      const btnCuenta = document.createElement('button');
+      btnCuenta.className = 'btn' + (g.cuenta.active ? ' danger' : '');
+      btnCuenta.textContent = g.cuenta.active ? 'Desactivar empresa' : 'Activar empresa';
+      btnCuenta.addEventListener('click', function () { toggleAccount(g.cuenta, btnCuenta); });
+
+      head.appendChild(nombre);
+      head.appendChild(pill);
+      head.appendChild(meta);
+      head.appendChild(btnCuenta);
+      bloque.appendChild(head);
+
+      // Usuarios de la empresa
+      const table = document.createElement('table');
+      const tbody = document.createElement('tbody');
+      g.usuarios.forEach(function (c) {
+        const tr = document.createElement('tr');
+
+        const tdMail = document.createElement('td');
+        tdMail.textContent = c.email;
+        if (c.full_name) {
+          const s = document.createElement('div');
+          s.className = 'hint';
+          s.textContent = c.full_name;
+          tdMail.appendChild(s);
+        }
+
+        const tdDate = document.createElement('td');
+        tdDate.className = 'hide-sm muted-cell';
+        tdDate.textContent = c.created_at ? String(c.created_at).slice(0, 10) : '—';
+
+        const tdState = document.createElement('td');
+        const p2 = document.createElement('span');
+        p2.className = 'pill ' + (c.active ? 'on' : 'off');
+        p2.textContent = c.active ? 'Activo' : 'Desactivado';
+        tdState.appendChild(p2);
+
+        const tdAct = document.createElement('td');
+        tdAct.style.textAlign = 'right';
+        const btn = document.createElement('button');
+        btn.className = 'btn' + (c.active ? ' danger' : '');
+        btn.textContent = c.active ? 'Desactivar' : 'Activar';
+        btn.addEventListener('click', function () { toggleUser(c, btn); });
+        tdAct.appendChild(btn);
+
+        tr.appendChild(tdMail); tr.appendChild(tdDate);
+        tr.appendChild(tdState); tr.appendChild(tdAct);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      bloque.appendChild(table);
+      box.appendChild(bloque);
+    });
   }
 
-  async function toggleActive(client, btn) {
+  // Desactivar la empresa corta el acceso a TODOS sus usuarios de golpe.
+  async function toggleAccount(cuenta, btn) {
+    const next = !cuenta.active;
+    if (!next && !confirm('¿Desactivar la empresa "' + cuenta.name + '"?\nTodos sus usuarios perderán el acceso hasta que la vuelvas a activar.')) return;
+    btn.disabled = true;
+    const { error } = await sb.from('accounts').update({ active: next }).eq('id', cuenta.id);
+    btn.disabled = false;
+    if (error) { alert('No se pudo actualizar la empresa: ' + error.message); return; }
+    loadClients();
+  }
+
+  async function toggleUser(client, btn) {
     const next = !client.active;
-    if (!next && !confirm('¿Desactivar la cuenta de ' + client.email + '?\nPerderá el acceso a sus datos hasta que la vuelvas a activar.')) return;
+    if (!next && !confirm('¿Desactivar a ' + client.email + '?\nPerderá el acceso hasta que lo vuelvas a activar.')) return;
     btn.disabled = true;
     const { error } = await sb.from('profiles').update({ active: next }).eq('id', client.id);
     btn.disabled = false;
