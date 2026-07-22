@@ -59,14 +59,6 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 6px 0 var(--overdue), inset 0 0 0 1px rgba(255,47,208,0.5); }
-    50% { box-shadow: 0 0 20px 3px var(--overdue), inset 0 0 0 1px rgba(255,47,208,0.8); }
-  }
-  @keyframes popIn {
-    0% { transform: scale(0.85); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
 
   .app, #authScreen { position: relative; z-index: 1; }
   .app {
@@ -189,200 +181,149 @@
   .matrix-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 10px;
   }
   @media (max-width: 720px) { .matrix-grid { grid-template-columns: 1fr; } }
   .quadrant {
     border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 14px;
-    min-height: 220px;
+    border-radius: 10px;
+    padding: 9px 10px;
+    min-height: 110px;
     background: var(--panel);
-    backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: border-color 0.2s ease;
     position: relative;
-    overflow: hidden;
   }
-  .quadrant::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 3px;
-  }
-  .quadrant.drag-over { border-color: var(--accent2); box-shadow: 0 0 24px rgba(53,229,255,0.3); }
-  .q1::before { background: linear-gradient(90deg, var(--danger), var(--overdue)); }
-  .q2::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .quadrant.drag-over { border-color: var(--accent2); }
   .quadrant h4 {
-    margin: 4px 0 10px;
-    font-size: 13px;
+    margin: 0 0 6px;
+    font-size: 11px;
     color: var(--muted);
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    letter-spacing: 0.7px;
   }
-  .qlist { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+  .qlist { flex: 1; display: flex; flex-direction: column; min-height: 28px; }
   .qlist:empty::after {
     content: 'Arrastra tareas aquí';
     color: var(--muted);
-    font-size: 12px;
-    opacity: 0.5;
-    padding: 10px 0;
+    font-size: 11.5px;
+    opacity: 0.45;
+    padding: 6px 0;
   }
   .qadd {
-    margin-top: 10px;
+    margin-top: 6px;
     border: 1px dashed var(--line);
     background: transparent;
     color: var(--muted);
-    border-radius: 10px;
-    padding: 8px;
-    font-size: 12.5px;
+    border-radius: 7px;
+    padding: 4px;
+    font-size: 12px;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: color 0.18s ease, border-color 0.18s ease;
   }
-  .qadd:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(53,229,255,0.06); }
+  .qadd:hover { border-color: var(--accent2); color: var(--accent2); }
 
-  /* ---------- Card ---------- */
+  /* ---------- Tarea raíz: fila de lista, no tarjeta ---------- */
+  /* Plana y separada por una línea fina: la densidad manda y la jerarquía
+     se lee por la indentación, no por cajas anidadas. */
   .card {
-    background: var(--panel-strong);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 9px 10px;
+    border-bottom: 1px solid var(--line);
+    padding: 1px 0;
     cursor: grab;
-    animation: popIn 0.22s ease;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
   }
-  .card:hover { border-color: var(--accent2); box-shadow: 0 4px 18px rgba(53,229,255,0.15); transform: translateY(-1px); }
+  .card:last-child { border-bottom: none; }
   .card.dragging { opacity: 0.35; cursor: grabbing; }
-  .card.done .card-text { text-decoration: line-through; color: var(--muted); }
-  .card-top { display: flex; align-items: flex-start; gap: 8px; }
-  .checkbox {
-    flex: 0 0 16px; width: 16px; height: 16px; margin-top: 3px;
-    border: 1px solid var(--line); border-radius: 5px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; color: #07050f; user-select: none;
-    transition: all 0.15s ease;
-  }
-  .checkbox.checked { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; box-shadow: 0 0 10px rgba(176,107,255,0.5); }
-  .card-text {
-    flex: 1; min-width: 0; line-height: 20px; font-size: 13.5px;
-    outline: none; white-space: pre-wrap; word-break: break-word;
-  }
-  .card-text:empty::before { content: attr(data-placeholder); color: var(--muted); }
-  .card-menu {
-    flex: 0 0 auto; font-size: 13px; color: var(--muted); cursor: pointer;
-    background: none; border: none; padding: 2px 4px; border-radius: 5px; transition: all 0.15s ease;
-  }
-  .card-menu:hover { color: var(--accent2); background: rgba(53,229,255,0.1); }
-  .card-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
   .tag-chip {
-    font-size: 10.5px; border-radius: 8px; padding: 2px 7px;
+    font-size: 10px; border-radius: 5px; padding: 0 5px;
     background: rgba(176,107,255,0.15); color: #d9bcff; border: 1px solid rgba(176,107,255,0.3);
   }
   .due-badge {
-    font-size: 10.5px; border-radius: 8px; padding: 2px 8px; font-weight: 600;
+    font-size: 10px; border-radius: 5px; padding: 0 5px; font-weight: 600;
     border: 1px solid transparent;
   }
-  .due-badge.d-today { background: rgba(255,77,109,0.18); color: #ff8fa3; border-color: rgba(255,77,109,0.4); }
-  .due-badge.d-soon { background: rgba(255,159,67,0.18); color: #ffc48a; border-color: rgba(255,159,67,0.4); }
-  .due-badge.d-later { background: rgba(46,230,166,0.15); color: #8ff5d2; border-color: rgba(46,230,166,0.35); }
-  .due-badge.d-overdue { background: rgba(255,47,208,0.2); color: #ffb3f0; border-color: rgba(255,47,208,0.55); animation: pulseGlow 1.6s ease-in-out infinite; }
+  .due-badge.d-today { background: rgba(255,77,109,0.16); color: #ff8fa3; }
+  .due-badge.d-soon { background: rgba(255,159,67,0.16); color: #ffc48a; }
+  .due-badge.d-later { color: var(--muted); }
+  .due-badge.d-overdue { background: rgba(255,77,109,0.28); color: #ffb3c6; }
 
-  /* ---------- Tree (árbol recursivo de tareas) ---------- */
-  .tnode { animation: popIn 0.2s ease; }
+  /* ---------- Árbol de tareas: lista densa, no explorador de archivos ---------- */
+  /* Todas las medidas van en múltiplos pequeños: la fila es la unidad de
+     densidad y nada debe empujarla más allá de ~19px de alto. */
   .tnode.removing { animation: nodeOut 0.17s ease forwards; }
   @keyframes nodeOut { to { opacity: 0; transform: translateX(8px) scale(0.96); } }
 
   /* Fila de cada nodo */
-  .tnode-row { display: flex; align-items: flex-start; gap: 6px; border-radius: 8px; padding: 2px 4px; transition: background 0.15s ease; }
-  .tnode:not(.lvl-1) > .tnode-row:hover { background: rgba(255,255,255,0.04); }
+  .tnode-row { display: flex; align-items: flex-start; gap: 4px; border-radius: 4px; padding: 0 2px; transition: background 0.12s ease; }
+  .tnode-row:hover { background: rgba(255,255,255,0.035); }
   .tnode-row.done > .tnode-text { text-decoration: line-through; color: var(--muted); }
 
-  /* Chevron expandir/contraer */
+  /* Triángulo expandir/contraer: ▸ que gira a ▾ */
   .tnode-chevron {
-    flex: 0 0 auto; width: 15px; height: 20px; margin-top: 1px;
+    flex: 0 0 auto; width: 12px; height: 18px;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--muted); font-size: 9px; user-select: none;
-    transition: transform 0.2s ease, color 0.15s ease;
+    cursor: pointer; color: var(--muted); font-size: 10px; user-select: none;
+    transition: transform 0.18s ease, color 0.12s ease;
   }
-  .tnode-chevron:hover { color: var(--accent2); }
+  .tnode-chevron:hover { color: var(--text); }
   .tnode-chevron.expanded { transform: rotate(90deg); }
   .tnode-chevron.hidden-chevron { visibility: hidden; cursor: default; }
 
-  /* Icono por nivel: identidad visual distinta según profundidad */
-  .tnode-icon { flex: 0 0 auto; margin-top: 1px; cursor: pointer; user-select: none; line-height: 20px; }
-  .lvl-1 > .tnode-row > .tnode-icon { font-size: 16px; }
-  .lvl-2 > .tnode-row > .tnode-icon { font-size: 14px; opacity: 0.97; }
-  .lvl-3 > .tnode-row > .tnode-icon { font-size: 13px; opacity: 0.92; }
-  .lvl-4 > .tnode-row > .tnode-icon { font-size: 12px; opacity: 0.88; }
-  .lvl-5 > .tnode-row > .tnode-icon { font-size: 15px; line-height: 16px; color: var(--accent); opacity: 0.9; }
-
-  /* Checkbox */
+  /* Casilla ☐ / ✓ — es el único indicador de estado que necesita una tarea */
   .tnode-check {
-    flex: 0 0 15px; width: 15px; height: 15px; margin-top: 3px;
-    border: 1px solid var(--line); border-radius: 5px; cursor: pointer;
+    flex: 0 0 13px; width: 13px; height: 13px; margin-top: 2.5px;
+    border: 1px solid var(--line); border-radius: 3px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 9px; color: #07050f; user-select: none; transition: all 0.15s ease;
+    font-size: 9px; color: #07050f; user-select: none; transition: background 0.12s ease, border-color 0.12s ease;
   }
-  .tnode-check.checked { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; box-shadow: 0 0 8px rgba(176,107,255,0.45); }
+  .tnode-check:hover { border-color: var(--accent2); }
+  .tnode-check.checked { background: var(--accent); border-color: var(--accent); }
 
-  /* Texto editable (peso/tamaño según nivel) */
+  /* Texto editable: la raíz pesa un poco más, el resto es todo igual */
   .tnode-text {
     flex: 1; min-width: 0; outline: none; white-space: pre-wrap; word-break: break-word; color: var(--text);
+    font-size: 12.5px; line-height: 18px;
   }
-  .lvl-1 > .tnode-row > .tnode-text { font-size: 13.5px; line-height: 20px; font-weight: 600; }
-  .tnode:not(.lvl-1) > .tnode-row > .tnode-text { font-size: 12.5px; line-height: 19px; }
+  .lvl-1 > .tnode-row > .tnode-text { font-weight: 600; }
   .tnode-text:empty::before { content: attr(data-placeholder); color: var(--muted); }
 
-  /* Botón agregar subtarea: icono ＋ minimalista, aparece en hover */
+  /* Botón agregar subtarea: aparece en hover */
   .tnode-add {
-    flex: 0 0 auto; width: 20px; height: 20px; margin-top: 1px;
+    flex: 0 0 auto; width: 16px; height: 18px;
     border: none; background: none; color: var(--muted);
-    cursor: pointer; font-size: 14px; line-height: 1; border-radius: 6px;
+    cursor: pointer; font-size: 13px; line-height: 1; border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+    opacity: 0; transition: opacity 0.12s ease, color 0.12s ease;
   }
-  .tnode-row:hover .tnode-add { opacity: 0.85; }
-  .tnode-add:hover { opacity: 1; color: var(--accent2); background: rgba(53,229,255,0.12); }
+  .tnode-row:hover .tnode-add { opacity: 0.8; }
+  .tnode-add:hover { opacity: 1; color: var(--accent2); }
 
   /* Menú ⋯ */
   .tnode-menu {
-    flex: 0 0 auto; font-size: 13px; color: var(--muted); cursor: pointer;
-    background: none; border: none; padding: 0 3px; margin-top: 1px; border-radius: 5px;
-    opacity: 0; transition: all 0.15s ease;
+    flex: 0 0 auto; font-size: 12px; color: var(--muted); cursor: pointer;
+    background: none; border: none; padding: 0 2px; height: 18px; border-radius: 4px;
+    opacity: 0; transition: opacity 0.12s ease, color 0.12s ease;
   }
-  .tnode-row:hover .tnode-menu { opacity: 0.85; }
-  .tnode-menu:hover { color: var(--accent2); background: rgba(53,229,255,0.1); opacity: 1; }
+  .tnode-row:hover .tnode-menu { opacity: 0.8; }
+  .tnode-menu:hover { color: var(--accent2); opacity: 1; }
 
-  /* Fila de etiquetas / fecha */
-  .tnode-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0 38px; }
+  /* Metadatos en la propia fila: etiquetas, fecha y progreso */
+  .tnode-meta { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; height: 18px; }
+  .progress-count { font-size: 10px; color: var(--muted); white-space: nowrap; font-weight: 600; }
+  .progress-count.complete { color: var(--ok, #2ee6a6); }
 
-  /* Progreso */
-  .progress-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 0 38px; }
-  .progress-track { flex: 1; height: 5px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,0.08); }
-  .progress-fill {
-    height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    box-shadow: 0 0 8px rgba(53,229,255,0.4);
-    transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
-  }
-  .progress-count { font-size: 10.5px; color: var(--muted); white-space: nowrap; font-weight: 600; }
-
-  /* Contenedor de hijos: animación de expandir/contraer (grid 0fr↔1fr) e indentación tipo árbol */
-  .tnode-children { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.22s ease; }
+  /* Hijos: la jerarquía se lee por la indentación y la guía vertical */
+  .tnode-children { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.2s ease; }
   .tnode-children.expanded { grid-template-rows: 1fr; }
-  .tnode-children-inner { overflow: hidden; margin-left: 15px; padding-left: 10px; border-left: 1px solid var(--line); }
-  .lvl-1 > .tnode-children.expanded > .tnode-children-inner { margin-top: 6px; }
+  .tnode-children-inner { overflow: hidden; margin-left: 11px; padding-left: 8px; border-left: 1px solid var(--line); }
 
   /* ---------- Drag & drop del árbol ---------- */
   .tnode-grip {
-    flex: 0 0 auto; width: 13px; margin-top: 2px; margin-left: -2px;
+    flex: 0 0 auto; width: 11px; height: 18px; margin-left: -2px;
     display: flex; align-items: center; justify-content: center;
-    cursor: grab; color: var(--muted); font-size: 12px; line-height: 1;
-    opacity: 0; transition: opacity 0.15s ease, color 0.15s ease; user-select: none;
+    cursor: grab; color: var(--muted); font-size: 11px; line-height: 1;
+    opacity: 0; transition: opacity 0.12s ease, color 0.12s ease; user-select: none;
   }
   .tnode-row:hover .tnode-grip { opacity: 0.55; }
   .tnode-grip:hover { opacity: 1; color: var(--accent2); }
@@ -557,12 +498,12 @@
 
   <div id="matrixView" class="matrix-grid">
     <div class="quadrant q1" data-q="q1">
-      <h4>🔥 Urgente e importante</h4>
+      <h4>Urgente e importante</h4>
       <div class="qlist" data-q="q1"></div>
       <button class="qadd" data-q="q1">+ Nueva tarea</button>
     </div>
     <div class="quadrant q2" data-q="q2">
-      <h4>📌 Importante, no urgente</h4>
+      <h4>Importante, no urgente</h4>
       <div class="qlist" data-q="q2"></div>
       <button class="qadd" data-q="q2">+ Nueva tarea</button>
     </div>
@@ -1116,15 +1057,6 @@
 
   // ---------------- Tree helpers (recursivo) ----------------
 
-  // Icono según el nivel de profundidad (identidad visual por jerarquía).
-  function levelIcon(level) {
-    if (level === 1) return '📁'; // carpeta / proyecto
-    if (level === 2) return '📌'; // tarea
-    if (level === 3) return '✔';  // checklist
-    if (level === 4) return '📝'; // nota
-    return '•';                    // bullet simple
-  }
-
   // Progreso según los hijos DIRECTOS de un nodo.
   function subProgress(task) {
     const subs = task.subtasks || [];
@@ -1361,7 +1293,7 @@
     // así el texto editable no interfiere con la selección.
     const grip = document.createElement('span');
     grip.className = 'tnode-grip';
-    grip.textContent = '⠿';
+    grip.textContent = '≡';
     grip.title = 'Arrastra para mover';
     grip.draggable = true;
     grip.addEventListener('dragstart', function (e) {
@@ -1375,20 +1307,15 @@
 
     function toggleCollapse() { if (hasKids) { node.collapsed = !node.collapsed; save(); render(); } }
 
-    // Chevron ▶ / ▼ (solo si tiene hijos)
+    // Triángulo ▸ / ▾ (solo si tiene hijos). La CSS lo gira al expandir.
     const chevron = document.createElement('span');
     chevron.className = 'tnode-chevron' + (hasKids ? '' : ' hidden-chevron') + (hasKids && !node.collapsed ? ' expanded' : '');
-    chevron.textContent = '▶';
+    chevron.textContent = '▸';
     chevron.title = 'Expandir / contraer';
     chevron.addEventListener('click', toggleCollapse);
 
-    // Icono según nivel (también alterna expandir/contraer)
-    const icon = document.createElement('span');
-    icon.className = 'tnode-icon';
-    icon.textContent = levelIcon(level);
-    icon.addEventListener('click', toggleCollapse);
-
-    // Checkbox: marca/desmarca el nodo y toda su rama
+    // Casilla ☐ / ✓: marca/desmarca el nodo y toda su rama. Es el único
+    // indicador de estado; no hay icono decorativo por nivel.
     const check = document.createElement('span');
     check.className = 'tnode-check' + (node.done ? ' checked' : '');
     check.textContent = node.done ? '✓' : '';
@@ -1433,53 +1360,41 @@
     menu.title = 'Opciones';
     menu.addEventListener('click', function () { openMetaId = openMetaId === node.id ? null : node.id; render(); });
 
+    // Etiquetas, fecha y progreso van EN LA MISMA FILA, a la derecha del texto:
+    // así una tarea sigue ocupando una sola línea aunque tenga metadatos.
+    const meta = document.createElement('div');
+    meta.className = 'tnode-meta';
+    (node.tags || []).forEach(function (tag) {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.textContent = tag;
+      styleChip(chip, tagColor(tag));
+      meta.appendChild(chip);
+    });
+    if (node.dueDate) {
+      const badge = document.createElement('span');
+      badge.className = 'due-badge ' + dueClass(node.dueDate);
+      badge.textContent = dueLabel(node.dueDate);
+      meta.appendChild(badge);
+    }
+    // Progreso como fracción compacta (2/4) en vez de barra: misma información,
+    // una fracción del espacio.
+    const prog = subProgress(node);
+    if (prog.total > 0) {
+      const count = document.createElement('span');
+      count.className = 'progress-count' + (prog.done === prog.total ? ' complete' : '');
+      count.textContent = prog.done + '/' + prog.total;
+      meta.appendChild(count);
+    }
+
     row.appendChild(grip);
     row.appendChild(chevron);
-    row.appendChild(icon);
     row.appendChild(check);
     row.appendChild(text);
+    if (meta.childNodes.length) row.appendChild(meta);
     row.appendChild(add);
     row.appendChild(menu);
     wrap.appendChild(row);
-
-    // Etiquetas + fecha
-    if ((node.tags && node.tags.length) || node.dueDate) {
-      const metaRow = document.createElement('div');
-      metaRow.className = 'tnode-meta-row';
-      (node.tags || []).forEach(function (tag) {
-        const chip = document.createElement('span');
-        chip.className = 'tag-chip';
-        chip.textContent = tag;
-        styleChip(chip, tagColor(tag));
-        metaRow.appendChild(chip);
-      });
-      if (node.dueDate) {
-        const badge = document.createElement('span');
-        badge.className = 'due-badge ' + dueClass(node.dueDate);
-        badge.textContent = dueLabel(node.dueDate);
-        metaRow.appendChild(badge);
-      }
-      wrap.appendChild(metaRow);
-    }
-
-    // Barra de progreso (según hijos directos)
-    const prog = subProgress(node);
-    if (prog.total > 0) {
-      const progRow = document.createElement('div');
-      progRow.className = 'progress-row';
-      const track = document.createElement('div');
-      track.className = 'progress-track';
-      const fill = document.createElement('div');
-      fill.className = 'progress-fill';
-      fill.style.width = Math.round((prog.done / prog.total) * 100) + '%';
-      track.appendChild(fill);
-      const count = document.createElement('span');
-      count.className = 'progress-count';
-      count.textContent = prog.done + '/' + prog.total;
-      progRow.appendChild(track);
-      progRow.appendChild(count);
-      wrap.appendChild(progRow);
-    }
 
     // Panel de opciones (fecha / etiquetas / eliminar)
     wrap.appendChild(renderMetaPanel(node));
