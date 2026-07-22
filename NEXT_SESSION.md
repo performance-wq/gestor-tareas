@@ -64,11 +64,13 @@ que no hacen falta cuentas nuevas — basta suplantar en el SQL Editor.
 
 ## Trabajo pendiente
 
-1. **Ápice `organizadisimos.com`**: no apunta a Vercel. Falta decidir si el
-   dominio desnudo redirige a la app o se reserva para el sitio comercial
-   (que no está construido). Hoy resuelve al parking de GoDaddy.
-2. **Sitio comercial** en `organizadisimos.com`: landing, precios, FAQ, blog.
-   No está construido.
+1. **Sitio comercial** en el ápice `organizadisimos.com`: landing, precios,
+   FAQ, blog. **Decisión del 22 jul 2026: se pospone a propósito.** El ápice
+   se queda como está (parking de GoDaddy, sin apuntar a Vercel) hasta que se
+   construya el sitio; no redirigirlo a la app mientras tanto.
+2. **Cambios dentro de la app**, que es la prioridad siguiente: ajustes tanto
+   en la vista de administración (`/admin/`) como en la del usuario
+   (`/dashboard/` y `/proyectos/`). Sin definir todavía.
 
 ## Contexto de la plataforma
 
