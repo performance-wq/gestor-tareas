@@ -91,7 +91,9 @@
     const { data: profile } = await sb
       .from('profiles').select('role, active').eq('id', userId).maybeSingle();
 
-    if (profile && profile.active === false) {
+    // Comprueba en el servidor que el usuario Y su empresa estén activos.
+    const { data: activo, error: errActivo } = await sb.rpc('is_active_user');
+    if (errActivo || !activo) {
       await sb.auth.signOut();
       $('form').style.display = 'block';
       show('Tu cuenta está desactivada. Contacta al administrador.', 'error');

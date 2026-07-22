@@ -647,8 +647,20 @@
 
   signOutBtn.addEventListener('click', async function () { await sb.auth.signOut(); });
 
-  sb.auth.onAuthStateChange(function (event, session) {
+  // Mensaje que debe sobrevivir al cierre de sesión automático (la pantalla de
+  // acceso se reinicia y borraría el aviso).
+  let mensajeBloqueo = null;
+
+  sb.auth.onAuthStateChange(async function (event, session) {
     if (session && session.user) {
+      // Autenticarse no basta: la cuenta del usuario Y la de su empresa deben
+      // estar activas. is_active_user() comprueba ambas en el servidor.
+      const { data: activo, error: errActivo } = await sb.rpc('is_active_user');
+      if (errActivo || !activo) {
+        mensajeBloqueo = 'Tu cuenta está desactivada. Contacta al administrador.';
+        await sb.auth.signOut();
+        return;
+      }
       currentUser = session.user;
       authScreen.classList.add('hidden');
       appScreen.style.display = 'block';
@@ -659,6 +671,7 @@
       appScreen.style.display = 'none';
       authScreen.classList.remove('hidden');
       setAuthMode('signin');
+      if (mensajeBloqueo) { showAuthMsg(mensajeBloqueo, 'error'); mensajeBloqueo = null; }
     }
   });
 
