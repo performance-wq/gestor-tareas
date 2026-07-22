@@ -940,11 +940,14 @@
   addMemberBtn.addEventListener('click', async function () {
     const email = memberEmailInput.value.trim();
     if (!email) return;
-    const { data: profile } = await sb.from('profiles').select('id').eq('email', email).maybeSingle();
-    if (!profile) { alert('Ese correo no tiene una cuenta creada en la app todavía.'); return; }
-    if (profile.id === currentBoard.owner_id) { alert('Esa persona ya es el dueño del proyecto.'); return; }
-    if (members.some(function (m) { return m.id === profile.id; })) { alert('Ya es miembro de este proyecto.'); return; }
-    const { error } = await sb.from('board_members').insert({ board_id: currentBoard.id, user_id: profile.id });
+    // Se resuelve el correo con una función security definer: evita exponer el
+    // listado completo de perfiles (enumeración de correos entre clientes).
+    const { data: foundId, error: findErr } = await sb.rpc('find_profile_id_by_email', { p_email: email });
+    if (findErr) { alert('No se pudo buscar ese correo: ' + findErr.message); return; }
+    if (!foundId) { alert('Ese correo no tiene una cuenta activa en la app todavía.'); return; }
+    if (foundId === currentBoard.owner_id) { alert('Esa persona ya es el dueño del proyecto.'); return; }
+    if (members.some(function (m) { return m.id === foundId; })) { alert('Ya es miembro de este proyecto.'); return; }
+    const { error } = await sb.from('board_members').insert({ board_id: currentBoard.id, user_id: foundId });
     if (error) { alert('No se pudo agregar: ' + error.message); return; }
     memberEmailInput.value = '';
     await loadMembers();
