@@ -514,12 +514,9 @@
 
   <button class="primary-btn" id="authSubmit">Iniciar sesión</button>
 
-  <div class="switch-mode">
-    <span id="switchText">¿No tienes cuenta?</span>
-    <a id="switchLink">Crear una</a>
-  </div>
-
   <div id="authMsg"></div>
+
+  <p class="switch-mode">Acceso privado. Solicita tus credenciales al administrador.</p>
 </div>
 
 <div class="app" id="appScreen">
@@ -587,8 +584,6 @@
   const authSubmit = document.getElementById('authSubmit');
   const authMsg = document.getElementById('authMsg');
   const authSub = document.getElementById('authSub');
-  const switchText = document.getElementById('switchText');
-  const switchLink = document.getElementById('switchLink');
   const userEmailEl = document.getElementById('userEmail');
   const signOutBtn = document.getElementById('signOutBtn');
   const saveStatusEl = document.getElementById('saveStatus');
@@ -608,7 +603,6 @@
   const tagsPanel = document.getElementById('tagsPanel');
   const tagsListEl = document.getElementById('tagsList');
 
-  let authMode = 'signin';
   let currentUser = null;
   let boards = [];
   let currentBoard = null;
@@ -622,25 +616,14 @@
 
   // ---------------- Auth ----------------
 
-  function setAuthMode(mode) {
-    authMode = mode;
+  // Acceso privado: no existe auto-registro. Las cuentas se crean únicamente
+  // desde el panel de administración (/admin), y el registro está además
+  // deshabilitado en el servidor de Supabase.
+  function setAuthMode() {
     authMsg.innerHTML = '';
-    if (mode === 'signin') {
-      authSub.textContent = 'Inicia sesión para acceder a tus tareas.';
-      authSubmit.textContent = 'Iniciar sesión';
-      switchText.textContent = '¿No tienes cuenta?';
-      switchLink.textContent = 'Crear una';
-    } else {
-      authSub.textContent = 'Crea una cuenta para empezar.';
-      authSubmit.textContent = 'Crear cuenta';
-      switchText.textContent = '¿Ya tienes cuenta?';
-      switchLink.textContent = 'Iniciar sesión';
-    }
+    authSub.textContent = 'Inicia sesión para acceder a tus tareas.';
+    authSubmit.textContent = 'Iniciar sesión';
   }
-
-  switchLink.addEventListener('click', function () {
-    setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
-  });
 
   function showAuthMsg(text, type) {
     authMsg.innerHTML = '<div class="auth-msg ' + type + '">' + text + '</div>';
@@ -653,16 +636,8 @@
     authSubmit.disabled = true;
     authMsg.innerHTML = '';
     try {
-      if (authMode === 'signin') {
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      } else {
-        const { data, error } = await sb.auth.signUp({ email, password });
-        if (error) throw error;
-        if (data && data.user && !data.session) {
-          showAuthMsg('Cuenta creada. Revisa tu correo para confirmar antes de iniciar sesión.', 'info');
-        }
-      }
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
     } catch (err) {
       showAuthMsg(err.message || 'Algo salió mal.', 'error');
     } finally {

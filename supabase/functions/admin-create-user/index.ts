@@ -81,13 +81,22 @@ Deno.serve(async (req: Request) => {
     return json({ error: msg }, 400);
   }
 
-  // 5) Completar el perfil (el trigger on_auth_user_created ya creó la fila).
-  const { error: updErr } = await admin
+  // 5) Completar el perfil. El trigger on_auth_user_created ya creó la fila y,
+  //    con ella, la cuenta (tenant) propia de este cliente.
+  const { data: profile, error: updErr } = await admin
     .from("profiles")
     .update({ role: "client", active: true, company, full_name: fullName })
-    .eq("id", created.user!.id);
+    .eq("id", created.user!.id)
+    .select("account_id")
+    .single();
 
   if (updErr) return json({ error: updErr.message }, 500);
 
-  return json({ ok: true, id: created.user!.id, email });
+  // 6) La cuenta nace con el correo por nombre: si nos dieron la empresa,
+  //    se renombra para que el panel muestre algo legible.
+  if (company && profile?.account_id) {
+    await admin.from("accounts").update({ name: company }).eq("id", profile.account_id);
+  }
+
+  return json({ ok: true, id: created.user!.id, email, account_id: profile?.account_id ?? null });
 });
