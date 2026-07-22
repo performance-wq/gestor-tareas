@@ -3,8 +3,10 @@
 ## Dominio
 
 La app se sirve **solo** en **https://app.organizadisimos.com**.
-El 22 jul 2026 se desconectaron `academiapex.com` y `www.academiapex.com` del
-proyecto de Vercel: ya devuelven 404. No volver a usar ese dominio aquí.
+El 22 jul 2026 se sacó academiapex por completo de Vercel: `academiapex.com` y
+`www.academiapex.com` se desconectaron de este proyecto, `app.academiapex.com`
+se desconectó de `systems-canvas` (que vive en `app.canvaspex.com`) y el dominio
+se quitó de la cuenta. Los tres devuelven 404. No volver a usarlo.
 
 ## Estado
 
@@ -20,6 +22,9 @@ El módulo está **construido y en producción**:
   "Tu cuenta está desactivada. Contacta al administrador."
 - Navegación: enlace "Proyectos" en `/dashboard/` y en `/admin/`, y "Tareas"
   de vuelta desde `/proyectos/`.
+- Reordenar con flechas ▲▼ en áreas, tareas y subtareas: al mover se reescribe
+  la `position` de toda la lista de hermanos, así que el orden que se ve es
+  siempre el que queda guardado.
 
 ## Qué es este módulo
 
@@ -38,18 +43,32 @@ Regla de producto: si algo no sirve a uno de estos tres pilares, no se implement
 3. **Bitácora** — historial técnico: fecha, área, cambio, motivo, resultado y
    observaciones. No es un chat.
 
+## Aislamiento entre empresas · verificado el 22 jul 2026
+
+Probado en SQL suplantando identidades (`set role authenticated` +
+`request.jwt.claims`), con una fila semilla en dos cuentas distintas:
+
+| Prueba | Resultado |
+|---|---|
+| Cliente A: proyectos visibles | solo el suyo |
+| Cliente B: proyectos visibles | solo el suyo |
+| A modifica el proyecto de B | 0 filas afectadas |
+| A elimina el proyecto de B | 0 filas afectadas |
+| A crea un proyecto dentro de la cuenta de B | rechazado (42501) |
+| Cuenta desactivada: proyectos visibles | ninguno |
+| Cuenta desactivada: `is_active_user()` | false |
+
+Ni A ni B vieron nunca los proyectos del propietario. Las filas semilla se
+borraron al terminar. Para repetirlo: el auto-registro está cerrado (422), así
+que no hacen falta cuentas nuevas — basta suplantar en el SQL Editor.
+
 ## Trabajo pendiente
 
-1. **Prueba E2E con dos cuentas de cliente reales**: crear proyecto, áreas,
-   tareas, subtareas y bitácora; y confirmar **por API** (no solo por UI) que
-   la cuenta A no puede leer ni escribir los `projects` de la cuenta B.
-   Requiere credenciales de dos cuentas de prueba.
-2. **Limpiar academiapex del resto de la cuenta**: `app.academiapex.com` sigue
-   enganchado al proyecto `systems-canvas`, que ya vive en `app.canvaspex.com`.
-3. **Ápice `organizadisimos.com`**: todavía no apunta a Vercel (falta el
-   registro `A 76.76.21.21` en GoDaddy). Queda libre para el sitio comercial.
-4. **Orden de áreas y tareas**: `position` se guarda pero no hay forma de
-   reordenar desde la UI.
+1. **Ápice `organizadisimos.com`**: no apunta a Vercel. Falta decidir si el
+   dominio desnudo redirige a la app o se reserva para el sitio comercial
+   (que no está construido). Hoy resuelve al parking de GoDaddy.
+2. **Sitio comercial** en `organizadisimos.com`: landing, precios, FAQ, blog.
+   No está construido.
 
 ## Contexto de la plataforma
 

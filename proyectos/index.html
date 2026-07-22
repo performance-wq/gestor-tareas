@@ -153,8 +153,9 @@
   });
 
   // ---------------- Avance (derivado, nunca guardado) ----------------
-  function hijas(id) { return tareas.filter(function (t) { return t.parent_id === id; }); }
-  function raiz() { return tareas.filter(function (t) { return !t.parent_id; }); }
+  function porPos(a, b) { return (a.position || 0) - (b.position || 0); }
+  function hijas(id) { return tareas.filter(function (t) { return t.parent_id === id; }).sort(porPos); }
+  function raiz() { return tareas.filter(function (t) { return !t.parent_id; }).sort(porPos); }
   function avance(t) {
     var h = hijas(t.id);
     if (h.length) return h.filter(function (s) { return s.status === 'done'; }).length / h.length;
@@ -323,6 +324,8 @@
     };
     head.appendChild(add);
 
+    if (a && areas.length > 1) head.appendChild(flechas(areas, a, 'project_areas'));
+
     if (a) {
       var del = el('button', 'x', '✕'); del.title = 'Eliminar área';
       del.onclick = async function () {
@@ -337,7 +340,7 @@
     caja.appendChild(head);
 
     if (!lista.length) caja.appendChild(el('div', 'empty', 'Sin tareas todavía.'));
-    lista.forEach(function (t) { caja.appendChild(filaTarea(t)); });
+    lista.forEach(function (t) { caja.appendChild(filaTarea(t, lista)); });
     return caja;
   }
 
@@ -347,7 +350,35 @@
     if (r.error) alert('No se pudo guardar: ' + r.error.message);
   }
 
-  function filaTarea(t) {
+  // Sube o baja un elemento dentro de su lista de hermanos. Reescribe la
+  // posición de toda la lista para que nunca queden huecos ni empates: el
+  // orden que se ve es siempre el que queda guardado.
+  async function mover(lista, item, delta, tabla) {
+    var i = lista.indexOf(item), j = i + delta;
+    if (i < 0 || j < 0 || j >= lista.length) return;
+    lista.splice(j, 0, lista.splice(i, 1)[0]);
+    lista.forEach(function (x, k) { x.position = k; });
+    pintar();
+    for (var k = 0; k < lista.length; k++) {
+      var r = await sb.from(tabla).update({ position: k }).eq('id', lista[k].id);
+      if (r.error) { alert('No se pudo guardar el orden: ' + r.error.message); return; }
+    }
+  }
+
+  // Par de flechas para reordenar; se desactivan en los extremos.
+  function flechas(lista, item, tabla) {
+    var c = document.createDocumentFragment();
+    [['▲', -1], ['▼', 1]].forEach(function (o) {
+      var b = el('button', 'x', o[0]);
+      var i = lista.indexOf(item), j = i + o[1];
+      if (j < 0 || j >= lista.length) { b.disabled = true; b.style.opacity = '.25'; }
+      else { b.title = o[1] < 0 ? 'Subir' : 'Bajar'; b.onclick = function () { mover(lista, item, o[1], tabla); }; }
+      c.appendChild(b);
+    });
+    return c;
+  }
+
+  function filaTarea(t, hermanas) {
     var h = hijas(t.id), est = estado(t), pct = Math.round(avance(t) * 100);
     var caja = el('div', 'task' + (est === 'done' ? ' done' : ''));
 
@@ -365,6 +396,8 @@
 
     top.appendChild(el('span', 'hint', pct + '%'));
     top.appendChild(el('span', 'pill p-' + (est === 'in_progress' ? 'progress' : est), ETIQ[est]));
+
+    if (hermanas && hermanas.length > 1) top.appendChild(flechas(hermanas, t, 'project_tasks'));
 
     var ver = el('button', 'x', abierta === t.id ? '▾' : '▸');
     ver.onclick = function () { abierta = abierta === t.id ? null : t.id; pintar(); };
@@ -439,7 +472,9 @@
         await sb.from('project_tasks').delete().eq('id', s.id);
         tareas = tareas.filter(function (x) { return x.id !== s.id; }); pintar();
       };
-      f.appendChild(sd); f.appendChild(si); f.appendChild(sx);
+      f.appendChild(sd); f.appendChild(si);
+      if (h.length > 1) f.appendChild(flechas(h, s, 'project_tasks'));
+      f.appendChild(sx);
       sw.appendChild(f);
     });
     var addSub = el('div', 'row'); addSub.style.marginTop = '6px'; addSub.style.paddingLeft = '24px';
