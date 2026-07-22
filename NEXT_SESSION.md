@@ -1,11 +1,25 @@
 # Próxima sesión · Módulo "Organizador de Proyectos"
 
+## Dominio
+
+La app se sirve **solo** en **https://app.organizadisimos.com**.
+El 22 jul 2026 se desconectaron `academiapex.com` y `www.academiapex.com` del
+proyecto de Vercel: ya devuelven 404. No volver a usar ese dominio aquí.
+
 ## Estado
 
-La base de datos está **escrita pero NO ejecutada**: `sql/004-organizador-de-proyectos.sql`.
-Primer paso de la próxima sesión: correrla en el SQL Editor de Supabase
-(proyecto `hwisrkincpkkdqrxuoch`) y verificar con una consulta que las 4 tablas
-y sus políticas existen.
+El módulo está **construido y en producción**:
+
+- `sql/004-organizador-de-proyectos.sql` **ejecutado** en Supabase
+  (`hwisrkincpkkdqrxuoch`). Verificado por API: las cuatro tablas responden y
+  un insert anónimo se rechaza con `42501` (RLS activa).
+- `/proyectos/index.html` publicado: lista de proyectos, vista de proyecto con
+  % de avance global y contadores, pestañas **Tareas** y **Bitácora**, tareas
+  agrupadas por área, subtareas, estado automático y seguimiento opcional.
+- Guard de acceso: `sb.rpc('is_active_user')` tras autenticar, con el aviso
+  "Tu cuenta está desactivada. Contacta al administrador."
+- Navegación: enlace "Proyectos" en `/dashboard/` y en `/admin/`, y "Tareas"
+  de vuelta desde `/proyectos/`.
 
 ## Qué es este módulo
 
@@ -17,6 +31,7 @@ Regla de producto: si algo no sirve a uno de estos tres pilares, no se implement
 
 1. **Organizar** — proyecto → áreas/fases → tareas → subtareas. Avance por tarea
    = % de subtareas completadas; avance del proyecto = promedio de sus tareas.
+   El avance se **deriva en el cliente**, nunca se persiste.
 2. **Seguimiento** — opcional por tarea, con indicadores libres que cada tarea
    define (webinar: inscritos/show rate; campaña: CPL/ROAS; landing: visitas/leads).
    Sin dashboards ni gráficos.
@@ -25,37 +40,28 @@ Regla de producto: si algo no sirve a uno de estos tres pilares, no se implement
 
 ## Trabajo pendiente
 
-1. **Ejecutar `sql/004`** y verificar.
-2. **Crear `/proyectos/index.html`** (misma estructura de página única que
-   `/dashboard/` y `/admin/`, mismos tokens de color y tipografía):
-   - Lista de proyectos de la cuenta + crear proyecto.
-   - Vista de proyecto: cabecera con **% de avance global** y contadores
-     (pendiente / en proceso / completado), y dos pestañas: **Tareas** y **Bitácora**.
-   - Tareas agrupadas por **área**; cada tarea despliega descripción,
-     responsable, prioridad, fecha, estado, subtareas y el bloque de seguimiento.
-   - Estado automático cuando la tarea tiene subtareas (todas hechas → completada;
-     alguna avanzada → en proceso), para que nunca contradiga la barra de avance.
-3. **Navegación**: enlace "Proyectos" en `/dashboard/` y "Tareas" de vuelta,
-   más el enlace desde `/admin/`. Es la "sección del menú principal" que pidió.
-4. **Guard de acceso**: copiar el de `/dashboard/` — tras autenticarse, llamar a
-   `sb.rpc('is_active_user')` y, si es falso, cerrar sesión con el aviso
-   "Tu cuenta está desactivada. Contacta al administrador."
-5. **Verificar** con una cuenta de cliente real: que solo ve sus proyectos y que
-   el aislamiento entre empresas se mantiene (probar por API, no solo por UI).
+1. **Prueba E2E con dos cuentas de cliente reales**: crear proyecto, áreas,
+   tareas, subtareas y bitácora; y confirmar **por API** (no solo por UI) que
+   la cuenta A no puede leer ni escribir los `projects` de la cuenta B.
+   Requiere credenciales de dos cuentas de prueba.
+2. **Limpiar academiapex del resto de la cuenta**: `app.academiapex.com` sigue
+   enganchado al proyecto `systems-canvas`, que ya vive en `app.canvaspex.com`.
+3. **Ápice `organizadisimos.com`**: todavía no apunta a Vercel (falta el
+   registro `A 76.76.21.21` en GoDaddy). Queda libre para el sitio comercial.
+4. **Orden de áreas y tareas**: `position` se guarda pero no hay forma de
+   reordenar desde la UI.
+
+## Contexto de la plataforma
+
+- Rutas: `/` acceso y enrutado por rol · `/dashboard/` Tareas · `/admin/` panel
+  del propietario · `/proyectos/` Organizador.
+- Multi-tenant: todo cuelga de `account_id`; las políticas filtran por
+  `current_account_id()` y exigen `is_active_user()` (usuario **y** empresa activos).
+- El auto-registro está deshabilitado en Supabase: las cuentas solo se crean
+  desde `/admin` mediante la Edge Function `admin-create-user`.
 
 ## Referencia útil
 
 Ya se construyó un módulo equivalente en el repo **systems-canvas**
 (`app/projects/[projectId]/execution/` y `lib/domain/execution.ts`): sirve de
-guía para el cálculo de avance y la estructura de componentes. Aquí hay que
-adaptarlo a HTML/JS de un solo archivo y añadir el nivel de **áreas**, que
-aquel no tenía.
-
-## Contexto de la plataforma
-
-- Rutas: `/` acceso y enrutado por rol · `/dashboard/` Tareas · `/admin/` panel
-  del propietario · `/proyectos/` (nuevo).
-- Multi-tenant: todo cuelga de `account_id`; las políticas filtran por
-  `current_account_id()` y exigen `is_active_user()` (usuario **y** empresa activos).
-- El auto-registro está deshabilitado en Supabase: las cuentas solo se crean
-  desde `/admin` mediante la Edge Function `admin-create-user`.
+guía para el cálculo de avance y la estructura de componentes.
