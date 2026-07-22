@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organizadísimos · Administración</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07050f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23140b24'/%3E%3Cpath d='M17 33.5l10 10L47 22' fill='none' stroke='%23b06bff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #07050f; --panel: rgba(255,255,255,0.045); --panel-strong: rgba(255,255,255,0.08);
+    --line: rgba(168,120,255,0.22); --text: #ece7ff; --muted: #948bc4;
+    --accent: #b06bff; --accent2: #35e5ff; --danger: #ff4d6d; --ok: #2ee6a6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    display: flex; justify-content: center; position: relative; overflow-x: hidden;
+  }
+  body::before, body::after {
+    content: ''; position: fixed; width: 60vw; height: 60vw; border-radius: 50%;
+    filter: blur(90px); opacity: 0.2; z-index: 0; pointer-events: none;
+  }
+  body::before { background: var(--accent); top: -20%; left: -15%; }
+  body::after { background: var(--accent2); bottom: -25%; right: -15%; }
+
+  h1 {
+    font-size: 22px; margin: 0; font-weight: 700; letter-spacing: 0.3px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .badge {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700;
+    color: var(--accent2); border: 1px solid rgba(53,229,255,0.4);
+    border-radius: 6px; padding: 2px 7px; margin-left: 8px; vertical-align: middle;
+  }
+
+  /* ---- Acceso ---- */
+  #loginView { width: 100%; max-width: 380px; padding: 90px 24px; position: relative; z-index: 1; }
+  #loginView p.sub { color: var(--muted); font-size: 13px; margin: 6px 0 26px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; }
+  .field input, .form-grid input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+    font-size: 14px; font-family: inherit; background: var(--panel); color: var(--text);
+  }
+  .field input:focus, .form-grid input:focus { outline: none; border-color: var(--accent2); }
+  .primary-btn {
+    width: 100%; padding: 11px; border: none; border-radius: 10px; cursor: pointer;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #07050f; font-size: 14px; font-weight: 700; margin-top: 6px;
+  }
+  .primary-btn:disabled { opacity: 0.5; cursor: default; }
+  .msg { font-size: 13px; margin-top: 12px; padding: 9px 11px; border-radius: 8px; }
+  .msg.error { background: rgba(255,77,109,0.15); color: #ff8fa3; }
+  .msg.ok { background: rgba(46,230,166,0.14); color: #8ff5d2; }
+
+  /* ---- Panel ---- */
+  #adminView { width: 100%; max-width: 1000px; padding: 32px 24px 80px; display: none; position: relative; z-index: 1; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 26px; }
+  .user-bar { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); }
+  .btn {
+    border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    border-radius: 8px; padding: 6px 12px; font-size: 12.5px; cursor: pointer;
+    font-family: inherit; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--accent2); }
+  .btn.danger { color: var(--danger); border-color: rgba(255,77,109,0.4); }
+
+  .card {
+    border: 1px solid var(--line); border-radius: 14px; padding: 18px;
+    background: var(--panel); backdrop-filter: blur(10px); margin-bottom: 22px;
+  }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin: 0 0 14px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .form-grid label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .form-actions { margin-top: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .form-actions .primary-btn { width: auto; padding: 9px 18px; margin: 0; }
+  .hint { font-size: 11.5px; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--muted); font-weight: 600; padding: 0 10px 8px; border-bottom: 1px solid var(--line);
+  }
+  td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .pill { font-size: 10.5px; border-radius: 8px; padding: 2px 8px; font-weight: 600; white-space: nowrap; }
+  .pill.on { background: rgba(46,230,166,0.15); color: #8ff5d2; border: 1px solid rgba(46,230,166,0.35); }
+  .pill.off { background: rgba(255,77,109,0.15); color: #ff8fa3; border: 1px solid rgba(255,77,109,0.35); }
+  .empty { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+  .muted-cell { color: var(--muted); }
+  @media (max-width: 640px) { .hide-sm { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- ============ Acceso ============ -->
+<div id="loginView">
+  <h1>Organizadísimos <span class="badge">Admin</span></h1>
+  <p class="sub">Acceso exclusivo del propietario de la plataforma.</p>
+
+  <div class="field">
+    <label for="email">Correo</label>
+    <input type="email" id="email" autocomplete="email" placeholder="tu@correo.com">
+  </div>
+  <div class="field">
+    <label for="password">Contraseña</label>
+    <input type="password" id="password" autocomplete="current-password" placeholder="••••••••">
+  </div>
+  <button class="primary-btn" id="loginBtn">Entrar</button>
+  <div id="loginMsg"></div>
+</div>
+
+<!-- ============ Panel ============ -->
+<div id="adminView">
+  <div class="topbar">
+    <h1>Organizadísimos <span class="badge">Admin</span></h1>
+    <div class="user-bar">
+      <span id="whoami"></span>
+      <a class="btn" href="/dashboard/">Mi espacio</a>
+      <button class="btn" id="signOutBtn">Salir</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Crear cuenta de cliente</h2>
+    <div class="form-grid">
+      <div>
+        <label for="newEmail">Correo *</label>
+        <input type="email" id="newEmail" placeholder="cliente@empresa.com">
+      </div>
+      <div>
+        <label for="newPassword">Contraseña *</label>
+        <input type="text" id="newPassword" placeholder="mínimo 8 caracteres">
+      </div>
+      <div>
+        <label for="newCompany">Empresa</label>
+        <input type="text" id="newCompany" placeholder="Nombre de la empresa">
+      </div>
+      <div>
+        <label for="newName">Contacto</label>
+        <input type="text" id="newName" placeholder="Nombre de la persona">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="primary-btn" id="createBtn">Crear cuenta</button>
+      <button class="btn" id="genPassBtn" type="button">Generar contraseña</button>
+      <span class="hint">La cuenta queda activa al instante: entrégale el correo y la contraseña.</span>
+    </div>
+    <div id="createMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Clientes <span id="clientCount" class="hint"></span></h2>
+    <div id="clientsBox"><div class="empty">Cargando…</div></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SUPABASE_URL = 'https://hwisrkincpkkdqrxuoch.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_TnJBE9EIVVra1x22ilN25Q_qgfMG1EC';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const $ = function (id) { return document.getElementById(id); };
+  const loginView = $('loginView'), adminView = $('adminView');
+  let me = null;
+
+  function show(el, text, type) {
+    el.innerHTML = text ? '<div class="msg ' + type + '">' + text + '</div>' : '';
+  }
+
+  // ---------------- Acceso ----------------
+
+  $('loginBtn').addEventListener('click', signIn);
+  $('password').addEventListener('keydown', function (e) { if (e.key === 'Enter') signIn(); });
+
+  async function signIn() {
+    const email = $('email').value.trim();
+    const password = $('password').value;
+    if (!email || !password) { show($('loginMsg'), 'Completa correo y contraseña.', 'error'); return; }
+    $('loginBtn').disabled = true;
+    show($('loginMsg'), '', '');
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    $('loginBtn').disabled = false;
+    if (error) show($('loginMsg'), error.message, 'error');
+    // onAuthStateChange se encarga del resto (incluida la validación de rol).
+  }
+
+  $('signOutBtn').addEventListener('click', async function () { await sb.auth.signOut(); });
+
+  sb.auth.onAuthStateChange(async function (_event, session) {
+    if (!session || !session.user) {
+      me = null;
+      adminView.style.display = 'none';
+      loginView.style.display = 'block';
+      return;
+    }
+    // Solo el propietario de la plataforma entra aquí.
+    const { data: profile } = await sb
+      .from('profiles').select('id, email, role').eq('id', session.user.id).maybeSingle();
+
+    if (!profile || profile.role !== 'owner') {
+      await sb.auth.signOut();
+      show($('loginMsg'), 'Esta cuenta no tiene acceso de administrador.', 'error');
+      return;
+    }
+    me = profile;
+    $('whoami').textContent = profile.email;
+    loginView.style.display = 'none';
+    adminView.style.display = 'block';
+    loadClients();
+  });
+
+  // ---------------- Crear cuenta ----------------
+
+  $('genPassBtn').addEventListener('click', function () {
+    const abc = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let out = '';
+    const bytes = new Uint32Array(12);
+    crypto.getRandomValues(bytes);
+    for (let i = 0; i < 12; i++) out += abc[bytes[i] % abc.length];
+    $('newPassword').value = out;
+  });
+
+  $('createBtn').addEventListener('click', async function () {
+    const email = $('newEmail').value.trim();
+    const password = $('newPassword').value;
+    const company = $('newCompany').value.trim();
+    const full_name = $('newName').value.trim();
+    const msg = $('createMsg');
+
+    if (!email || !password) { show(msg, 'El correo y la contraseña son obligatorios.', 'error'); return; }
+    if (password.length < 8) { show(msg, 'La contraseña debe tener al menos 8 caracteres.', 'error'); return; }
+
+    $('createBtn').disabled = true;
+    show(msg, 'Creando cuenta…', 'ok');
+
+    // La creación ocurre en el servidor (Edge Function): la llave con permisos
+    // de administrador nunca viaja al navegador.
+    const { data: { session } } = await sb.auth.getSession();
+    let res, payload;
+    try {
+      res = await fetch(SUPABASE_URL + '/functions/v1/admin-create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + (session ? session.access_token : '')
+        },
+        body: JSON.stringify({ email: email, password: password, company: company, full_name: full_name })
+      });
+      payload = await res.json();
+    } catch (err) {
+      $('createBtn').disabled = false;
+      show(msg, 'No se pudo contactar al servidor: ' + err.message, 'error');
+      return;
+    }
+
+    $('createBtn').disabled = false;
+    if (!res.ok || payload.error) { show(msg, payload.error || 'No se pudo crear la cuenta.', 'error'); return; }
+
+    show(msg, 'Cuenta creada para ' + email + '. Ya puede entrar con esa contraseña.', 'ok');
+    $('newEmail').value = ''; $('newPassword').value = ''; $('newCompany').value = ''; $('newName').value = '';
+    loadClients();
+  });
+
+  // ---------------- Listado ----------------
+
+  async function loadClients() {
+    const box = $('clientsBox');
+    const { data, error } = await sb
+      .from('profiles')
+      .select('id, email, company, full_name, active, role, created_at')
+      .eq('role', 'client')
+      .order('created_at', { ascending: false });
+
+    if (error) { box.innerHTML = '<div class="msg error">' + error.message + '</div>'; return; }
+
+    const rows = data || [];
+    $('clientCount').textContent = rows.length ? '· ' + rows.length : '';
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty">Todavía no hay clientes. Crea la primera cuenta arriba.</div>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.innerHTML =
+      '<thead><tr><th>Correo</th><th class="hide-sm">Empresa</th><th class="hide-sm">Alta</th><th>Estado</th><th></th></tr></thead>';
+    const tbody = document.createElement('tbody');
+
+    rows.forEach(function (c) {
+      const tr = document.createElement('tr');
+
+      const tdMail = document.createElement('td');
+      tdMail.textContent = c.email;
+      if (c.full_name) {
+        const s = document.createElement('div');
+        s.className = 'hint';
+        s.textContent = c.full_name;
+        tdMail.appendChild(s);
+      }
+
+      const tdCompany = document.createElement('td');
+      tdCompany.className = 'hide-sm muted-cell';
+      tdCompany.textContent = c.company || '—';
+
+      const tdDate = document.createElement('td');
+      tdDate.className = 'hide-sm muted-cell';
+      tdDate.textContent = c.created_at ? String(c.created_at).slice(0, 10) : '—';
+
+      const tdState = document.createElement('td');
+      const pill = document.createElement('span');
+      pill.className = 'pill ' + (c.active ? 'on' : 'off');
+      pill.textContent = c.active ? 'Activa' : 'Desactivada';
+      tdState.appendChild(pill);
+
+      const tdAct = document.createElement('td');
+      tdAct.style.textAlign = 'right';
+      const btn = document.createElement('button');
+      btn.className = 'btn' + (c.active ? ' danger' : '');
+      btn.textContent = c.active ? 'Desactivar' : 'Activar';
+      btn.addEventListener('click', function () { toggleActive(c, btn); });
+      tdAct.appendChild(btn);
+
+      tr.appendChild(tdMail); tr.appendChild(tdCompany); tr.appendChild(tdDate);
+      tr.appendChild(tdState); tr.appendChild(tdAct);
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    box.innerHTML = '';
+    box.appendChild(table);
+  }
+
+  async function toggleActive(client, btn) {
+    const next = !client.active;
+    if (!next && !confirm('¿Desactivar la cuenta de ' + client.email + '?\nPerderá el acceso a sus datos hasta que la vuelvas a activar.')) return;
+    btn.disabled = true;
+    const { error } = await sb.from('profiles').update({ active: next }).eq('id', client.id);
+    btn.disabled = false;
+    if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+    loadClients();
+  }
+})();
+</script>
+</body>
+</html>

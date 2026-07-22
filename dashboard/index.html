@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organizadísimos</title>
+<meta name="description" content="Organizadísimos — organiza y ejecuta los proyectos de tu equipo: tareas, subtareas y seguimiento en un solo lugar.">
+<meta name="theme-color" content="#07050f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23140b24'/%3E%3Cpath d='M17 33.5l10 10L47 22' fill='none' stroke='%23b06bff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #07050f;
+    --bg2: #0d0820;
+    --panel: rgba(255,255,255,0.045);
+    --panel-strong: rgba(255,255,255,0.08);
+    --line: rgba(168,120,255,0.22);
+    --text: #ece7ff;
+    --muted: #948bc4;
+    --accent: #b06bff;
+    --accent2: #35e5ff;
+    --danger: #ff4d6d;
+    --warn: #ff9f43;
+    --ok: #2ee6a6;
+    --overdue: #ff2fd0;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    width: 60vw;
+    height: 60vw;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.22;
+    z-index: 0;
+    pointer-events: none;
+    animation: drift 22s ease-in-out infinite alternate;
+  }
+  body::before { background: var(--accent); top: -20%; left: -15%; }
+  body::after { background: var(--accent2); bottom: -25%; right: -15%; animation-delay: -8s; }
+  @keyframes drift {
+    0% { transform: translate(0,0) scale(1); }
+    100% { transform: translate(6%, 4%) scale(1.15); }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 6px 0 var(--overdue), inset 0 0 0 1px rgba(255,47,208,0.5); }
+    50% { box-shadow: 0 0 20px 3px var(--overdue), inset 0 0 0 1px rgba(255,47,208,0.8); }
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .app, #authScreen { position: relative; z-index: 1; }
+  .app {
+    width: 100%;
+    max-width: 1100px;
+    padding: 32px 24px 80px;
+    display: none;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: 10px;
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 0.3px;
+  }
+  .user-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .btn {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+    backdrop-filter: blur(6px);
+  }
+  .btn:hover { border-color: var(--accent2); box-shadow: 0 0 12px rgba(53,229,255,0.25); transform: translateY(-1px); }
+  .btn.danger { color: var(--danger); border-color: rgba(255,77,109,0.4); }
+  .btn.danger:hover { box-shadow: 0 0 12px rgba(255,77,109,0.3); }
+  .btn.primary { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #07050f; font-weight: 700; border: none; }
+  .btn.primary:hover { box-shadow: 0 0 18px rgba(176,107,255,0.5); }
+
+  .projectbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 18px 0 14px;
+  }
+  .board-name-input {
+    font-size: 17px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    padding: 5px 8px;
+    max-width: 260px;
+    font-family: inherit;
+  }
+  .board-name-input:hover { background: var(--panel); }
+  .board-name-input:focus { border-color: var(--accent2); outline: none; background: var(--panel-strong); }
+  select.board-picker {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 13px;
+    background: var(--panel);
+    color: var(--text);
+    max-width: 200px;
+  }
+  select.board-picker option { background: #12102a; color: var(--text); }
+
+  .share-panel {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: none;
+    background: var(--panel);
+    animation: fadeInUp 0.2s ease;
+  }
+  .share-panel.open { display: block; }
+  .share-panel h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .member-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .member-row:last-of-type { border-bottom: none; }
+  .member-tag { color: var(--muted); font-size: 11px; margin-left: 6px; }
+  .member-rm { color: var(--danger); cursor: pointer; font-size: 12px; background: none; border: none; }
+  .add-member-row { display: flex; gap: 6px; margin-top: 10px; }
+  .add-member-row input {
+    flex: 1; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: 13px; font-family: inherit; background: var(--panel-strong); color: var(--text);
+  }
+  .add-member-row button { padding: 7px 12px; border-radius: 8px; border: none; background: var(--accent); color: #fff; font-size: 13px; cursor: pointer; }
+
+  .notify-banner {
+    background: linear-gradient(90deg, rgba(255,159,67,0.15), rgba(255,47,208,0.12));
+    color: #ffd7a8;
+    border: 1px solid rgba(255,159,67,0.4);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    animation: fadeInUp 0.25s ease;
+  }
+
+  .save-status { font-size: 12px; color: var(--muted); }
+
+  /* ---------- Matrix ---------- */
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 720px) { .matrix-grid { grid-template-columns: 1fr; } }
+  .quadrant {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    min-height: 220px;
+    background: var(--panel);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .quadrant::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+  }
+  .quadrant.drag-over { border-color: var(--accent2); box-shadow: 0 0 24px rgba(53,229,255,0.3); }
+  .q1::before { background: linear-gradient(90deg, var(--danger), var(--overdue)); }
+  .q2::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .quadrant h4 {
+    margin: 4px 0 10px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .qlist { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+  .qlist:empty::after {
+    content: 'Arrastra tareas aquí';
+    color: var(--muted);
+    font-size: 12px;
+    opacity: 0.5;
+    padding: 10px 0;
+  }
+  .qadd {
+    margin-top: 10px;
+    border: 1px dashed var(--line);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 8px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .qadd:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(53,229,255,0.06); }
+
+  /* ---------- Card ---------- */
+  .card {
+    background: var(--panel-strong);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 9px 10px;
+    cursor: grab;
+    animation: popIn 0.22s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  }
+  .card:hover { border-color: var(--accent2); box-shadow: 0 4px 18px rgba(53,229,255,0.15); transform: translateY(-1px); }
+  .card.dragging { opacity: 0.35; cursor: grabbing; }
+  .card.done .card-text { text-decoration: line-through; color: var(--muted); }
+  .card-top { display: flex; align-items: flex-start; gap: 8px; }
+  .checkbox {
+    flex: 0 0 16px; width: 16px; height: 16px; margin-top: 3px;
+    border: 1px solid var(--line); border-radius: 5px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #07050f; user-select: none;
+    transition: all 0.15s ease;
+  }
+  .checkbox.checked { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; box-shadow: 0 0 10px rgba(176,107,255,0.5); }
+  .card-text {
+    flex: 1; min-width: 0; line-height: 20px; font-size: 13.5px;
+    outline: none; white-space: pre-wrap; word-break: break-word;
+  }
+  .card-text:empty::before { content: attr(data-placeholder); color: var(--muted); }
+  .card-menu {
+    flex: 0 0 auto; font-size: 13px; color: var(--muted); cursor: pointer;
+    background: none; border: none; padding: 2px 4px; border-radius: 5px; transition: all 0.15s ease;
+  }
+  .card-menu:hover { color: var(--accent2); background: rgba(53,229,255,0.1); }
+  .card-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag-chip {
+    font-size: 10.5px; border-radius: 8px; padding: 2px 7px;
+    background: rgba(176,107,255,0.15); color: #d9bcff; border: 1px solid rgba(176,107,255,0.3);
+  }
+  .due-badge {
+    font-size: 10.5px; border-radius: 8px; padding: 2px 8px; font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .due-badge.d-today { background: rgba(255,77,109,0.18); color: #ff8fa3; border-color: rgba(255,77,109,0.4); }
+  .due-badge.d-soon { background: rgba(255,159,67,0.18); color: #ffc48a; border-color: rgba(255,159,67,0.4); }
+  .due-badge.d-later { background: rgba(46,230,166,0.15); color: #8ff5d2; border-color: rgba(46,230,166,0.35); }
+  .due-badge.d-overdue { background: rgba(255,47,208,0.2); color: #ffb3f0; border-color: rgba(255,47,208,0.55); animation: pulseGlow 1.6s ease-in-out infinite; }
+
+  /* ---------- Tree (árbol recursivo de tareas) ---------- */
+  .tnode { animation: popIn 0.2s ease; }
+  .tnode.removing { animation: nodeOut 0.17s ease forwards; }
+  @keyframes nodeOut { to { opacity: 0; transform: translateX(8px) scale(0.96); } }
+
+  /* Fila de cada nodo */
+  .tnode-row { display: flex; align-items: flex-start; gap: 6px; border-radius: 8px; padding: 2px 4px; transition: background 0.15s ease; }
+  .tnode:not(.lvl-1) > .tnode-row:hover { background: rgba(255,255,255,0.04); }
+  .tnode-row.done > .tnode-text { text-decoration: line-through; color: var(--muted); }
+
+  /* Chevron expandir/contraer */
+  .tnode-chevron {
+    flex: 0 0 auto; width: 15px; height: 20px; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--muted); font-size: 9px; user-select: none;
+    transition: transform 0.2s ease, color 0.15s ease;
+  }
+  .tnode-chevron:hover { color: var(--accent2); }
+  .tnode-chevron.expanded { transform: rotate(90deg); }
+  .tnode-chevron.hidden-chevron { visibility: hidden; cursor: default; }
+
+  /* Icono por nivel: identidad visual distinta según profundidad */
+  .tnode-icon { flex: 0 0 auto; margin-top: 1px; cursor: pointer; user-select: none; line-height: 20px; }
+  .lvl-1 > .tnode-row > .tnode-icon { font-size: 16px; }
+  .lvl-2 > .tnode-row > .tnode-icon { font-size: 14px; opacity: 0.97; }
+  .lvl-3 > .tnode-row > .tnode-icon { font-size: 13px; opacity: 0.92; }
+  .lvl-4 > .tnode-row > .tnode-icon { font-size: 12px; opacity: 0.88; }
+  .lvl-5 > .tnode-row > .tnode-icon { font-size: 15px; line-height: 16px; color: var(--accent); opacity: 0.9; }
+
+  /* Checkbox */
+  .tnode-check {
+    flex: 0 0 15px; width: 15px; height: 15px; margin-top: 3px;
+    border: 1px solid var(--line); border-radius: 5px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #07050f; user-select: none; transition: all 0.15s ease;
+  }
+  .tnode-check.checked { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; box-shadow: 0 0 8px rgba(176,107,255,0.45); }
+
+  /* Texto editable (peso/tamaño según nivel) */
+  .tnode-text {
+    flex: 1; min-width: 0; outline: none; white-space: pre-wrap; word-break: break-word; color: var(--text);
+  }
+  .lvl-1 > .tnode-row > .tnode-text { font-size: 13.5px; line-height: 20px; font-weight: 600; }
+  .tnode:not(.lvl-1) > .tnode-row > .tnode-text { font-size: 12.5px; line-height: 19px; }
+  .tnode-text:empty::before { content: attr(data-placeholder); color: var(--muted); }
+
+  /* Botón agregar subtarea: icono ＋ minimalista, aparece en hover */
+  .tnode-add {
+    flex: 0 0 auto; width: 20px; height: 20px; margin-top: 1px;
+    border: none; background: none; color: var(--muted);
+    cursor: pointer; font-size: 14px; line-height: 1; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .tnode-row:hover .tnode-add { opacity: 0.85; }
+  .tnode-add:hover { opacity: 1; color: var(--accent2); background: rgba(53,229,255,0.12); }
+
+  /* Menú ⋯ */
+  .tnode-menu {
+    flex: 0 0 auto; font-size: 13px; color: var(--muted); cursor: pointer;
+    background: none; border: none; padding: 0 3px; margin-top: 1px; border-radius: 5px;
+    opacity: 0; transition: all 0.15s ease;
+  }
+  .tnode-row:hover .tnode-menu { opacity: 0.85; }
+  .tnode-menu:hover { color: var(--accent2); background: rgba(53,229,255,0.1); opacity: 1; }
+
+  /* Fila de etiquetas / fecha */
+  .tnode-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0 38px; }
+
+  /* Progreso */
+  .progress-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 0 38px; }
+  .progress-track { flex: 1; height: 5px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,0.08); }
+  .progress-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    box-shadow: 0 0 8px rgba(53,229,255,0.4);
+    transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  .progress-count { font-size: 10.5px; color: var(--muted); white-space: nowrap; font-weight: 600; }
+
+  /* Contenedor de hijos: animación de expandir/contraer (grid 0fr↔1fr) e indentación tipo árbol */
+  .tnode-children { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.22s ease; }
+  .tnode-children.expanded { grid-template-rows: 1fr; }
+  .tnode-children-inner { overflow: hidden; margin-left: 15px; padding-left: 10px; border-left: 1px solid var(--line); }
+  .lvl-1 > .tnode-children.expanded > .tnode-children-inner { margin-top: 6px; }
+
+  /* ---------- Drag & drop del árbol ---------- */
+  .tnode-grip {
+    flex: 0 0 auto; width: 13px; margin-top: 2px; margin-left: -2px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: grab; color: var(--muted); font-size: 12px; line-height: 1;
+    opacity: 0; transition: opacity 0.15s ease, color 0.15s ease; user-select: none;
+  }
+  .tnode-row:hover .tnode-grip { opacity: 0.55; }
+  .tnode-grip:hover { opacity: 1; color: var(--accent2); }
+  .tnode-grip:active { cursor: grabbing; }
+  .tnode.dragging { opacity: 0.4; }
+
+  .tnode-row { position: relative; }
+  .tnode-row.drop-before::before,
+  .tnode-row.drop-after::after {
+    content: ''; position: absolute; left: 4px; right: 4px; height: 2px; z-index: 3;
+    background: var(--accent2); border-radius: 2px; box-shadow: 0 0 6px var(--accent2);
+  }
+  .tnode-row.drop-before::before { top: -3px; }
+  .tnode-row.drop-after::after { bottom: -3px; }
+  .tnode-row.drop-inside { background: rgba(53,229,255,0.14); box-shadow: inset 0 0 0 1px var(--accent2); }
+
+  /* ---------- Selector de etiquetas (picker) ---------- */
+  .tag-add-btn {
+    font-size: 11px; border-radius: 8px; padding: 2px 8px; cursor: pointer;
+    background: transparent; color: var(--muted); border: 1px dashed var(--line);
+    transition: all 0.15s ease;
+  }
+  .tag-add-btn:hover { color: var(--accent2); border-color: var(--accent2); }
+  .tag-picker {
+    margin-top: 8px; border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px; background: rgba(0,0,0,0.35); animation: fadeInUp 0.15s ease;
+    max-height: 220px; overflow-y: auto;
+  }
+  .tag-opt {
+    display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 7px;
+    cursor: pointer; font-size: 12.5px; transition: background 0.12s ease;
+  }
+  .tag-opt:hover { background: rgba(255,255,255,0.05); }
+  .tag-swatch { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
+  .tag-opt-name { flex: 1; }
+  .tag-opt-check { color: var(--accent2); font-size: 12px; }
+  .tag-picker-new { display: flex; gap: 6px; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .tag-picker-new input {
+    flex: 1; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px;
+    font-size: 12px; font-family: inherit; background: var(--panel-strong); color: var(--text);
+  }
+  .meta-tag-chip button { border: none; background: none; cursor: pointer; font-size: 12px; padding: 0 0 0 3px; color: inherit; }
+
+  /* ---------- Administrador de etiquetas ---------- */
+  .tags-panel {
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 16px; font-size: 13px; display: none; background: var(--panel);
+    animation: fadeInUp 0.2s ease;
+  }
+  .tags-panel.open { display: block; }
+  .tags-panel h3 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .tags-empty { color: var(--muted); font-size: 12.5px; }
+  .tagmgr-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .tagmgr-row:last-child { border-bottom: none; }
+  .tagmgr-row input[type="color"] { width: 26px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer; flex: 0 0 auto; }
+  .tagmgr-row input[type="text"] { flex: 1; min-width: 110px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; font-size: 12.5px; font-family: inherit; background: var(--panel-strong); color: var(--text); }
+  .tagmgr-merge { padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; font-size: 12px; background: var(--panel); color: var(--muted); font-family: inherit; }
+  .tagmgr-merge option { background: #12102a; color: var(--text); }
+  .tagmgr-del { color: var(--danger); background: none; border: 1px solid rgba(255,77,109,0.4); border-radius: 7px; padding: 5px 9px; font-size: 12px; cursor: pointer; }
+  .tagmgr-del:hover { background: rgba(255,77,109,0.12); }
+
+  .meta-panel {
+    display: none;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.25);
+    font-size: 12px;
+    animation: fadeInUp 0.18s ease;
+  }
+  .meta-panel.open { display: block; }
+  .meta-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .meta-row label { color: var(--muted); min-width: 50px; }
+  .meta-row input[type="date"], .meta-row input[type="text"] {
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px;
+    font-family: inherit; font-size: 12px; background: var(--panel-strong); color: var(--text);
+  }
+  .meta-row input[type="text"] { flex: 1; min-width: 90px; }
+  .meta-tags { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
+  .meta-tag-chip { background: rgba(176,107,255,0.18); color: #d9bcff; border-radius: 8px; padding: 2px 6px 2px 8px; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; }
+  .meta-tag-chip button { border: none; background: none; color: #d9bcff; cursor: pointer; font-size: 12px; padding: 0; }
+  .meta-delete { color: var(--danger); background: none; border: 1px solid rgba(255,77,109,0.4); border-radius: 6px; padding: 4px 9px; font-size: 11.5px; cursor: pointer; }
+  .meta-delete:hover { background: rgba(255,77,109,0.12); }
+
+  footer#count { margin-top: 26px; color: var(--muted); font-size: 12px; }
+
+  /* Auth screen */
+  #authScreen { width: 100%; max-width: 380px; padding: 100px 24px; }
+  #authScreen h1 { font-size: 24px; margin-bottom: 6px; }
+  #authScreen p.sub { color: var(--muted); font-size: 13px; margin: 0 0 26px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; }
+  .field input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+    font-size: 14px; font-family: inherit; background: var(--panel); color: var(--text);
+  }
+  .field input:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 12px rgba(53,229,255,0.2); }
+  .primary-btn {
+    width: 100%; padding: 11px; border: none; border-radius: 10px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #07050f; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 6px;
+    transition: box-shadow 0.2s ease;
+  }
+  .primary-btn:hover { box-shadow: 0 0 20px rgba(176,107,255,0.5); }
+  .primary-btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+  .switch-mode { margin-top: 18px; font-size: 13px; color: var(--muted); text-align: center; }
+  .switch-mode a { color: var(--accent2); cursor: pointer; text-decoration: none; }
+  .auth-msg { font-size: 13px; margin-top: 12px; padding: 9px 11px; border-radius: 8px; }
+  .auth-msg.error { background: rgba(255,77,109,0.15); color: #ff8fa3; }
+  .auth-msg.info { background: rgba(53,229,255,0.12); color: #8fe9ff; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="authScreen">
+  <h1>Organizadísimos</h1>
+  <p class="sub" id="authSub">Inicia sesión para acceder a tus tareas.</p>
+
+  <div class="field">
+    <label for="authEmail">Correo</label>
+    <input type="email" id="authEmail" autocomplete="email" placeholder="tu@correo.com">
+  </div>
+  <div class="field">
+    <label for="authPassword">Contraseña</label>
+    <input type="password" id="authPassword" autocomplete="current-password" placeholder="••••••••">
+  </div>
+
+  <button class="primary-btn" id="authSubmit">Iniciar sesión</button>
+
+  <div class="switch-mode">
+    <span id="switchText">¿No tienes cuenta?</span>
+    <a id="switchLink">Crear una</a>
+  </div>
+
+  <div id="authMsg"></div>
+</div>
+
+<div class="app" id="appScreen">
+  <div class="topbar">
+    <h1>Organizadísimos</h1>
+    <div class="user-bar">
+      <span id="userEmail"></span>
+      <button class="btn" id="signOutBtn">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="projectbar">
+    <input type="text" class="board-name-input" id="boardNameInput" placeholder="Nombre del proyecto">
+    <select class="board-picker" id="boardPicker"></select>
+    <button class="btn" id="newBoardBtn">+ Nuevo proyecto</button>
+    <button class="btn" id="shareBtn">Compartir</button>
+    <button class="btn" id="tagsBtn">Etiquetas</button>
+    <button class="btn danger" id="deleteBoardBtn">Eliminar proyecto</button>
+    <span class="save-status" id="saveStatus"></span>
+  </div>
+
+  <div class="notify-banner hidden" id="notifyBanner"></div>
+
+  <div class="tags-panel" id="tagsPanel">
+    <h3>Etiquetas del proyecto</h3>
+    <div id="tagsList"></div>
+  </div>
+
+  <div class="share-panel" id="sharePanel">
+    <h3>Miembros de este proyecto</h3>
+    <div id="memberList"></div>
+    <div class="add-member-row">
+      <input type="email" id="memberEmailInput" placeholder="correo@ejemplo.com">
+      <button id="addMemberBtn">Agregar</button>
+    </div>
+  </div>
+
+  <div id="matrixView" class="matrix-grid">
+    <div class="quadrant q1" data-q="q1">
+      <h4>🔥 Urgente e importante</h4>
+      <div class="qlist" data-q="q1"></div>
+      <button class="qadd" data-q="q1">+ Nueva tarea</button>
+    </div>
+    <div class="quadrant q2" data-q="q2">
+      <h4>📌 Importante, no urgente</h4>
+      <div class="qlist" data-q="q2"></div>
+      <button class="qadd" data-q="q2">+ Nueva tarea</button>
+    </div>
+  </div>
+
+  <footer id="count"></footer>
+</div>
+
+<script>
+(function () {
+  // ---- Supabase setup ----
+  const SUPABASE_URL = 'https://hwisrkincpkkdqrxuoch.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_TnJBE9EIVVra1x22ilN25Q_qgfMG1EC';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const authScreen = document.getElementById('authScreen');
+  const appScreen = document.getElementById('appScreen');
+  const authEmail = document.getElementById('authEmail');
+  const authPassword = document.getElementById('authPassword');
+  const authSubmit = document.getElementById('authSubmit');
+  const authMsg = document.getElementById('authMsg');
+  const authSub = document.getElementById('authSub');
+  const switchText = document.getElementById('switchText');
+  const switchLink = document.getElementById('switchLink');
+  const userEmailEl = document.getElementById('userEmail');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const saveStatusEl = document.getElementById('saveStatus');
+  const boardNameInput = document.getElementById('boardNameInput');
+  const boardPicker = document.getElementById('boardPicker');
+  const newBoardBtn = document.getElementById('newBoardBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const sharePanel = document.getElementById('sharePanel');
+  const memberListEl = document.getElementById('memberList');
+  const memberEmailInput = document.getElementById('memberEmailInput');
+  const addMemberBtn = document.getElementById('addMemberBtn');
+  const deleteBoardBtn = document.getElementById('deleteBoardBtn');
+  const matrixViewEl = document.getElementById('matrixView');
+  const notifyBanner = document.getElementById('notifyBanner');
+  const countEl = document.getElementById('count');
+  const tagsBtn = document.getElementById('tagsBtn');
+  const tagsPanel = document.getElementById('tagsPanel');
+  const tagsListEl = document.getElementById('tagsList');
+
+  let authMode = 'signin';
+  let currentUser = null;
+  let boards = [];
+  let currentBoard = null;
+  let members = [];
+  let tasks = [];
+  let tagCatalog = [];
+  let saveTimer = null;
+  let openMetaId = null;
+  let openTagPickerId = null;
+  let dragId = null;
+
+  // ---------------- Auth ----------------
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    authMsg.innerHTML = '';
+    if (mode === 'signin') {
+      authSub.textContent = 'Inicia sesión para acceder a tus tareas.';
+      authSubmit.textContent = 'Iniciar sesión';
+      switchText.textContent = '¿No tienes cuenta?';
+      switchLink.textContent = 'Crear una';
+    } else {
+      authSub.textContent = 'Crea una cuenta para empezar.';
+      authSubmit.textContent = 'Crear cuenta';
+      switchText.textContent = '¿Ya tienes cuenta?';
+      switchLink.textContent = 'Iniciar sesión';
+    }
+  }
+
+  switchLink.addEventListener('click', function () {
+    setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+  });
+
+  function showAuthMsg(text, type) {
+    authMsg.innerHTML = '<div class="auth-msg ' + type + '">' + text + '</div>';
+  }
+
+  authSubmit.addEventListener('click', async function () {
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+    if (!email || !password) { showAuthMsg('Completa correo y contraseña.', 'error'); return; }
+    authSubmit.disabled = true;
+    authMsg.innerHTML = '';
+    try {
+      if (authMode === 'signin') {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } else {
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) throw error;
+        if (data && data.user && !data.session) {
+          showAuthMsg('Cuenta creada. Revisa tu correo para confirmar antes de iniciar sesión.', 'info');
+        }
+      }
+    } catch (err) {
+      showAuthMsg(err.message || 'Algo salió mal.', 'error');
+    } finally {
+      authSubmit.disabled = false;
+    }
+  });
+
+  signOutBtn.addEventListener('click', async function () { await sb.auth.signOut(); });
+
+  sb.auth.onAuthStateChange(function (event, session) {
+    if (session && session.user) {
+      currentUser = session.user;
+      authScreen.classList.add('hidden');
+      appScreen.style.display = 'block';
+      userEmailEl.textContent = currentUser.email;
+      bootstrap();
+    } else {
+      currentUser = null;
+      appScreen.style.display = 'none';
+      authScreen.classList.remove('hidden');
+      setAuthMode('signin');
+    }
+  });
+
+  // ---------------- Data helpers ----------------
+
+  function uid() { return 't' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+  function newTask(urgent, important) {
+    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: !!urgent, important: !!important, assignee: null, subtasks: [], collapsed: false };
+  }
+
+  // Un nodo de tarea tiene el MISMO shape en cualquier nivel del árbol, de modo
+  // que una subtarea se comporta exactamente igual que una tarea principal.
+  function newNode() {
+    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: false, important: true, assignee: null, subtasks: [], collapsed: false };
+  }
+
+  // Normaliza un nodo (rellena campos faltantes) y recorre sus hijos recursivamente.
+  // Migra las subtareas antiguas ({id,text,done}) a nodos completos automáticamente.
+  function ensureNode(t) {
+    if (typeof t.done === 'undefined') t.done = false;
+    if (!t.tags) t.tags = [];
+    if (typeof t.dueDate === 'undefined') t.dueDate = null;
+    if (typeof t.urgent === 'undefined') t.urgent = false;
+    if (typeof t.important === 'undefined') t.important = false;
+    if (typeof t.assignee === 'undefined') t.assignee = null;
+    if (!Array.isArray(t.subtasks)) t.subtasks = [];
+    if (typeof t.collapsed === 'undefined') t.collapsed = false;
+    if (!t.id) t.id = uid();
+    t.subtasks.forEach(ensureNode);
+    return t;
+  }
+
+  function ensureFields(list) {
+    (list || []).forEach(function (t) {
+      // Migración de cuadrantes (solo aplica a la raíz): la matriz tiene 2 columnas
+      // (q1 = urgente+importante, q2 = importante). Reubica tareas de columnas eliminadas
+      // para que ninguna desaparezca.
+      if (!t.important && !t.urgent) { t.urgent = true; t.important = true; }
+      else if (t.urgent && !t.important) { t.important = true; }
+      ensureNode(t);
+    });
+    return list || [];
+  }
+
+  // ---------------- Boards / projects ----------------
+
+  async function bootstrap() {
+    await loadBoardsList();
+    const lastId = localStorage.getItem('lastBoard_' + currentUser.id);
+    const found = boards.find(function (b) { return b.id === lastId; });
+    await switchBoard(found ? found.id : boards[0].id);
+  }
+
+  async function loadBoardsList() {
+    const { data, error } = await sb.from('boards').select('id, name, owner_id').order('name');
+    if (error) { saveStatusEl.textContent = 'Error: ' + error.message; boards = []; return; }
+    boards = data || [];
+    if (!boards.length) {
+      const { data: newBoard, error: insErr } = await sb
+        .from('boards')
+        .insert({ owner_id: currentUser.id, name: 'Mis tareas', data: [] })
+        .select('id, name, owner_id')
+        .single();
+      if (!insErr && newBoard) boards = [newBoard];
+    }
+  }
+
+  function renderBoardPicker() {
+    boardPicker.innerHTML = '';
+    boards.forEach(function (b) {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.textContent = b.name + (b.owner_id !== currentUser.id ? ' (compartido)' : '');
+      if (currentBoard && b.id === currentBoard.id) opt.selected = true;
+      boardPicker.appendChild(opt);
+    });
+  }
+
+  boardPicker.addEventListener('change', function () { switchBoard(boardPicker.value); });
+
+  newBoardBtn.addEventListener('click', async function () {
+    const { data, error } = await sb.from('boards')
+      .insert({ owner_id: currentUser.id, name: 'Nuevo proyecto', data: [] })
+      .select('id, name, owner_id').single();
+    if (error) { alert('No se pudo crear: ' + error.message); return; }
+    boards.push(data);
+    await switchBoard(data.id);
+    boardNameInput.focus();
+    boardNameInput.select();
+  });
+
+  boardNameInput.addEventListener('change', async function () {
+    const newName = boardNameInput.value.trim();
+    if (!newName || !currentBoard) return;
+    currentBoard.name = newName;
+    const found = boards.find(function (b) { return b.id === currentBoard.id; });
+    if (found) found.name = newName;
+    renderBoardPicker();
+    await sb.from('boards').update({ name: newName }).eq('id', currentBoard.id);
+  });
+
+  deleteBoardBtn.addEventListener('click', async function () {
+    if (!currentBoard) return;
+    if (boards.length <= 1) { alert('No puedes eliminar tu único proyecto. Crea otro primero.'); return; }
+    const ok = confirm('¿Eliminar "' + currentBoard.name + '"? Esto borra todas sus tareas permanentemente.');
+    if (!ok) return;
+    const idToDelete = currentBoard.id;
+    const { error } = await sb.from('boards').delete().eq('id', idToDelete);
+    if (error) { alert('No se pudo eliminar: ' + error.message); return; }
+    boards = boards.filter(function (b) { return b.id !== idToDelete; });
+    await switchBoard(boards[0].id);
+  });
+
+  async function switchBoard(boardId) {
+    const { data, error } = await sb.from('boards').select('*').eq('id', boardId).single();
+    if (error || !data) { saveStatusEl.textContent = 'Error al cargar proyecto.'; return; }
+    currentBoard = data;
+    localStorage.setItem('lastBoard_' + currentUser.id, currentBoard.id);
+    // Compatibilidad: data puede ser un array (formato antiguo: solo tareas)
+    // o un objeto { tasks, tags } (formato nuevo con catálogo de etiquetas).
+    const raw = currentBoard.data;
+    let loadedTasks, loadedTags;
+    if (Array.isArray(raw)) { loadedTasks = raw; loadedTags = []; }
+    else if (raw && typeof raw === 'object') {
+      loadedTasks = Array.isArray(raw.tasks) ? raw.tasks : [];
+      loadedTags = Array.isArray(raw.tags) ? raw.tags : [];
+    } else { loadedTasks = []; loadedTags = []; }
+    tasks = ensureFields(loadedTasks);
+    tagCatalog = normalizeTags(loadedTags);
+    // Garantiza que toda etiqueta usada en alguna tarea exista en el catálogo.
+    flattenTasks(tasks).forEach(function (n) { (n.tags || []).forEach(function (name) { ensureTag(name); }); });
+    openTagPickerId = null;
+    boardNameInput.value = currentBoard.name;
+    renderBoardPicker();
+    await loadMembers();
+    renderSharePanel();
+    render();
+  }
+
+  // ---------------- Sharing / members ----------------
+
+  async function loadMembers() {
+    members = [];
+    if (!currentBoard) return;
+    const { data: ownerProfile } = await sb.from('profiles').select('id, email').eq('id', currentBoard.owner_id).maybeSingle();
+    if (ownerProfile) members.push({ id: ownerProfile.id, email: ownerProfile.email, isOwner: true });
+    const { data: memberRows } = await sb.from('board_members').select('user_id').eq('board_id', currentBoard.id);
+    const ids = (memberRows || []).map(function (r) { return r.user_id; });
+    if (ids.length) {
+      const { data: profs } = await sb.from('profiles').select('id, email').in('id', ids);
+      (profs || []).forEach(function (p) { members.push({ id: p.id, email: p.email, isOwner: false }); });
+    }
+  }
+
+  function renderSharePanel() {
+    memberListEl.innerHTML = '';
+    const isOwner = currentBoard && currentBoard.owner_id === currentUser.id;
+    members.forEach(function (m) {
+      const row = document.createElement('div');
+      row.className = 'member-row';
+      const label = document.createElement('span');
+      label.textContent = m.email;
+      if (m.isOwner) {
+        const tag = document.createElement('span');
+        tag.className = 'member-tag';
+        tag.textContent = '(dueño)';
+        label.appendChild(tag);
+      }
+      row.appendChild(label);
+      if (isOwner && !m.isOwner) {
+        const rm = document.createElement('button');
+        rm.className = 'member-rm';
+        rm.textContent = 'Quitar';
+        rm.addEventListener('click', async function () {
+          await sb.from('board_members').delete().eq('board_id', currentBoard.id).eq('user_id', m.id);
+          await loadMembers();
+          renderSharePanel();
+        });
+        row.appendChild(rm);
+      }
+      memberListEl.appendChild(row);
+    });
+    addMemberBtn.parentElement.style.display = isOwner ? 'flex' : 'none';
+  }
+
+  shareBtn.addEventListener('click', function () { sharePanel.classList.toggle('open'); });
+
+  // ---------------- Administrador de etiquetas ----------------
+
+  function renderTagsManager() {
+    tagsListEl.innerHTML = '';
+    if (!tagCatalog.length) {
+      const empty = document.createElement('div');
+      empty.className = 'tags-empty';
+      empty.textContent = 'Aún no hay etiquetas. Se crean al agregar una etiqueta desde el menú ⋯ de cualquier tarea.';
+      tagsListEl.appendChild(empty);
+      return;
+    }
+    tagCatalog.forEach(function (t) {
+      const row = document.createElement('div');
+      row.className = 'tagmgr-row';
+
+      const color = document.createElement('input');
+      color.type = 'color';
+      color.value = t.color;
+      color.title = 'Color';
+      color.addEventListener('change', function () { setTagColor(t.name, color.value); save(); render(); });
+
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.value = t.name;
+      name.addEventListener('change', function () {
+        const nv = name.value.trim();
+        if (nv && nv !== t.name) { renameTag(t.name, nv); save(); render(); }
+        else name.value = t.name;
+      });
+
+      const merge = document.createElement('select');
+      merge.className = 'tagmgr-merge';
+      const opt0 = document.createElement('option');
+      opt0.value = '';
+      opt0.textContent = 'Fusionar en…';
+      merge.appendChild(opt0);
+      tagCatalog.forEach(function (o) {
+        if (o.name === t.name) return;
+        const op = document.createElement('option');
+        op.value = o.name;
+        op.textContent = o.name;
+        merge.appendChild(op);
+      });
+      merge.addEventListener('change', function () {
+        if (merge.value) { mergeTag(t.name, merge.value); save(); render(); }
+      });
+
+      const del = document.createElement('button');
+      del.className = 'tagmgr-del';
+      del.textContent = 'Eliminar';
+      del.addEventListener('click', function () { deleteTag(t.name); save(); render(); });
+
+      row.appendChild(color);
+      row.appendChild(name);
+      row.appendChild(merge);
+      row.appendChild(del);
+      tagsListEl.appendChild(row);
+    });
+  }
+
+  tagsBtn.addEventListener('click', function () {
+    tagsPanel.classList.toggle('open');
+    if (tagsPanel.classList.contains('open')) renderTagsManager();
+  });
+
+  addMemberBtn.addEventListener('click', async function () {
+    const email = memberEmailInput.value.trim();
+    if (!email) return;
+    // Se resuelve el correo con una función security definer: evita exponer el
+    // listado completo de perfiles (enumeración de correos entre clientes).
+    const { data: foundId, error: findErr } = await sb.rpc('find_profile_id_by_email', { p_email: email });
+    if (findErr) { alert('No se pudo buscar ese correo: ' + findErr.message); return; }
+    if (!foundId) { alert('Ese correo no tiene una cuenta activa en la app todavía.'); return; }
+    if (foundId === currentBoard.owner_id) { alert('Esa persona ya es el dueño del proyecto.'); return; }
+    if (members.some(function (m) { return m.id === foundId; })) { alert('Ya es miembro de este proyecto.'); return; }
+    const { error } = await sb.from('board_members').insert({ board_id: currentBoard.id, user_id: foundId });
+    if (error) { alert('No se pudo agregar: ' + error.message); return; }
+    memberEmailInput.value = '';
+    await loadMembers();
+    renderSharePanel();
+  });
+
+  // ---------------- Save ----------------
+
+  function save() {
+    clearTimeout(saveTimer);
+    saveStatusEl.textContent = 'Guardando...';
+    saveTimer = setTimeout(async function () {
+      if (!currentBoard) return;
+      const { error } = await sb.from('boards').update({ data: { tasks: tasks, tags: tagCatalog }, updated_at: new Date().toISOString() }).eq('id', currentBoard.id);
+      saveStatusEl.textContent = error ? ('Error al guardar: ' + error.message) : 'Guardado';
+      if (!error) setTimeout(function () { if (saveStatusEl.textContent === 'Guardado') saveStatusEl.textContent = ''; }, 1500);
+    }, 400);
+  }
+
+  // ---------------- Due date helpers ----------------
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function daysUntil(dueDate) {
+    const today = new Date(todayStr() + 'T00:00:00');
+    const due = new Date(dueDate + 'T00:00:00');
+    return Math.round((due - today) / 86400000);
+  }
+
+  function dueClass(dueDate) {
+    if (!dueDate) return null;
+    const diff = daysUntil(dueDate);
+    if (diff < 0) return 'd-overdue';
+    if (diff === 0) return 'd-today';
+    if (diff >= 1 && diff <= 3) return 'd-soon';
+    return 'd-later';
+  }
+
+  function dueLabel(dueDate) {
+    const diff = daysUntil(dueDate);
+    if (diff < 0) return dueDate + ' · vencida';
+    if (diff === 0) return 'Hoy';
+    if (diff === 1) return 'Mañana';
+    return dueDate;
+  }
+
+  function renderNotifyBanner() {
+    const all = flattenTasks(tasks);
+    const overdue = all.filter(function (t) { return !t.done && t.dueDate && daysUntil(t.dueDate) < 0; });
+    const today = all.filter(function (t) { return !t.done && t.dueDate && daysUntil(t.dueDate) === 0; });
+    if (!overdue.length && !today.length) {
+      notifyBanner.classList.add('hidden');
+      notifyBanner.textContent = '';
+      return;
+    }
+    const parts = [];
+    if (overdue.length) parts.push(overdue.length + ' tarea(s) vencida(s)');
+    if (today.length) parts.push(today.length + ' que vence(n) hoy');
+    notifyBanner.textContent = '⚡ Tienes ' + parts.join(' y ') + '. (Aviso in-app; el correo requiere activar notificaciones por email).';
+    notifyBanner.classList.remove('hidden');
+  }
+
+  // ---------------- Meta panel ----------------
+
+  function renderMetaPanel(task) {
+    const panel = document.createElement('div');
+    panel.className = 'meta-panel' + (openMetaId === task.id ? ' open' : '');
+
+    const dateRow = document.createElement('div');
+    dateRow.className = 'meta-row';
+    const dateLabel = document.createElement('label');
+    dateLabel.textContent = 'Vence:';
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.value = task.dueDate || '';
+    dateInput.addEventListener('change', function () { task.dueDate = dateInput.value || null; save(); render(); });
+    dateRow.appendChild(dateLabel);
+    dateRow.appendChild(dateInput);
+    const delBtn = document.createElement('button');
+    delBtn.className = 'meta-delete';
+    delBtn.textContent = 'Eliminar tarea';
+    delBtn.addEventListener('click', function () {
+      removeNodeAnimated(task.id);
+    });
+    dateRow.appendChild(delBtn);
+
+    const tagsRow = document.createElement('div');
+    tagsRow.className = 'meta-row';
+    const tagsLabel = document.createElement('label');
+    tagsLabel.textContent = 'Etiquetas:';
+    const tagsWrap = document.createElement('div');
+    tagsWrap.className = 'meta-tags';
+    (task.tags || []).forEach(function (tag, i) {
+      const chip = document.createElement('span');
+      chip.className = 'meta-tag-chip';
+      chip.textContent = tag;
+      styleChip(chip, tagColor(tag));
+      const rm = document.createElement('button');
+      rm.textContent = '×';
+      rm.addEventListener('click', function () { task.tags.splice(i, 1); save(); render(); });
+      chip.appendChild(rm);
+      tagsWrap.appendChild(chip);
+    });
+    // Botón para abrir el selector de etiquetas reutilizables.
+    const addTagBtn = document.createElement('button');
+    addTagBtn.className = 'tag-add-btn';
+    addTagBtn.textContent = '＋ Etiqueta';
+    addTagBtn.addEventListener('click', function () {
+      openTagPickerId = openTagPickerId === task.id ? null : task.id;
+      render();
+    });
+    tagsWrap.appendChild(addTagBtn);
+    tagsRow.appendChild(tagsLabel);
+    tagsRow.appendChild(tagsWrap);
+
+    panel.appendChild(dateRow);
+    panel.appendChild(tagsRow);
+
+    // Selector: elige de las etiquetas ya creadas o crea una nueva.
+    if (openTagPickerId === task.id) {
+      const picker = document.createElement('div');
+      picker.className = 'tag-picker';
+      if (!tagCatalog.length) {
+        const empty = document.createElement('div');
+        empty.className = 'tags-empty';
+        empty.textContent = 'Aún no hay etiquetas. Crea la primera abajo.';
+        picker.appendChild(empty);
+      }
+      tagCatalog.forEach(function (t) {
+        const opt = document.createElement('div');
+        opt.className = 'tag-opt';
+        const sw = document.createElement('span');
+        sw.className = 'tag-swatch';
+        sw.style.background = t.color;
+        const nm = document.createElement('span');
+        nm.className = 'tag-opt-name';
+        nm.textContent = t.name;
+        opt.appendChild(sw);
+        opt.appendChild(nm);
+        if ((task.tags || []).indexOf(t.name) >= 0) {
+          const ck = document.createElement('span');
+          ck.className = 'tag-opt-check';
+          ck.textContent = '✓';
+          opt.appendChild(ck);
+        }
+        opt.addEventListener('click', function () { toggleTaskTag(task, t.name); save(); render(); });
+        picker.appendChild(opt);
+      });
+      const newRow = document.createElement('div');
+      newRow.className = 'tag-picker-new';
+      const newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.placeholder = 'Crear nueva etiqueta + Enter';
+      newInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const val = newInput.value.trim();
+          if (val) { toggleTaskTag(task, val); newInput.value = ''; save(); render(); }
+        }
+      });
+      newRow.appendChild(newInput);
+      picker.appendChild(newRow);
+      panel.appendChild(picker);
+      requestAnimationFrame(function () {
+        const el = matrixViewEl.querySelector('.tnode[data-id="' + task.id + '"] .tag-picker-new input');
+        if (el && document.activeElement !== el) el.focus();
+      });
+    }
+
+    return panel;
+  }
+
+  // ---------------- Card + Matrix rendering ----------------
+
+  // ---------------- Tree helpers (recursivo) ----------------
+
+  // Icono según el nivel de profundidad (identidad visual por jerarquía).
+  function levelIcon(level) {
+    if (level === 1) return '📁'; // carpeta / proyecto
+    if (level === 2) return '📌'; // tarea
+    if (level === 3) return '✔';  // checklist
+    if (level === 4) return '📝'; // nota
+    return '•';                    // bullet simple
+  }
+
+  // Progreso según los hijos DIRECTOS de un nodo.
+  function subProgress(task) {
+    const subs = task.subtasks || [];
+    const total = subs.length;
+    const done = subs.filter(function (s) { return s.done; }).length;
+    return { total: total, done: done };
+  }
+
+  // Marca (o desmarca) un nodo y TODOS sus descendientes.
+  function setDoneRecursive(node, val) {
+    node.done = val;
+    (node.subtasks || []).forEach(function (c) { setDoneRecursive(c, val); });
+  }
+
+  // Recalcula "done" de abajo hacia arriba: un nodo con hijos queda completo solo
+  // si todos sus hijos lo están. Las hojas conservan su estado manual.
+  function recomputeDone(node) {
+    const subs = node.subtasks || [];
+    if (subs.length) {
+      subs.forEach(recomputeDone);
+      node.done = subs.every(function (c) { return c.done; });
+    }
+    return node.done;
+  }
+
+  // Aplana el árbol completo (raíz + descendientes) en una lista.
+  function flattenTasks(list, acc) {
+    acc = acc || [];
+    (list || []).forEach(function (t) { acc.push(t); flattenTasks(t.subtasks, acc); });
+    return acc;
+  }
+
+  // Elimina un nodo por id en cualquier nivel del árbol.
+  function removeNode(id) {
+    function walk(list) {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === id) { list.splice(i, 1); return true; }
+        if (walk(list[i].subtasks || [])) return true;
+      }
+      return false;
+    }
+    walk(tasks);
+  }
+
+  // Elimina con una pequeña animación de salida.
+  function removeNodeAnimated(id) {
+    const el = matrixViewEl.querySelector('.tnode[data-id="' + id + '"]');
+    if (el) {
+      el.classList.add('removing');
+      setTimeout(function () { removeNode(id); save(); render(); }, 170);
+    } else {
+      removeNode(id); save(); render();
+    }
+  }
+
+  // Enfoca el texto de un nodo recién creado.
+  function focusNode(id) {
+    requestAnimationFrame(function () {
+      const el = matrixViewEl.querySelector('.tnode[data-id="' + id + '"] > .tnode-row > .tnode-text');
+      if (el) el.focus();
+    });
+  }
+
+  // ---------------- Etiquetas reutilizables ----------------
+
+  // Paleta consistente: cada etiqueta conserva su color.
+  const TAG_COLORS = ['#b06bff', '#35e5ff', '#2ee6a6', '#ff9f43', '#ff4d6d', '#ff2fd0', '#5b8cff', '#f7d154', '#22d3ee', '#a3e635'];
+
+  function hexA(hex, a) {
+    const h = (hex || '#948bc4').replace('#', '');
+    const n = parseInt(h.length === 3 ? h.replace(/(.)/g, '$1$1') : h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  function findTag(name) { return tagCatalog.find(function (t) { return t.name === name; }); }
+  function nextTagColor() { return TAG_COLORS[tagCatalog.length % TAG_COLORS.length]; }
+  // Crea la etiqueta en el catálogo si no existe y la deja disponible globalmente.
+  function ensureTag(name) {
+    name = (name || '').trim();
+    if (!name) return null;
+    let t = findTag(name);
+    if (!t) { t = { name: name, color: nextTagColor() }; tagCatalog.push(t); }
+    return t;
+  }
+  function tagColor(name) { const t = findTag(name); return t ? t.color : '#948bc4'; }
+  function normalizeTags(list) {
+    const out = [];
+    (list || []).forEach(function (t) {
+      if (t && t.name && !out.some(function (x) { return x.name === t.name; })) {
+        out.push({ name: String(t.name), color: t.color || TAG_COLORS[out.length % TAG_COLORS.length] });
+      }
+    });
+    return out;
+  }
+  function styleChip(el, color) {
+    el.style.background = hexA(color, 0.16);
+    el.style.color = color;
+    el.style.borderColor = hexA(color, 0.5);
+  }
+  function dedupeTags(n) { if (n.tags) n.tags = n.tags.filter(function (x, i) { return n.tags.indexOf(x) === i; }); }
+  function toggleTaskTag(task, name) {
+    task.tags = task.tags || [];
+    const i = task.tags.indexOf(name);
+    if (i >= 0) task.tags.splice(i, 1);
+    else { ensureTag(name); task.tags.push(name); }
+  }
+  function setTagColor(name, color) { const t = findTag(name); if (t) t.color = color; }
+  function renameTag(oldName, newName) {
+    newName = (newName || '').trim();
+    if (!newName || newName === oldName) return;
+    const t = findTag(oldName);
+    if (t) t.name = newName;
+    tagCatalog = normalizeTags(tagCatalog); // deduplica si el nuevo nombre ya existía
+    flattenTasks(tasks).forEach(function (n) {
+      if (n.tags) { n.tags = n.tags.map(function (x) { return x === oldName ? newName : x; }); dedupeTags(n); }
+    });
+  }
+  function deleteTag(name) {
+    tagCatalog = tagCatalog.filter(function (t) { return t.name !== name; });
+    flattenTasks(tasks).forEach(function (n) { if (n.tags) n.tags = n.tags.filter(function (x) { return x !== name; }); });
+  }
+  function mergeTag(from, into) {
+    if (from === into) return;
+    flattenTasks(tasks).forEach(function (n) {
+      if (n.tags) { n.tags = n.tags.map(function (x) { return x === from ? into : x; }); dedupeTags(n); }
+    });
+    tagCatalog = tagCatalog.filter(function (t) { return t.name !== from; });
+  }
+
+  // ---------------- Drag & drop: mover nodos en el árbol ----------------
+
+  // Devuelve { node, list, index } de un nodo en cualquier nivel.
+  function findCtx(id, list) {
+    list = list || tasks;
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === id) return { node: list[i], list: list, index: i };
+      const deep = findCtx(id, list[i].subtasks || []);
+      if (deep) return deep;
+    }
+    return null;
+  }
+  function findNode(id) { const c = findCtx(id); return c ? c.node : null; }
+  function isSelfOrDescendant(node, id) {
+    if (node.id === id) return true;
+    return (node.subtasks || []).some(function (c) { return isSelfOrDescendant(c, id); });
+  }
+  // No se puede soltar sobre sí mismo ni dentro de su propia descendencia.
+  function canDrop(dId, targetId) {
+    if (!dId || !targetId || dId === targetId) return false;
+    const dn = findNode(dId);
+    return dn ? !isSelfOrDescendant(dn, targetId) : false;
+  }
+  // Mueve un nodo relativo a un objetivo: 'before'/'after' (hermano) o 'inside' (hijo).
+  function moveNode(dId, targetId, zone) {
+    if (!canDrop(dId, targetId)) return;
+    const dctx = findCtx(dId);
+    if (!dctx) return;
+    const drag = dctx.node;
+    dctx.list.splice(dctx.index, 1);
+    const tctx = findCtx(targetId);
+    if (!tctx) { dctx.list.splice(dctx.index, 0, drag); return; }
+    if (zone === 'inside') {
+      tctx.node.subtasks = tctx.node.subtasks || [];
+      tctx.node.subtasks.push(drag);
+      tctx.node.collapsed = false;
+    } else {
+      const idx = tctx.index + (zone === 'after' ? 1 : 0);
+      tctx.list.splice(idx, 0, drag);
+      // Si queda como hermano de nivel superior, hereda el cuadrante del objetivo.
+      if (tctx.list === tasks) { drag.urgent = tctx.node.urgent; drag.important = tctx.node.important; }
+    }
+  }
+  // Mueve un nodo al nivel superior en una columna concreta (soltar en zona vacía).
+  function moveNodeToColumn(dId, q) {
+    const dctx = findCtx(dId);
+    if (!dctx) return;
+    const drag = dctx.node;
+    dctx.list.splice(dctx.index, 1);
+    drag.urgent = (q === 'q1');
+    drag.important = true;
+    tasks.push(drag);
+  }
+  function clearDropIndicators() {
+    matrixViewEl.querySelectorAll('.drop-before, .drop-after, .drop-inside').forEach(function (el) {
+      el.classList.remove('drop-before', 'drop-after', 'drop-inside');
+    });
+  }
+  function zoneFromEvent(rowEl, e) {
+    const r = rowEl.getBoundingClientRect();
+    const y = e.clientY - r.top;
+    const h = r.height || 1;
+    if (y < h * 0.30) return 'before';
+    if (y > h * 0.70) return 'after';
+    return 'inside';
+  }
+
+  // Renderiza un nodo y, recursivamente, TODOS sus descendientes. Es el mismo
+  // componente en cualquier nivel: cada nodo puede editarse, completarse,
+  // colapsarse/expandirse, tener sus propias subtareas, etiquetas, fecha y eliminarse.
+  function renderNode(node, level) {
+    const hasKids = (node.subtasks || []).length > 0;
+    const isRoot = level === 1;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'tnode lvl-' + Math.min(level, 5) + (isRoot ? ' card' : '');
+    wrap.dataset.id = node.id;
+
+    const row = document.createElement('div');
+    row.className = 'tnode-row' + (node.done ? ' done' : '');
+
+    // Zonas de drop: soltar arriba/abajo (hermano) o al centro (anidar como hijo).
+    row.addEventListener('dragover', function (e) {
+      if (!dragId) return;
+      // Mientras el cursor está sobre un nodo, la columna no debe capturar el drop.
+      e.stopPropagation();
+      if (!canDrop(dragId, node.id)) return; // objetivo inválido: sin indicador ni drop
+      e.preventDefault();
+      clearDropIndicators();
+      row.classList.add('drop-' + zoneFromEvent(row, e));
+    });
+    row.addEventListener('drop', function (e) {
+      if (!dragId) return;
+      e.stopPropagation();
+      if (!canDrop(dragId, node.id)) { clearDropIndicators(); return; }
+      e.preventDefault();
+      const zone = zoneFromEvent(row, e);
+      clearDropIndicators();
+      moveNode(dragId, node.id, zone);
+      dragId = null;
+      save();
+      render();
+    });
+
+    // Manija de arrastre (aparece en hover). Solo la manija inicia el drag,
+    // así el texto editable no interfiere con la selección.
+    const grip = document.createElement('span');
+    grip.className = 'tnode-grip';
+    grip.textContent = '⠿';
+    grip.title = 'Arrastra para mover';
+    grip.draggable = true;
+    grip.addEventListener('dragstart', function (e) {
+      dragId = node.id;
+      wrap.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', node.id); } catch (_) {}
+      try { e.dataTransfer.setDragImage(wrap, 12, 12); } catch (_) {}
+    });
+    grip.addEventListener('dragend', function () { wrap.classList.remove('dragging'); clearDropIndicators(); dragId = null; });
+
+    function toggleCollapse() { if (hasKids) { node.collapsed = !node.collapsed; save(); render(); } }
+
+    // Chevron ▶ / ▼ (solo si tiene hijos)
+    const chevron = document.createElement('span');
+    chevron.className = 'tnode-chevron' + (hasKids ? '' : ' hidden-chevron') + (hasKids && !node.collapsed ? ' expanded' : '');
+    chevron.textContent = '▶';
+    chevron.title = 'Expandir / contraer';
+    chevron.addEventListener('click', toggleCollapse);
+
+    // Icono según nivel (también alterna expandir/contraer)
+    const icon = document.createElement('span');
+    icon.className = 'tnode-icon';
+    icon.textContent = levelIcon(level);
+    icon.addEventListener('click', toggleCollapse);
+
+    // Checkbox: marca/desmarca el nodo y toda su rama
+    const check = document.createElement('span');
+    check.className = 'tnode-check' + (node.done ? ' checked' : '');
+    check.textContent = node.done ? '✓' : '';
+    check.addEventListener('click', function () {
+      setDoneRecursive(node, !node.done);
+      save(); render();
+    });
+
+    // Texto editable
+    const text = document.createElement('div');
+    text.className = 'tnode-text';
+    text.contentEditable = 'true';
+    text.dataset.placeholder = isRoot ? 'Escribe la tarea...' : 'Subtarea...';
+    text.textContent = node.text;
+    text.addEventListener('input', function () { node.text = text.textContent; save(); });
+    text.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); text.blur(); }
+      else if (e.key === 'Backspace' && text.textContent === '' && !hasKids && !isRoot) {
+        e.preventDefault();
+        removeNodeAnimated(node.id);
+      }
+    });
+
+    // Botón agregar subtarea (icono ＋, aparece en hover)
+    const add = document.createElement('button');
+    add.className = 'tnode-add';
+    add.textContent = '＋';
+    add.title = 'Agregar subtarea';
+    add.addEventListener('click', function () {
+      const child = newNode();
+      node.subtasks = node.subtasks || [];
+      node.subtasks.push(child);
+      node.collapsed = false;
+      save(); render();
+      focusNode(child.id);
+    });
+
+    // Menú ⋯ (fecha, etiquetas, eliminar)
+    const menu = document.createElement('button');
+    menu.className = 'tnode-menu';
+    menu.textContent = '⋯';
+    menu.title = 'Opciones';
+    menu.addEventListener('click', function () { openMetaId = openMetaId === node.id ? null : node.id; render(); });
+
+    row.appendChild(grip);
+    row.appendChild(chevron);
+    row.appendChild(icon);
+    row.appendChild(check);
+    row.appendChild(text);
+    row.appendChild(add);
+    row.appendChild(menu);
+    wrap.appendChild(row);
+
+    // Etiquetas + fecha
+    if ((node.tags && node.tags.length) || node.dueDate) {
+      const metaRow = document.createElement('div');
+      metaRow.className = 'tnode-meta-row';
+      (node.tags || []).forEach(function (tag) {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.textContent = tag;
+        styleChip(chip, tagColor(tag));
+        metaRow.appendChild(chip);
+      });
+      if (node.dueDate) {
+        const badge = document.createElement('span');
+        badge.className = 'due-badge ' + dueClass(node.dueDate);
+        badge.textContent = dueLabel(node.dueDate);
+        metaRow.appendChild(badge);
+      }
+      wrap.appendChild(metaRow);
+    }
+
+    // Barra de progreso (según hijos directos)
+    const prog = subProgress(node);
+    if (prog.total > 0) {
+      const progRow = document.createElement('div');
+      progRow.className = 'progress-row';
+      const track = document.createElement('div');
+      track.className = 'progress-track';
+      const fill = document.createElement('div');
+      fill.className = 'progress-fill';
+      fill.style.width = Math.round((prog.done / prog.total) * 100) + '%';
+      track.appendChild(fill);
+      const count = document.createElement('span');
+      count.className = 'progress-count';
+      count.textContent = prog.done + '/' + prog.total;
+      progRow.appendChild(track);
+      progRow.appendChild(count);
+      wrap.appendChild(progRow);
+    }
+
+    // Panel de opciones (fecha / etiquetas / eliminar)
+    wrap.appendChild(renderMetaPanel(node));
+
+    // Hijos (recursivo) con animación de expandir/contraer e indentación tipo árbol
+    const childrenWrap = document.createElement('div');
+    childrenWrap.className = 'tnode-children' + (hasKids && !node.collapsed ? ' expanded' : '');
+    const childrenInner = document.createElement('div');
+    childrenInner.className = 'tnode-children-inner';
+    (node.subtasks || []).forEach(function (child) {
+      childrenInner.appendChild(renderNode(child, level + 1));
+    });
+    childrenWrap.appendChild(childrenInner);
+    wrap.appendChild(childrenWrap);
+
+    return wrap;
+  }
+
+  function quadrantKey(t) {
+    // Solo 2 columnas: q1 = urgente e importante, q2 = importante (no urgente).
+    return t.urgent && t.important ? 'q1' : 'q2';
+  }
+
+  function render() {
+    const qlists = {
+      q1: matrixViewEl.querySelector('.qlist[data-q="q1"]'),
+      q2: matrixViewEl.querySelector('.qlist[data-q="q2"]')
+    };
+    Object.keys(qlists).forEach(function (k) { qlists[k].innerHTML = ''; });
+    tasks.forEach(recomputeDone);
+    tasks.forEach(function (t) { qlists[quadrantKey(t)].appendChild(renderNode(t, 1)); });
+    const all = flattenTasks(tasks);
+    countEl.textContent = all.length + ' tarea(s) · ' + all.filter(function (t) { return t.done; }).length + ' completada(s)';
+    if (tagsPanel.classList.contains('open')) renderTagsManager();
+    renderNotifyBanner();
+  }
+
+  // ---------------- Drag & drop on quadrants ----------------
+
+  matrixViewEl.querySelectorAll('.qlist').forEach(function (list) {
+    list.addEventListener('dragover', function (e) {
+      if (!dragId) return;
+      e.preventDefault();
+      clearDropIndicators();
+      list.closest('.quadrant').classList.add('drag-over');
+    });
+    list.addEventListener('dragleave', function () {
+      list.closest('.quadrant').classList.remove('drag-over');
+    });
+    list.addEventListener('drop', function (e) {
+      e.preventDefault();
+      list.closest('.quadrant').classList.remove('drag-over');
+      if (!dragId) return;
+      // Soltar en zona vacía de una columna: mueve la tarea a nivel superior
+      // con ese cuadrante (urgente/importante). Sirve también para "sacar" subtareas.
+      moveNodeToColumn(dragId, list.dataset.q);
+      dragId = null;
+      clearDropIndicators();
+      save();
+      render();
+    });
+  });
+
+  matrixViewEl.querySelectorAll('.qadd').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const q = btn.dataset.q;
+      // q1 = urgente e importante ; q2 = importante, no urgente
+      const t = newTask(q === 'q1', true);
+      tasks.push(t);
+      openMetaId = null;
+      save();
+      render();
+      focusNode(t.id);
+    });
+  });
+
+  setAuthMode('signin');
+})();
+</script>
+</body>
+</html>
