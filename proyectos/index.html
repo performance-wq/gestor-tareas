@@ -15,10 +15,11 @@
   body::before{background:var(--accent);top:-20%;left:-15%}
   body::after{background:var(--accent2);bottom:-25%;right:-15%}
   h1{font-size:22px;margin:0;font-weight:700;background:linear-gradient(90deg,var(--accent2),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .wrap{width:100%;max-width:960px;padding:30px 22px 80px;position:relative;z-index:1}
+  .wrap{width:100%;max-width:960px;min-width:0;padding:30px 22px 80px;position:relative;z-index:1}
   #loginView{max-width:380px}
   .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
-  .user-bar{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+  .user-bar{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap;min-width:0;max-width:100%}
+  .user-bar #whoami{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .nav{display:flex;gap:6px;margin:14px 0 22px}
   .nav a{font-size:13px;padding:6px 14px;border-radius:9px;text-decoration:none;color:var(--muted);border:1px solid transparent}
   .nav a:hover{color:var(--text)}
@@ -54,27 +55,52 @@
   .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px}
   .tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13.5px;padding:9px 15px;cursor:pointer;font-family:inherit;margin-bottom:-1px}
   .tabs button.on{color:var(--text);border-bottom-color:var(--accent)}
-  .area{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
-  .area-h{display:flex;align-items:center;gap:9px;padding:10px 13px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .area-h b{font-size:13px}
-  .area-h .btn{margin-left:auto}
-  .task{border-bottom:1px solid var(--line);padding:9px 13px}
+  /* ---- Áreas y tareas: lista compacta estilo Linear/ClickUp ---- */
+  .area{border:1px solid var(--line);border-radius:9px;margin-bottom:8px;overflow:hidden}
+  .area-h{display:flex;align-items:center;gap:7px;padding:5px 8px 5px 6px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .area-h b{font-size:12.5px}
+  .area-h .cnt{font-size:11px;color:var(--muted)}
+  .area-h .btn{margin-left:auto;padding:3px 9px}
+  .task{border-bottom:1px solid var(--line)}
   .task:last-child{border-bottom:none}
-  .task-top{display:flex;align-items:flex-start;gap:9px}
-  .task-name{flex:1;min-width:0;background:none;border:none;padding:0;font-size:13.5px;font-weight:600;color:var(--text)}
+  .task.dragging,.sub.dragging{opacity:.4}
+  .task-top{display:flex;align-items:center;gap:6px;padding:2px 8px 2px 6px;min-height:29px;position:relative}
+  .task-top:hover{background:rgba(255,255,255,.03)}
+  .drop-antes{box-shadow:inset 0 2px 0 0 var(--accent2)}
+  .drop-despues{box-shadow:inset 0 -2px 0 0 var(--accent2)}
+  .grip{flex:0 0 auto;width:12px;text-align:center;cursor:grab;color:var(--muted);font-size:12px;line-height:1;opacity:0;user-select:none}
+  .task-top:hover .grip,.sub:hover .grip{opacity:.55}
+  .grip:active{cursor:grabbing}
+  .task-name{flex:1;min-width:0;background:none;border:none;padding:0;font-size:13px;font-weight:600;color:var(--text)}
   .task.done .task-name{text-decoration:line-through;color:var(--muted)}
-  .sub{display:flex;align-items:center;gap:8px;padding:4px 0 4px 24px}
-  .sub input{background:none;border:none;padding:0;font-size:12.5px}
+  .task-pct{font-size:10.5px;color:var(--muted);white-space:nowrap}
+  .sub{display:flex;align-items:center;gap:6px;padding:2px 8px 2px 20px;min-height:25px;position:relative}
+  .sub:hover{background:rgba(255,255,255,.03)}
+  .sub input{flex:1;min-width:0;background:none;border:none;padding:0;font-size:12px}
   .sub.done input{text-decoration:line-through;color:var(--muted)}
-  .x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 3px}
+  .x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 3px;line-height:1}
   .x:hover{color:var(--danger)}
-  .detail{border-top:1px dashed var(--line);margin-top:9px;padding-top:11px;display:flex;flex-direction:column;gap:11px}
-  .track{border:1px solid var(--line);border-radius:9px;padding:10px;background:rgba(0,0,0,.25)}
-  .empty{color:var(--muted);font-size:13px;padding:8px 2px}
+  .detail{border-top:1px dashed var(--line);margin:0 8px 8px;padding-top:9px;display:flex;flex-direction:column;gap:9px}
+  .track{border:1px solid var(--line);border-radius:8px;padding:9px;background:rgba(0,0,0,.25)}
+  .empty{color:var(--muted);font-size:12.5px;padding:7px 2px}
   .plist a{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;text-decoration:none;color:var(--text);background:var(--panel)}
   .plist a:hover{border-color:var(--accent2)}
-  .log-e{border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:10px;background:var(--panel)}
   .tag{background:rgba(176,107,255,.14);color:#d9bcff;border-radius:7px;padding:2px 8px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  /* ---- Bitácora: línea de tiempo cronológica ---- */
+  .form-log{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel);margin:8px 0 16px}
+  .timeline{position:relative;margin:0 0 0 5px;padding-left:16px;border-left:1px solid var(--line)}
+  .tl-item{position:relative;padding:5px 6px 5px 4px;cursor:pointer;border-radius:6px}
+  .tl-item:hover{background:rgba(255,255,255,.03)}
+  .tl-dot{position:absolute;left:-21px;top:9px;width:9px;height:9px;border-radius:50%;border:2px solid var(--bg);box-sizing:content-box}
+  .tl-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .tl-area{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .tl-date{font-size:11px;color:var(--muted)}
+  .tl-x{margin-left:auto;opacity:0;font-size:11px}
+  .tl-item:hover .tl-x{opacity:.6}
+  .tl-sum{font-size:12.5px;color:var(--text);margin-top:1px}
+  .tl-detail{margin-top:8px;display:flex;flex-direction:column;gap:8px;cursor:default}
+  .tl-field .lbl{margin-bottom:2px}
+  .tl-field .val{font-size:13px;white-space:pre-wrap;line-height:1.4}
   .hidden{display:none!important}
 </style>
 </head>
@@ -110,6 +136,7 @@
 
   var me = null, cuenta = null, proyectos = [], actual = null;
   var areas = [], tareas = [], bitacora = [], pestana = 'tareas', abierta = null, bloqueo = null;
+  var arrastreId = null, arrastreTabla = null, logAbierto = null;
 
   function msg(el, t, k) { el.innerHTML = t ? '<div class="msg ' + k + '">' + t + '</div>' : ''; }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
@@ -309,10 +336,12 @@
   function bloqueArea(a) {
     var caja = el('div', 'area');
     var head = el('div', 'area-h');
+    var gripA = el('span', 'grip', '⠿'); gripA.title = 'Arrastra para reordenar el área';
+    head.appendChild(gripA);
     head.appendChild(el('b', null, a ? a.name : 'Sin área'));
     var lista = raiz().filter(function (t) { return a ? t.area_id === a.id : !t.area_id; });
     var hechas = lista.filter(function (t) { return estado(t) === 'done'; }).length;
-    head.appendChild(el('span', 'hint', hechas + '/' + lista.length));
+    head.appendChild(el('span', 'cnt', hechas + '/' + lista.length));
 
     var add = el('button', 'btn', '+ Tarea');
     add.onclick = async function () {
@@ -324,7 +353,8 @@
     };
     head.appendChild(add);
 
-    if (a && areas.length > 1) head.appendChild(flechas(areas, a, 'project_areas'));
+    if (a && areas.length > 1) arrastrable(head, gripA, a, areas, 'project_areas');
+    else gripA.style.visibility = 'hidden';
 
     if (a) {
       var del = el('button', 'x', '✕'); del.title = 'Eliminar área';
@@ -350,32 +380,67 @@
     if (r.error) alert('No se pudo guardar: ' + r.error.message);
   }
 
-  // Sube o baja un elemento dentro de su lista de hermanos. Reescribe la
-  // posición de toda la lista para que nunca queden huecos ni empates: el
-  // orden que se ve es siempre el que queda guardado.
-  async function mover(lista, item, delta, tabla) {
-    var i = lista.indexOf(item), j = i + delta;
-    if (i < 0 || j < 0 || j >= lista.length) return;
-    lista.splice(j, 0, lista.splice(i, 1)[0]);
-    lista.forEach(function (x, k) { x.position = k; });
-    pintar();
-    for (var k = 0; k < lista.length; k++) {
-      var r = await sb.from(tabla).update({ position: k }).eq('id', lista[k].id);
-      if (r.error) { alert('No se pudo guardar el orden: ' + r.error.message); return; }
-    }
+  // ---------------- Reordenar con Drag & Drop ----------------
+  // El orden se guarda en la columna position, igual que antes; solo cambia la
+  // interacción (arrastrar en vez de flechas). Un elemento solo puede soltarse
+  // dentro de su propia lista de hermanos: el arrastre se identifica por tabla
+  // y se comprueba que el id arrastrado pertenezca a la lista de destino.
+  function limpiarDrop() {
+    document.querySelectorAll('.drop-antes, .drop-despues').forEach(function (n) {
+      n.classList.remove('drop-antes', 'drop-despues');
+    });
   }
 
-  // Par de flechas para reordenar; se desactivan en los extremos.
-  function flechas(lista, item, tabla) {
-    var c = document.createDocumentFragment();
-    [['▲', -1], ['▼', 1]].forEach(function (o) {
-      var b = el('button', 'x', o[0]);
-      var i = lista.indexOf(item), j = i + o[1];
-      if (j < 0 || j >= lista.length) { b.disabled = true; b.style.opacity = '.25'; }
-      else { b.title = o[1] < 0 ? 'Subir' : 'Bajar'; b.onclick = function () { mover(lista, item, o[1], tabla); }; }
-      c.appendChild(b);
+  function reordenar(lista, fromId, toId, antes, tabla) {
+    if (fromId === toId) return;
+    var from = -1, to = -1;
+    lista.forEach(function (x, i) { if (x.id === fromId) from = i; if (x.id === toId) to = i; });
+    if (from < 0 || to < 0) return;
+    var item = lista.splice(from, 1)[0];
+    to = lista.findIndex(function (x) { return x.id === toId; });
+    lista.splice(antes ? to : to + 1, 0, item);
+    lista.forEach(function (x, k) { x.position = k; });
+    pintar();
+    // Persiste el nuevo orden fila por fila (mismo patrón de guardado de antes).
+    (async function () {
+      for (var k = 0; k < lista.length; k++) {
+        var r = await sb.from(tabla).update({ position: k }).eq('id', lista[k].id);
+        if (r.error) { alert('No se pudo guardar el orden: ' + r.error.message); return; }
+      }
+    })();
+  }
+
+  // Conecta una fila como arrastrable: la manija inicia el arrastre y la fila
+  // entera es zona de destino, con indicador arriba/abajo según el cursor.
+  function arrastrable(fila, grip, item, lista, tabla) {
+    grip.draggable = true;
+    grip.addEventListener('dragstart', function (e) {
+      arrastreId = item.id; arrastreTabla = tabla;
+      fila.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', item.id); } catch (_) {}
+      try { e.dataTransfer.setDragImage(fila, 10, 10); } catch (_) {}
     });
-    return c;
+    grip.addEventListener('dragend', function () {
+      fila.classList.remove('dragging'); limpiarDrop(); arrastreId = null; arrastreTabla = null;
+    });
+    fila.addEventListener('dragover', function (e) {
+      if (arrastreId == null || arrastreTabla !== tabla) return;
+      if (item.id === arrastreId || !lista.some(function (x) { return x.id === arrastreId; })) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+      limpiarDrop();
+      var rect = fila.getBoundingClientRect();
+      fila.classList.add((e.clientY - rect.top) < rect.height / 2 ? 'drop-antes' : 'drop-despues');
+    });
+    fila.addEventListener('drop', function (e) {
+      if (arrastreId == null || arrastreTabla !== tabla) return;
+      if (!lista.some(function (x) { return x.id === arrastreId; })) { limpiarDrop(); return; }
+      e.preventDefault();
+      var rect = fila.getBoundingClientRect();
+      var antes = (e.clientY - rect.top) < rect.height / 2, fromId = arrastreId;
+      limpiarDrop(); arrastreId = null; arrastreTabla = null;
+      reordenar(lista, fromId, item.id, antes, tabla);
+    });
   }
 
   function filaTarea(t, hermanas) {
@@ -383,6 +448,10 @@
     var caja = el('div', 'task' + (est === 'done' ? ' done' : ''));
 
     var top = el('div', 'task-top');
+
+    var grip = el('span', 'grip', '⠿'); grip.title = 'Arrastra para reordenar';
+    top.appendChild(grip);
+
     var d = el('span', 'dot' + (est === 'done' ? ' on' : est === 'in_progress' ? ' mid' : ''));
     d.title = h.length ? 'Estado automático según subtareas' : 'Marcar completada';
     if (!h.length) d.onclick = async function () { await guardar(t, { status: t.status === 'done' ? 'pending' : 'done' }); pintar(); };
@@ -394,10 +463,8 @@
     nom.addEventListener('keydown', function (e) { if (e.key === 'Enter') nom.blur(); });
     top.appendChild(nom);
 
-    top.appendChild(el('span', 'hint', pct + '%'));
+    top.appendChild(el('span', 'task-pct', pct + '%'));
     top.appendChild(el('span', 'pill p-' + (est === 'in_progress' ? 'progress' : est), ETIQ[est]));
-
-    if (hermanas && hermanas.length > 1) top.appendChild(flechas(hermanas, t, 'project_tasks'));
 
     var ver = el('button', 'x', abierta === t.id ? '▾' : '▸');
     ver.onclick = function () { abierta = abierta === t.id ? null : t.id; pintar(); };
@@ -413,8 +480,12 @@
     top.appendChild(quitar);
     caja.appendChild(top);
 
+    // Arrastrar para reordenar dentro del área (solo si hay con quién intercambiar).
+    if (hermanas && hermanas.length > 1) arrastrable(top, grip, t, hermanas, 'project_tasks');
+    else grip.style.visibility = 'hidden';
+
     if (h.length) {
-      var bar = el('div', 'bar' + (pct >= 100 ? ' full' : '')); bar.style.margin = '8px 0 4px 24px';
+      var bar = el('div', 'bar' + (pct >= 100 ? ' full' : '')); bar.style.margin = '4px 8px 6px 26px';
       var f = el('i'); f.style.width = pct + '%'; bar.appendChild(f); caja.appendChild(bar);
     }
 
@@ -462,19 +533,21 @@
     sw.appendChild(el('div', 'lbl', 'Subtareas'));
     h.forEach(function (s) {
       var f = el('div', 'sub' + (s.status === 'done' ? ' done' : ''));
+      var sg = el('span', 'grip', '⠿'); sg.title = 'Arrastra para reordenar';
       var sd = el('span', 'dot' + (s.status === 'done' ? ' on' : ''));
       sd.onclick = async function () { await guardar(s, { status: s.status === 'done' ? 'pending' : 'done' }); pintar(); };
       var si = el('input'); si.value = s.name;
       si.onblur = function () { if (si.value !== s.name) guardar(s, { name: si.value }); };
       si.addEventListener('keydown', function (e) { if (e.key === 'Enter') si.blur(); });
-      var sx = el('button', 'x', '✕');
+      var sx = el('button', 'x', '✕'); sx.title = 'Eliminar subtarea';
       sx.onclick = async function () {
+        if (!confirm('¿Eliminar la subtarea "' + s.name + '"?')) return;
         await sb.from('project_tasks').delete().eq('id', s.id);
         tareas = tareas.filter(function (x) { return x.id !== s.id; }); pintar();
       };
-      f.appendChild(sd); f.appendChild(si);
-      if (h.length > 1) f.appendChild(flechas(h, s, 'project_tasks'));
-      f.appendChild(sx);
+      f.appendChild(sg); f.appendChild(sd); f.appendChild(si); f.appendChild(sx);
+      if (h.length > 1) arrastrable(f, sg, s, h, 'project_tasks');
+      else sg.style.visibility = 'hidden';
       sw.appendChild(f);
     });
     var addSub = el('div', 'row'); addSub.style.marginTop = '6px'; addSub.style.paddingLeft = '24px';
@@ -529,21 +602,62 @@
   }
 
   // ---------------- Bitácora ----------------
+  // Color por área: los nombres conocidos usan el color pedido; cualquier otro
+  // recibe uno estable derivado del propio nombre (misma área → mismo color).
+  var COLOR_AREA = {
+    'trafico': '#b06bff', 'tráfico': '#b06bff', 'trafico pago': '#b06bff', 'tráfico pago': '#b06bff',
+    'desarrollo': '#35e5ff', 'dev': '#35e5ff',
+    'diseno': '#2ee6a6', 'diseño': '#2ee6a6',
+    'copy': '#ff9f43', 'copywriting': '#ff9f43',
+    'ventas': '#ff4d6d',
+    'automatizaciones': '#f7d154', 'automatizacion': '#f7d154', 'automatización': '#f7d154',
+    'crm': '#5b8cff',
+    'general': '#948bc4'
+  };
+  var PALETA_AREA = ['#b06bff', '#35e5ff', '#2ee6a6', '#ff9f43', '#ff4d6d', '#f7d154', '#5b8cff', '#22d3ee', '#a3e635', '#ff2fd0'];
+  function colorArea(nombre) {
+    var k = (nombre || '').trim().toLowerCase();
+    if (COLOR_AREA[k]) return COLOR_AREA[k];
+    var s = 0;
+    for (var i = 0; i < k.length; i++) s = (s * 31 + k.charCodeAt(i)) >>> 0;
+    return PALETA_AREA[k ? s % PALETA_AREA.length : 0];
+  }
+
+  // Resumen de una línea (~80–120 caracteres), cortado en un espacio.
+  function resumenLog(txt) {
+    var s = (txt || '').replace(/\s+/g, ' ').trim();
+    if (s.length <= 120) return s;
+    var c = s.slice(0, 110), esp = c.lastIndexOf(' ');
+    if (esp > 70) c = c.slice(0, esp);
+    return c + '…';
+  }
+
+  var MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  function fechaCorta(iso) {
+    var p = String(iso || '').slice(0, 10).split('-');
+    if (p.length !== 3) return iso || '';
+    var txt = parseInt(p[2], 10) + ' ' + (MESES[parseInt(p[1], 10) - 1] || '');
+    if (String(new Date().getFullYear()) !== p[0]) txt += ' ' + p[0];
+    return txt;
+  }
+
   function pintarBitacora(z) {
-    var f = el('div', 'card');
-    f.appendChild(el('div', 'lbl', 'Registrar un cambio'));
-    var g = el('div', 'grid'); g.style.marginTop = '10px';
+    // --- Formulario en acordeón: oculto hasta pulsar "+ Registrar cambio" ---
+    var toggle = el('button', 'pbtn', '+ Registrar cambio');
+    var panel = el('div', 'form-log'); panel.style.display = 'none';
+
+    var g = el('div', 'grid');
     var fecha = el('input'); fecha.type = 'date'; fecha.value = hoy();
-    var area = el('input'); area.placeholder = 'Área (Tráfico Pago, Landing…)';
+    var area = el('input'); area.placeholder = 'Área (Tráfico, Diseño, Ventas…)';
     g.appendChild(fecha); g.appendChild(area);
-    f.appendChild(g);
+    panel.appendChild(g);
 
     function ta(ph) { var x = el('textarea'); x.rows = 2; x.placeholder = ph; x.style.marginTop = '9px'; return x; }
-    var cambio = ta('Cambio realizado');
+    var cambio = ta('Cambio realizado *');
     var motivo = ta('Motivo del cambio');
     var result = ta('Resultado obtenido');
     var notas = ta('Observaciones');
-    [cambio, motivo, result, notas].forEach(function (x) { f.appendChild(x); });
+    [cambio, motivo, result, notas].forEach(function (x) { panel.appendChild(x); });
 
     var bt = el('button', 'pbtn', 'Registrar'); bt.style.marginTop = '11px';
     bt.onclick = async function () {
@@ -557,34 +671,69 @@
       }).select('*').single();
       bt.disabled = false;
       if (r.error) { alert(r.error.message); return; }
-      bitacora.unshift(r.data); pintar();
+      bitacora.unshift(r.data);
+      // Al guardar, pintar() vuelve a dibujar la pestaña: formulario cerrado y
+      // campos limpios, sin trabajo extra.
+      pintar();
     };
-    f.appendChild(bt);
-    z.appendChild(f);
+    panel.appendChild(bt);
 
+    toggle.onclick = function () {
+      var abrir = panel.style.display === 'none';
+      panel.style.display = abrir ? 'block' : 'none';
+      toggle.textContent = abrir ? 'Cancelar' : '+ Registrar cambio';
+      if (abrir) setTimeout(function () { area.focus(); }, 0);
+    };
+
+    z.appendChild(toggle);
+    z.appendChild(panel);
+
+    // --- Historial como línea de tiempo ---
     if (!bitacora.length) { z.appendChild(el('div', 'empty', 'Todavía no hay cambios registrados.')); return; }
-    bitacora.forEach(function (e2) {
-      var c = el('div', 'log-e');
-      var h = el('div', 'row');
-      h.appendChild(el('span', 'tag', e2.area));
-      h.appendChild(el('span', 'hint', e2.entry_date));
-      var x = el('button', 'x', '✕'); x.style.marginLeft = 'auto';
-      x.onclick = async function () {
-        if (!confirm('¿Eliminar este registro?')) return;
-        await sb.from('project_log').delete().eq('id', e2.id);
-        bitacora = bitacora.filter(function (y) { return y.id !== e2.id; }); pintar();
-      };
-      h.appendChild(x);
-      c.appendChild(h);
+    var tl = el('div', 'timeline');
+    bitacora.forEach(function (e2) { tl.appendChild(filaLog(e2)); });
+    z.appendChild(tl);
+  }
+
+  function filaLog(e2) {
+    var color = colorArea(e2.area), expandido = logAbierto === e2.id;
+    var item = el('div', 'tl-item');
+
+    var dot = el('span', 'tl-dot'); dot.style.background = color;
+    item.appendChild(dot);
+
+    var head = el('div', 'tl-head');
+    var a = el('span', 'tl-area', e2.area); a.style.color = color;
+    head.appendChild(a);
+    head.appendChild(el('span', 'tl-date', fechaCorta(e2.entry_date)));
+    var x = el('button', 'x tl-x', '✕'); x.title = 'Eliminar registro';
+    x.onclick = async function (ev) {
+      ev.stopPropagation();
+      if (!confirm('¿Eliminar este registro?')) return;
+      await sb.from('project_log').delete().eq('id', e2.id);
+      bitacora = bitacora.filter(function (y) { return y.id !== e2.id; }); pintar();
+    };
+    head.appendChild(x);
+    item.appendChild(head);
+
+    // Cerrado: solo el resumen de una línea. Expandido: el detalle completo.
+    if (!expandido) {
+      item.appendChild(el('div', 'tl-sum', resumenLog(e2.change_text)));
+    } else {
+      var det = el('div', 'tl-detail');
+      det.onclick = function (ev) { ev.stopPropagation(); };
       [['Cambio realizado', e2.change_text], ['Motivo', e2.reason], ['Resultado', e2.result], ['Observaciones', e2.notes]].forEach(function (p) {
         if (!p[1]) return;
-        var w = el('div'); w.style.marginTop = '9px';
+        var w = el('div', 'tl-field');
         w.appendChild(el('div', 'lbl', p[0]));
-        var t = el('div', null, p[1]); t.style.fontSize = '13.5px'; t.style.whiteSpace = 'pre-wrap'; t.style.marginTop = '3px';
-        w.appendChild(t); c.appendChild(w);
+        var v = el('div', 'val'); v.textContent = p[1];
+        w.appendChild(v); det.appendChild(w);
       });
-      z.appendChild(c);
-    });
+      item.appendChild(det);
+    }
+
+    item.onclick = function () { logAbierto = expandido ? null : e2.id; pintar(); };
+    return item;
   }
 })();
 </script>
