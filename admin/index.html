@@ -276,6 +276,16 @@
     $('createBtn').disabled = false;
     if (!res.ok || payload.error) { show(msg, payload.error || 'No se pudo crear la cuenta.', 'error'); return; }
 
+    // La cuenta (tenant) nace con el correo por nombre. Si nos dieron la
+    // empresa, se renombra aquí: el propietario tiene permiso sobre accounts,
+    // así que no hace falta tocar la función del servidor.
+    if (company && payload.id) {
+      const { data: prof } = await sb.from('profiles').select('account_id').eq('id', payload.id).maybeSingle();
+      if (prof && prof.account_id) {
+        await sb.from('accounts').update({ name: company }).eq('id', prof.account_id);
+      }
+    }
+
     show(msg, 'Cuenta creada para ' + email + '. Ya puede entrar con esa contraseña.', 'ok');
     $('newEmail').value = ''; $('newPassword').value = ''; $('newCompany').value = ''; $('newName').value = '';
     loadClients();
