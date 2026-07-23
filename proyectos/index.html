@@ -108,6 +108,18 @@
   .tl-detail{margin-top:8px;display:flex;flex-direction:column;gap:8px;cursor:default}
   .tl-field .lbl{margin-bottom:2px}
   .tl-field .val{font-size:13px;white-space:pre-wrap;line-height:1.4}
+  /* ---- Estado del proyecto ---- */
+  .pstatus{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:2px 9px;white-space:nowrap;flex:0 0 auto}
+  .pstatus-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .estado-select{width:auto;padding:5px 9px;font-size:12px;border-radius:9px}
+  /* ---- Menú de acciones (⋮) ---- */
+  .menu-wrap{position:relative;flex:0 0 auto}
+  .menu-btn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:15px;line-height:1;padding:0}
+  .menu-btn:hover{color:var(--text);border-color:var(--accent2)}
+  .menu-pop{position:absolute;right:0;top:32px;z-index:40;min-width:180px;background:#141018;border:1px solid var(--line);border-radius:10px;padding:5px;box-shadow:0 8px 26px rgba(0,0,0,.55)}
+  .menu-pop button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:12.5px;padding:8px 10px;border-radius:7px;cursor:pointer;font-family:inherit}
+  .menu-pop button:hover{background:rgba(255,255,255,.06)}
+  .menu-pop button.danger{color:var(--danger)}
   .hidden{display:none!important}
 </style>
 </head>
@@ -148,6 +160,100 @@
   function msg(el, t, k) { el.innerHTML = t ? '<div class="msg ' + k + '">' + t + '</div>' : ''; }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   function hoy() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+  // ---------------- Estado del proyecto ----------------
+  var ESTADOS = [
+    { v: 'active',    lbl: 'Activo',     emoji: '🟢', dot: '#2ee6a6' },
+    { v: 'pending',   lbl: 'Pendiente',  emoji: '🟡', dot: '#f7d154' },
+    { v: 'on_hold',   lbl: 'En espera',  emoji: '🟠', dot: '#ff9f43' },
+    { v: 'done',      lbl: 'Finalizado', emoji: '🔵', dot: '#35e5ff' },
+    { v: 'cancelled', lbl: 'Cancelado',  emoji: '🔴', dot: '#ff4d6d' }
+  ];
+  function estadoInfo(v) { for (var i = 0; i < ESTADOS.length; i++) if (ESTADOS[i].v === v) return ESTADOS[i]; return ESTADOS[0]; }
+  function pillEstado(v) {
+    var e = estadoInfo(v), s = el('span', 'pstatus');
+    var d = el('span', 'pstatus-dot'); d.style.background = e.dot;
+    s.appendChild(d); s.appendChild(document.createTextNode(e.lbl));
+    return s;
+  }
+
+  // ---------------- Menú de acciones (⋮) ----------------
+  document.addEventListener('click', function () {
+    document.querySelectorAll('.menu-pop').forEach(function (p) { p.classList.add('hidden'); });
+  });
+  function menuAcciones(items) {
+    var wrap = el('div', 'menu-wrap');
+    var btn = el('button', 'menu-btn', '⋮'); btn.title = 'Acciones'; btn.type = 'button';
+    var pop = el('div', 'menu-pop hidden');
+    items.forEach(function (it) {
+      var b = el('button', it.danger ? 'danger' : '', it.label); b.type = 'button';
+      b.onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); pop.classList.add('hidden'); it.onClick(); };
+      pop.appendChild(b);
+    });
+    btn.onclick = function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      var abrir = pop.classList.contains('hidden');
+      document.querySelectorAll('.menu-pop').forEach(function (p) { p.classList.add('hidden'); });
+      if (abrir) pop.classList.remove('hidden');
+    };
+    wrap.appendChild(btn); wrap.appendChild(pop);
+    return wrap;
+  }
+
+  // ---------------- Duplicar / Eliminar ----------------
+  // Copia la estructura (áreas, tareas, subtareas, prioridades, indicadores de
+  // seguimiento) pero NO el avance, responsables, fechas ni bitácora: el nuevo
+  // proyecto nace limpio, listo para reutilizarse como plantilla.
+  async function duplicarProyecto(p) {
+    var res = await Promise.all([
+      sb.from('project_areas').select('*').eq('project_id', p.id).order('position'),
+      sb.from('project_tasks').select('*').eq('project_id', p.id).order('position')
+    ]);
+    var oAreas = res[0].data || [], oTasks = res[1].data || [];
+
+    var np = await sb.from('projects').insert({
+      name: p.name + ' (copia)', description: p.description || null,
+      account_id: cuenta, owner_id: me.id, status: 'pending'
+    }).select('id').single();
+    if (np.error) { alert('No se pudo duplicar: ' + np.error.message); return null; }
+    var nid = np.data.id, areaMap = {}, taskMap = {};
+
+    for (var i = 0; i < oAreas.length; i++) {
+      var a = oAreas[i];
+      var ra = await sb.from('project_areas').insert({ project_id: nid, account_id: cuenta, name: a.name, position: a.position }).select('id').single();
+      if (!ra.error) areaMap[a.id] = ra.data.id;
+    }
+
+    function limpiaTracking(tr) { return (Array.isArray(tr) ? tr : []).map(function (m) { return { label: m.label, value: '' }; }); }
+    function copiaTarea(t, parentNuevo) {
+      return sb.from('project_tasks').insert({
+        project_id: nid, account_id: cuenta,
+        area_id: t.area_id ? (areaMap[t.area_id] || null) : null,
+        parent_id: parentNuevo,
+        name: t.name, description: t.description || null,
+        responsible: null, priority: t.priority, due_date: null, status: 'pending',
+        tracking_enabled: t.tracking_enabled, tracking: limpiaTracking(t.tracking),
+        position: t.position
+      }).select('id').single();
+    }
+    var padres = oTasks.filter(function (t) { return !t.parent_id; });
+    var hijas = oTasks.filter(function (t) { return t.parent_id; });
+    for (var j = 0; j < padres.length; j++) { var rp = await copiaTarea(padres[j], null); if (!rp.error) taskMap[padres[j].id] = rp.data.id; }
+    for (var k = 0; k < hijas.length; k++) { var rh = await copiaTarea(hijas[k], taskMap[hijas[k].parent_id] || null); if (!rh.error) taskMap[hijas[k].id] = rh.data.id; }
+
+    return nid;
+  }
+  async function accionDuplicar(p) {
+    var nid = await duplicarProyecto(p);
+    if (nid) { history.pushState({}, '', '?p=' + nid); verProyecto(nid); }
+  }
+  async function accionEliminar(p) {
+    if (!confirm('¿Estás seguro de eliminar este proyecto?\nEsta acción no se puede deshacer.')) return;
+    var r = await sb.from('projects').delete().eq('id', p.id);
+    if (r.error) { alert('No se pudo eliminar: ' + r.error.message); return; }
+    history.pushState({}, '', '/proyectos/');
+    listaProyectos();
+  }
 
   // ---------------- Acceso ----------------
   $('loginBtn').addEventListener('click', entrar);
@@ -268,11 +374,16 @@
     proyectos.forEach(function (p) {
       var a = el('a'); a.href = '?p=' + p.id;
       a.onclick = function (e) { e.preventDefault(); verProyecto(p.id, true); };
-      var izq = el('div'); izq.style.flex = '1';
+      var izq = el('div'); izq.style.flex = '1'; izq.style.minWidth = '0';
       izq.appendChild(el('div', null, p.name));
       if (p.description) izq.appendChild(el('div', 'hint', p.description));
       a.appendChild(izq);
+      a.appendChild(pillEstado(p.status));
       a.appendChild(el('span', 'hint', String(p.created_at || '').slice(0, 10)));
+      a.appendChild(menuAcciones([
+        { label: 'Duplicar proyecto', onClick: function () { accionDuplicar(p); } },
+        { label: 'Eliminar proyecto', danger: true, onClick: function () { accionEliminar(p); } }
+      ]));
       lista.appendChild(a);
     });
     b.appendChild(lista);
@@ -305,8 +416,30 @@
     volver.onclick = function (e) { e.preventDefault(); history.pushState({}, '', '/proyectos/'); listaProyectos(); };
     b.appendChild(volver);
 
-    var h = el('h1', null, actual.name); h.style.margin = '10px 0 16px'; h.style.fontSize = '20px';
-    b.appendChild(h);
+    var cab = el('div', 'row'); cab.style.margin = '10px 0 16px'; cab.style.justifyContent = 'space-between'; cab.style.flexWrap = 'wrap'; cab.style.gap = '10px';
+    var h = el('h1', null, actual.name); h.style.fontSize = '20px'; h.style.margin = '0'; h.style.minWidth = '0';
+    cab.appendChild(h);
+    var ctr = el('div', 'row'); ctr.style.gap = '8px';
+    // Selector de estado del proyecto (con color por estado).
+    var sel = el('select', 'estado-select');
+    ESTADOS.forEach(function (e2) {
+      var op = el('option', null, e2.emoji + ' ' + e2.lbl); op.value = e2.v;
+      if (actual.status === e2.v) op.selected = true;
+      sel.appendChild(op);
+    });
+    sel.onchange = async function () {
+      var rr = await sb.from('projects').update({ status: sel.value }).eq('id', actual.id);
+      if (rr.error) { alert('No se pudo cambiar el estado: ' + rr.error.message); return; }
+      actual.status = sel.value;
+      var lp = proyectos.find(function (x) { return x.id === actual.id; }); if (lp) lp.status = sel.value;
+    };
+    ctr.appendChild(sel);
+    ctr.appendChild(menuAcciones([
+      { label: 'Duplicar proyecto', onClick: function () { accionDuplicar(actual); } },
+      { label: 'Eliminar proyecto', danger: true, onClick: function () { accionEliminar(actual); } }
+    ]));
+    cab.appendChild(ctr);
+    b.appendChild(cab);
 
     // Resumen: avance global y contadores
     var r = raiz();
