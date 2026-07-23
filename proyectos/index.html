@@ -57,10 +57,17 @@
   .tabs button.on{color:var(--text);border-bottom-color:var(--accent)}
   /* ---- Áreas y tareas: lista compacta estilo Linear/ClickUp ---- */
   .area{border:1px solid var(--line);border-radius:9px;margin-bottom:8px;overflow:hidden}
-  .area-h{display:flex;align-items:center;gap:7px;padding:5px 8px 5px 6px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .area-h{display:flex;align-items:center;gap:7px;padding:5px 8px 5px 6px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap;cursor:pointer}
+  .area-h.plegada{border-bottom:none}
+  .area-chev{flex:0 0 auto;width:11px;text-align:center;color:var(--muted);font-size:9px;transition:transform .18s ease;user-select:none}
+  .area-chev.abierta{transform:rotate(90deg)}
   .area-h b{font-size:12.5px}
-  .area-h .cnt{font-size:11px;color:var(--muted)}
-  .area-h .btn{margin-left:auto;padding:3px 9px}
+  .area-h .cnt{font-size:11px;color:var(--muted);margin-left:auto}
+  .area-bar{flex:0 0 auto;width:52px;height:4px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+  .area-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .3s}
+  .area-bar.full>i{background:var(--ok)}
+  .area-pct{font-size:10.5px;color:var(--muted);white-space:nowrap;min-width:30px}
+  .area-h .btn{padding:3px 9px}
   .task{border-bottom:1px solid var(--line)}
   .task:last-child{border-bottom:none}
   .task.dragging,.sub.dragging{opacity:.4}
@@ -136,7 +143,7 @@
 
   var me = null, cuenta = null, proyectos = [], actual = null;
   var areas = [], tareas = [], bitacora = [], pestana = 'tareas', abierta = null, bloqueo = null;
-  var arrastreId = null, arrastreTabla = null, logAbierto = null;
+  var arrastreId = null, arrastreTabla = null, logAbierto = null, areasAbiertas = {};
 
   function msg(el, t, k) { el.innerHTML = t ? '<div class="msg ' + k + '">' + t + '</div>' : ''; }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
@@ -202,6 +209,26 @@
   }
   var ETIQ = { pending: 'Pendiente', in_progress: 'En proceso', done: 'Completado' };
 
+  // ---------------- Acordeón de etapas (áreas) ----------------
+  // Cada etapa se pliega/despliega. Por defecto TODAS contraídas al abrir el
+  // proyecto; solo se recuerdan las que el usuario expande. Se guarda por
+  // proyecto en localStorage, así el estado sobrevive re-render y recarga
+  // mientras el usuario sigue en ese proyecto.
+  function claveAreas() { return 'areasAbiertas_' + (actual ? actual.id : ''); }
+  function cargarAreasAbiertas() {
+    try { areasAbiertas = JSON.parse(localStorage.getItem(claveAreas()) || '{}') || {}; }
+    catch (_) { areasAbiertas = {}; }
+  }
+  function guardarAreasAbiertas() {
+    try { localStorage.setItem(claveAreas(), JSON.stringify(areasAbiertas)); } catch (_) {}
+  }
+  function areaAbierta(key) { return !!areasAbiertas[key]; }
+  function abrirArea(key) { areasAbiertas[key] = true; guardarAreasAbiertas(); }
+  function toggleArea(key) {
+    if (areasAbiertas[key]) delete areasAbiertas[key]; else areasAbiertas[key] = true;
+    guardarAreasAbiertas(); pintar();
+  }
+
   // ---------------- Navegación ----------------
   function abrirDesdeURL() {
     var id = new URLSearchParams(location.search).get('p');
@@ -263,6 +290,7 @@
     ]);
     if (!res[0].data) { b.innerHTML = '<div class="msg error">No se encontró el proyecto.</div>'; return; }
     actual = res[0].data;
+    cargarAreasAbiertas(); // etapas contraídas por defecto, salvo las recordadas
     areas = res[1].data || [];
     tareas = (res[2].data || []).map(function (t) { t.tracking = Array.isArray(t.tracking) ? t.tracking : []; return t; });
     bitacora = res[3].data || [];
@@ -318,7 +346,7 @@
       var n = ia.value.trim(); if (!n) return;
       var r = await sb.from('project_areas').insert({ project_id: actual.id, account_id: cuenta, name: n, position: areas.length }).select('*').single();
       if (r.error) { alert(r.error.message); return; }
-      areas.push(r.data); ia.value = ''; pintar();
+      areas.push(r.data); abrirArea(r.data.id); ia.value = ''; pintar();
     };
     ia.addEventListener('keydown', function (e) { if (e.key === 'Enter') ba.click(); });
     nueva.appendChild(ia); nueva.appendChild(ba);
@@ -334,14 +362,28 @@
   }
 
   function bloqueArea(a) {
+    var key = a ? a.id : '__sin__', abierta_ = areaAbierta(key);
     var caja = el('div', 'area');
-    var head = el('div', 'area-h');
+    var head = el('div', 'area-h' + (abierta_ ? '' : ' plegada'));
+
     var gripA = el('span', 'grip', '⠿'); gripA.title = 'Arrastra para reordenar el área';
     head.appendChild(gripA);
+
+    // Chevron ▶ / ▼ del acordeón
+    var chev = el('span', 'area-chev' + (abierta_ ? ' abierta' : ''), '▶');
+    head.appendChild(chev);
+
     head.appendChild(el('b', null, a ? a.name : 'Sin área'));
+
     var lista = raiz().filter(function (t) { return a ? t.area_id === a.id : !t.area_id; });
     var hechas = lista.filter(function (t) { return estado(t) === 'done'; }).length;
+    var pct = lista.length ? Math.round(lista.reduce(function (s, t) { return s + avance(t); }, 0) / lista.length * 100) : 0;
+
     head.appendChild(el('span', 'cnt', hechas + '/' + lista.length));
+    var barra = el('span', 'area-bar' + (pct >= 100 ? ' full' : ''));
+    var bi = el('i'); bi.style.width = pct + '%'; barra.appendChild(bi);
+    head.appendChild(barra);
+    head.appendChild(el('span', 'area-pct', pct + '%'));
 
     var add = el('button', 'btn', '+ Tarea');
     add.onclick = async function () {
@@ -349,7 +391,9 @@
         project_id: actual.id, account_id: cuenta, area_id: a ? a.id : null, name: 'Nueva tarea', position: lista.length
       }).select('*').single();
       if (r.error) { alert(r.error.message); return; }
-      r.data.tracking = []; tareas.push(r.data); abierta = r.data.id; pintar();
+      r.data.tracking = []; tareas.push(r.data);
+      abrirArea(key); // al añadir una tarea, la etapa se despliega para verla
+      abierta = r.data.id; pintar();
     };
     head.appendChild(add);
 
@@ -367,10 +411,20 @@
       };
       head.appendChild(del);
     }
+
+    // Clic en el encabezado (menos botones y manija) = plegar/desplegar
+    head.addEventListener('click', function (e) {
+      if (e.target.closest('button') || e.target.classList.contains('grip')) return;
+      toggleArea(key);
+    });
     caja.appendChild(head);
 
-    if (!lista.length) caja.appendChild(el('div', 'empty', 'Sin tareas todavía.'));
-    lista.forEach(function (t) { caja.appendChild(filaTarea(t, lista)); });
+    // Contenido colapsable: las tareas (y con ellas las subtareas) solo se
+    // dibujan si la etapa está desplegada.
+    if (abierta_) {
+      if (!lista.length) caja.appendChild(el('div', 'empty', 'Sin tareas todavía.'));
+      lista.forEach(function (t) { caja.appendChild(filaTarea(t, lista)); });
+    }
     return caja;
   }
 
