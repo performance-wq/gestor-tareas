@@ -58,6 +58,11 @@
   .tp{font-size:11px;color:var(--muted);white-space:nowrap}
   .children{margin-left:16px;border-left:1px solid var(--line);padding-left:6px}
   .phase-b{padding:6px 10px 10px}
+  .phito{display:flex;align-items:center;gap:8px;padding:7px 4px 3px;margin-top:4px;font-size:13px;color:var(--muted)}
+  .phito-i{color:var(--muted);font-size:13px}
+  .phito.done{color:#2ee6a6}
+  .phito.done .phito-i{color:#2ee6a6}
+  .phito-t{font-weight:600;letter-spacing:.01em}
   .foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center}
   .state{text-align:center;padding:80px 20px;color:var(--muted)}
 </style>
@@ -103,6 +108,8 @@
 
   function raizFase(areaId) { return data.tasks.filter(function (t) { return !t.parent_id && (areaId ? t.area_id === areaId : !t.area_id); }).sort(function (a, b) { return (a.position || 0) - (b.position || 0); }); }
   function todasLasHojas() { var conHijos = {}; data.tasks.forEach(function (t) { if (t.parent_id) conHijos[t.parent_id] = 1; }); return data.tasks.filter(function (t) { return !conHijos[t.id]; }); }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function hitosDeFase(areaId) { return (data.milestones || []).filter(function (h) { return areaId ? h.area_id === areaId : !h.area_id; }).sort(function (a, b) { return (a.position || 0) - (b.position || 0); }); }
 
   function render() {
     var p = data.project, show = (p.show && typeof p.show === 'object') ? p.show : {};
@@ -152,13 +159,24 @@
     var box = el('div', 'phase');
     var head = el('div', 'phase-h');
     head.appendChild(el('span', 'chev' + (abierto ? ' open' : ''), '▸'));
-    head.appendChild(el('span', 'num', numero + '.'));
+    head.appendChild(el('span', 'num', pad2(numero) + '.'));
     head.appendChild(el('span', 'nm', a ? a.name : 'General'));
     var mini = el('span', 'mini' + (pct >= 100 ? ' full' : '')); var mi = el('i'); mi.style.width = pct + '%'; mini.appendChild(mi); head.appendChild(mini);
     head.appendChild(el('span', 'pp', pct + '%'));
     head.onclick = function () { abiertos[key] = !abierto; render(); };
     box.appendChild(head);
-    if (abierto) { var body = el('div', 'phase-b'); if (!lista.length) body.appendChild(el('div', 'counts', 'Sin tareas.')); lista.forEach(function (t, i) { body.appendChild(renderTarea(t, numero + '.' + (i + 1), show)); }); box.appendChild(body); }
+    if (abierto) {
+      var body = el('div', 'phase-b');
+      if (!lista.length) body.appendChild(el('div', 'counts', 'Sin tareas.'));
+      lista.forEach(function (t, i) { body.appendChild(renderTarea(t, pad2(numero) + '.' + pad2(i + 1), show)); });
+      hitosDeFase(a ? a.id : null).forEach(function (h) {
+        var hr = el('div', 'phito' + (h.achieved ? ' done' : ''));
+        hr.appendChild(el('span', 'phito-i', h.achieved ? '◆' : '◇'));
+        hr.appendChild(el('span', 'phito-t', 'Hito: ' + h.name));
+        body.appendChild(hr);
+      });
+      box.appendChild(body);
+    }
     return box;
   }
 
@@ -174,7 +192,7 @@
     if ((h.length || est) && show.pct_task !== false && (h.length)) row.appendChild(el('span', 'tp', pct + '%'));
     if (h.length) row.onclick = function () { abiertos['t' + t.id] = !abierto; render(); };
     cont.appendChild(row);
-    if (h.length && abierto) { var ch = el('div', 'children'); h.forEach(function (c, i) { ch.appendChild(renderTarea(c, numero + '.' + (i + 1), show)); }); cont.appendChild(ch); }
+    if (h.length && abierto) { var ch = el('div', 'children'); h.forEach(function (c, i) { ch.appendChild(renderTarea(c, numero + '.' + pad2(i + 1), show)); }); cont.appendChild(ch); }
     return cont;
   }
 

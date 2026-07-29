@@ -123,6 +123,17 @@
   .tchildren{margin-left:14px;border-left:1px solid var(--line);padding-left:0}
   .tdetail{border-top:1px dashed var(--line);margin:2px 8px 6px 26px;padding-top:8px;display:flex;flex-direction:column;gap:8px}
   .addrow{padding:4px 8px 6px}
+  /* Hitos */
+  .hito{display:flex;align-items:center;gap:8px;padding:5px 8px 5px 6px;border-top:1px dashed var(--line)}
+  .hito-ck{cursor:pointer;font-size:15px;color:var(--warn);line-height:1;flex:0 0 auto}
+  .hito.done .hito-ck{color:var(--ok)}
+  .hito-nm{flex:1;min-width:60px;background:none;border:none;padding:0;font-size:12.5px;font-weight:600;color:var(--accent2)}
+  .hito.done .hito-nm{color:var(--ok)}
+  /* Nota informativa del ciclo operativo */
+  .cyclenote{border:1px solid var(--line);border-radius:11px;padding:12px 14px;background:var(--panel);margin-bottom:14px;font-size:12.5px;color:var(--muted);line-height:1.6}
+  .cyclenote b{color:var(--text)}
+  .cyclechain{display:flex;flex-wrap:wrap;gap:4px 8px;margin:6px 0}
+  .cyclechain span{color:var(--accent2)}
 
   /* Compartir */
   .toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer}
@@ -181,9 +192,23 @@
   var me = null, cuenta = null, proyectos = [], actual = null, resumenPct = {};
   var areas = [], tareas = [], bitacora = [], pestana = 'tareas', bloqueo = null;
   var arrastreId = null, arrastreTabla = null, logAbierto = null, areasAbiertas = {}, tareaAbierta = null;
+  var plantillas = [], hitos = [];
 
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   function msg(elm, t, k) { elm.innerHTML = t ? '<div class="msg ' + k + '">' + t + '</div>' : ''; }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  // Modal de confirmación reutilizable (reemplaza a confirm()).
+  function confirmar(titulo, mensaje, textoBoton, onOk) {
+    var host = $('modalHost'); var ov = el('div', 'overlay'); var m = el('div', 'modal'); m.style.maxWidth = '440px';
+    m.appendChild(el('h2', null, titulo));
+    var p = el('div'); p.style.margin = '10px 0 4px'; p.style.fontSize = '13px'; p.style.lineHeight = '1.5'; p.style.whiteSpace = 'pre-wrap'; p.textContent = mensaje; m.appendChild(p);
+    var acc = el('div', 'row'); acc.style.justifyContent = 'flex-end'; acc.style.marginTop = '16px';
+    var cancel = el('button', 'btn', 'Cancelar'); cancel.onclick = function () { host.innerHTML = ''; };
+    var ok = el('button', 'btn danger', textoBoton || 'Eliminar'); ok.onclick = function () { host.innerHTML = ''; onOk(); };
+    acc.appendChild(cancel); acc.appendChild(ok); m.appendChild(acc);
+    ov.appendChild(m); ov.onclick = function (e) { if (e.target === ov) host.innerHTML = ''; };
+    host.innerHTML = ''; host.appendChild(ov);
+  }
   function hoy() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   var MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   var MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -264,6 +289,7 @@
       var pr = await sb.from('profiles').select('account_id').eq('id', me.id).maybeSingle();
       cuenta = pr.data ? pr.data.account_id : null;
       $('whoami').textContent = me.email; $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
+      cargarPlantillas();
       abrirDesdeURL();
     } else { me = null; $('appView').classList.add('hidden'); $('loginView').classList.remove('hidden'); if (bloqueo) { msg($('loginMsg'), bloqueo, 'error'); bloqueo = null; } }
   });
@@ -361,6 +387,43 @@
     ]);
   }
 
+  // ---------------- Plantillas ----------------
+  async function cargarPlantillas() {
+    var r = await sb.from('project_templates').select('*').eq('active', true).order('position');
+    if (!r.error) plantillas = r.data || [];
+  }
+  function resumenPlantilla(structure) {
+    var s = Array.isArray(structure) ? structure : [];
+    var mods = s.length, tar = 0, sub = 0, hit = 0;
+    s.forEach(function (m) { if (m.milestone) hit++; (m.tasks || []).forEach(function (t) { tar++; sub += (t.subtasks || []).length; }); });
+    return { mods: mods, tar: tar, sub: sub, hit: hit };
+  }
+  // Genera una copia INDEPENDIENTE de la estructura en el proyecto. La plantilla
+  // es solo un molde: nada queda vinculado.
+  async function generarDesdePlantilla(projectId, structure) {
+    var s = Array.isArray(structure) ? structure : []; if (!s.length) return;
+    // 1) Fases (una inserción por lote).
+    var areasIns = s.map(function (m, i) { return { project_id: projectId, account_id: cuenta, name: m.name || 'Fase', description: m.description || null, position: i }; });
+    var ra = await sb.from('project_areas').insert(areasIns).select('id,position');
+    if (ra.error) { alert('No se pudieron crear las fases: ' + ra.error.message); return; }
+    var areaId = {}; (ra.data || []).forEach(function (a) { areaId[a.position] = a.id; });
+    // 2) Tareas principales.
+    var tareasIns = [];
+    s.forEach(function (m, mi) { (m.tasks || []).forEach(function (t, ti) { tareasIns.push({ project_id: projectId, account_id: cuenta, area_id: areaId[mi], parent_id: null, name: t.name || 'Tarea', description: t.description || null, status: 'pending', position: ti }); }); });
+    var rt = await sb.from('project_tasks').insert(tareasIns).select('id,area_id,position');
+    if (rt.error) { alert('No se pudieron crear las tareas: ' + rt.error.message); return; }
+    // Mapa (area|position) -> task id para colgar las subtareas.
+    var taskId = {}; (rt.data || []).forEach(function (t) { taskId[t.area_id + '|' + t.position] = t.id; });
+    // 3) Subtareas.
+    var subsIns = [];
+    s.forEach(function (m, mi) { (m.tasks || []).forEach(function (t, ti) { var pid = taskId[areaId[mi] + '|' + ti]; (t.subtasks || []).forEach(function (name, si) { subsIns.push({ project_id: projectId, account_id: cuenta, area_id: areaId[mi], parent_id: pid, name: name, status: 'pending', position: si }); }); }); });
+    if (subsIns.length) { var rs = await sb.from('project_tasks').insert(subsIns); if (rs.error) alert('Subtareas: ' + rs.error.message); }
+    // 4) Hitos por fase.
+    var hitosIns = [];
+    s.forEach(function (m, mi) { if (m.milestone) hitosIns.push({ project_id: projectId, account_id: cuenta, area_id: areaId[mi], name: m.milestone, position: mi }); });
+    if (hitosIns.length) { var rh = await sb.from('project_milestones').insert(hitosIns); if (rh.error) alert('Hitos: ' + rh.error.message); }
+  }
+
   // ---------------- Modal crear/editar proyecto ----------------
   function modalProyecto(p) {
     var esNuevo = !p; p = p || {};
@@ -376,16 +439,40 @@
     m.appendChild(g);
     var wS = el('div', 'field'); wS.appendChild(el('label', null, 'Estado inicial')); var iStat = el('select'); ESTADOS.forEach(function (e2) { var o = el('option', null, e2.lbl); o.value = e2.v; if (estNorm(p.status || 'active') === e2.v) o.selected = true; iStat.appendChild(o); }); wS.appendChild(iStat); m.appendChild(wS);
     var iDesc = campo('Descripción general (opcional)', p.description, '', null, true);
+
+    // Plantilla del proyecto (solo al crear). "Proyecto vacío" siempre disponible.
+    var iTpl = null, resumenBox = null;
+    if (esNuevo) {
+      var wT = el('div', 'field'); wT.appendChild(el('label', null, 'Plantilla del proyecto'));
+      iTpl = el('select'); var o0 = el('option', null, 'Proyecto vacío'); o0.value = ''; iTpl.appendChild(o0);
+      plantillas.forEach(function (t) { var o = el('option', null, t.name); o.value = t.id; iTpl.appendChild(o); });
+      wT.appendChild(iTpl); m.appendChild(wT);
+      resumenBox = el('div', 'hint'); resumenBox.style.cssText = 'border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:13px;display:none'; m.appendChild(resumenBox);
+      function pintarResumen() {
+        var tpl = plantillas.find(function (t) { return t.id === iTpl.value; });
+        if (!tpl) { resumenBox.style.display = 'none'; return; }
+        var c = resumenPlantilla(tpl.structure);
+        resumenBox.style.display = 'block';
+        resumenBox.innerHTML = '<b style="color:var(--text)">Plantilla seleccionada: ' + escapar(tpl.name) + '</b><br>Se crearán automáticamente:<br>' + c.mods + ' módulos · ' + c.tar + ' tareas principales · ' + c.sub + ' subtareas · ' + c.hit + ' hitos<br><span style="color:var(--muted)">Toda la estructura será editable; la plantilla no queda vinculada.</span>';
+      }
+      iTpl.onchange = pintarResumen;
+      // Al elegir una plantilla, sugiere el nombre si el usuario no escribió uno.
+      iTpl.addEventListener('change', function () { var tpl = plantillas.find(function (t) { return t.id === iTpl.value; }); if (tpl && !iName.value.trim()) iName.value = tpl.name + ' — '; });
+    }
+
     var acc = el('div', 'row'); acc.style.justifyContent = 'flex-end'; acc.style.marginTop = '6px';
     var cancel = el('button', 'btn', 'Cancelar'); cancel.onclick = function () { host.innerHTML = ''; };
     var save = el('button', 'pbtn', esNuevo ? 'Crear proyecto' : 'Guardar');
     save.onclick = async function () {
       var n = iName.value.trim(); if (!n) { alert('El nombre es obligatorio.'); return; }
       save.disabled = true;
-      var campos = { name: n, client: iClient.value.trim() || null, niche: iNiche.value.trim() || null, start_date: iStart.value || null, end_date: iEnd.value || null, status: iStat.value, description: iDesc.value.trim() || null };
+      var tpl = (esNuevo && iTpl) ? plantillas.find(function (t) { return t.id === iTpl.value; }) : null;
+      var campos = { name: n, client: iClient.value.trim() || null, niche: iNiche.value.trim() || null, start_date: iStart.value || null, end_date: iEnd.value || null, status: iStat.value, description: iDesc.value.trim() || null, template: tpl ? (tpl.key || tpl.id) : null };
       if (esNuevo) {
+        if (tpl) save.textContent = 'Generando estructura…';
         var r = await sb.from('projects').insert(Object.assign({ account_id: cuenta, owner_id: me.id }, campos)).select('id').single();
-        if (r.error) { alert(r.error.message); save.disabled = false; return; }
+        if (r.error) { alert(r.error.message); save.disabled = false; save.textContent = 'Crear proyecto'; return; }
+        if (tpl) await generarDesdePlantilla(r.data.id, tpl.structure);
         host.innerHTML = ''; verProyecto(r.data.id, true);
       } else {
         var e2 = await sb.from('projects').update(campos).eq('id', p.id);
@@ -429,10 +516,13 @@
     // Copia en orden de profundidad (padres antes que hijos).
     var pendientes = oTasks.slice(), guard = 0;
     while (pendientes.length && guard < 9999) { guard++; var t = pendientes.shift(); var parentNuevo = t.parent_id ? taskMap[t.parent_id] : null; if (t.parent_id && !parentNuevo) { pendientes.push(t); continue; } var r = await copia(t, parentNuevo); if (!r.error) taskMap[t.id] = r.data.id; }
+    // Copia los hitos (sin marcar como alcanzados).
+    var oHitos = (await sb.from('project_milestones').select('*').eq('project_id', p.id).order('position')).data || [];
+    if (oHitos.length) { await sb.from('project_milestones').insert(oHitos.map(function (h) { return { project_id: nid, account_id: cuenta, area_id: h.area_id ? (areaMap[h.area_id] || null) : null, name: h.name, achieved: false, client_visible: h.client_visible, position: h.position }; })); }
     return nid;
   }
   async function accionDuplicar(p) { var nid = await duplicarProyecto(p); if (nid) verProyecto(nid, true); }
-  async function accionEliminar(p) { if (!confirm('¿Eliminar el proyecto "' + p.name + '"?\nSe borran sus tareas y bitácora. No se puede deshacer.')) return; var r = await sb.from('projects').delete().eq('id', p.id); if (r.error) { alert('No se pudo eliminar: ' + r.error.message); return; } history.pushState({}, '', '/proyectos/'); listaProyectos(); }
+  function accionEliminar(p) { confirmar('¿Eliminar este proyecto?', 'Se eliminará “' + p.name + '” con todas sus fases, tareas, subtareas, hitos y bitácora.\n\nEsta acción no se puede deshacer.', 'Eliminar proyecto', async function () { var r = await sb.from('projects').delete().eq('id', p.id); if (r.error) { alert('No se pudo eliminar: ' + r.error.message); return; } history.pushState({}, '', '/proyectos/'); listaProyectos(); }); }
 
   // ---------------- Vista de proyecto ----------------
   async function verProyecto(id, push) {
@@ -442,13 +532,15 @@
       sb.from('projects').select('*').eq('id', id).maybeSingle(),
       sb.from('project_areas').select('*').eq('project_id', id).order('position'),
       sb.from('project_tasks').select('*').eq('project_id', id).order('position'),
-      sb.from('project_log').select('*').eq('project_id', id).order('entry_date', { ascending: false })
+      sb.from('project_log').select('*').eq('project_id', id).order('entry_date', { ascending: false }),
+      sb.from('project_milestones').select('*').eq('project_id', id).order('position')
     ]);
     if (!res[0].data) { b.innerHTML = '<div class="msg error">No se encontró el proyecto.</div>'; return; }
     actual = res[0].data; cargarAreasAbiertas();
     areas = res[1].data || [];
     tareas = res[2].data || [];
     bitacora = res[3].data || [];
+    hitos = res[4].data || [];
     pintar();
   }
 
@@ -544,6 +636,7 @@
 
   // ---------------- Lista de tareas (fases + árbol recursivo numerado) ----------------
   function pintarTareas(z) {
+    if (actual.template === 'lanzamiento_perpetuo') z.appendChild(notaCiclo());
     var nueva = el('div', 'row'); nueva.style.marginBottom = '14px';
     var ia = el('input'); ia.placeholder = 'Nueva fase (ej. Captación, Landing Page, Publicidad)';
     var ba = el('button', 'btn', '+ Nueva fase');
@@ -554,8 +647,33 @@
     var sinFase = raizFase(null);
     if (!areas.length && !sinFase.length) { z.appendChild(el('div', 'empty', 'Empieza creando una fase (Captación, Landing Page…) y añade tareas dentro.')); return; }
     var num = 0;
-    areas.forEach(function (a) { num++; z.appendChild(bloqueFase(a, num)); });
-    if (sinFase.length) { num++; z.appendChild(bloqueFase(null, num)); }
+    areas.forEach(function (a) { num++; z.appendChild(bloqueFase(a, pad2(num))); });
+    if (sinFase.length) { num++; z.appendChild(bloqueFase(null, pad2(num))); }
+  }
+
+  // Nota informativa del ciclo operativo (referencia, no son tareas).
+  function notaCiclo() {
+    var c = el('div', 'cyclenote');
+    c.appendChild(el('b', null, 'Ciclo operativo'));
+    var chain = el('div', 'cyclechain');
+    'Concepción,Creación,Distribución,Captación,Nutrición,Lanzamiento,Postlanzamiento,Debriefing,Optimización,Nuevo ciclo'.split(',').forEach(function (p, i, arr) { chain.appendChild(el('span', null, p + (i < arr.length - 1 ? ' →' : ''))); });
+    c.appendChild(chain);
+    c.appendChild(el('div', null, 'Los módulos 01, 02 y 03 construyen la base inicial del proyecto. Los módulos 04 a 08 forman el ciclo operativo recurrente.'));
+    return c;
+  }
+
+  // Hitos de una fase (◆). No cuentan para el avance.
+  function hitosDeFase(areaId) { return hitos.filter(function (h) { return areaId ? h.area_id === areaId : !h.area_id; }).sort(function (a, b) { return (a.position || 0) - (b.position || 0); }); }
+  function filaHito(h) {
+    var row = el('div', 'hito' + (h.achieved ? ' done' : ''));
+    var ck = el('span', 'hito-ck', h.achieved ? '◆' : '◇'); ck.title = h.achieved ? 'Alcanzado' : 'Marcar como alcanzado';
+    ck.onclick = function () { h.achieved = !h.achieved; sb.from('project_milestones').update({ achieved: h.achieved }).eq('id', h.id); tocar(); pintar(); };
+    row.appendChild(ck);
+    var nm = el('input', 'hito-nm'); nm.value = h.name; nm.onblur = function () { if (nm.value.trim() && nm.value !== h.name) { h.name = nm.value.trim(); sb.from('project_milestones').update({ name: h.name }).eq('id', h.id); tocar(); } }; nm.addEventListener('keydown', function (e) { if (e.key === 'Enter') nm.blur(); }); row.appendChild(nm);
+    var eye = el('span', 'eye' + (h.client_visible === false ? ' off' : ''), h.client_visible === false ? '🚫' : '👁'); eye.title = h.client_visible === false ? 'Oculto al cliente' : 'Visible para el cliente';
+    eye.onclick = function () { h.client_visible = !(h.client_visible !== false); sb.from('project_milestones').update({ client_visible: h.client_visible }).eq('id', h.id); pintar(); }; row.appendChild(eye);
+    var x = el('button', 'x', '✕'); x.title = 'Eliminar hito'; x.onclick = function () { confirmar('¿Eliminar este hito?', 'Se eliminará “' + h.name + '”.', 'Eliminar hito', async function () { await sb.from('project_milestones').delete().eq('id', h.id); hitos = hitos.filter(function (y) { return y.id !== h.id; }); pintar(); }); }; row.appendChild(x);
+    return row;
   }
 
   function bloqueFase(a, numero) {
@@ -579,9 +697,11 @@
 
     if (a) { var eye = el('span', 'eye' + (a.client_visible === false ? ' off' : ''), a.client_visible === false ? '🚫' : '👁'); eye.title = a.client_visible === false ? 'Oculta al cliente' : 'Visible para el cliente'; eye.onclick = async function (e) { e.stopPropagation(); a.client_visible = !(a.client_visible !== false); await sb.from('project_areas').update({ client_visible: a.client_visible }).eq('id', a.id); pintar(); }; head.appendChild(eye); }
     if (a) head.appendChild(menuAcciones([
-      { label: 'Renombrar fase', onClick: function () { var n = prompt('Nombre de la fase:', a.name); if (n && n.trim()) { a.name = n.trim(); sb.from('project_areas').update({ name: a.name }).eq('id', a.id); pintar(); } } },
+      { label: 'Editar descripción', onClick: function () { modalDescFase(a); } },
+      { label: 'Añadir hito', onClick: async function () { var r = await sb.from('project_milestones').insert({ project_id: actual.id, account_id: cuenta, area_id: a.id, name: 'Nuevo hito', position: hitosDeFase(a.id).length }).select('*').single(); if (r.error) { alert(r.error.message); return; } hitos.push(r.data); abrirArea(key); pintar(); } },
+      { label: 'Duplicar fase', onClick: function () { duplicarFase(a); } },
       { label: a.client_visible === false ? 'Mostrar al cliente' : 'Ocultar al cliente', onClick: async function () { a.client_visible = !(a.client_visible !== false); await sb.from('project_areas').update({ client_visible: a.client_visible }).eq('id', a.id); pintar(); } },
-      { label: 'Eliminar fase', danger: true, onClick: async function () { if (!confirm('¿Eliminar la fase "' + a.name + '"? Sus tareas quedarán sin fase.')) return; await sb.from('project_areas').delete().eq('id', a.id); areas = areas.filter(function (x) { return x.id !== a.id; }); tareas.forEach(function (t) { if (t.area_id === a.id) t.area_id = null; }); pintar(); } }
+      { label: 'Eliminar fase', danger: true, onClick: function () { confirmar('¿Eliminar esta fase?', 'Se eliminará “' + a.name + '” junto con todas sus tareas, subtareas e hitos.\n\nEsta acción no se puede deshacer.', 'Eliminar fase', async function () { var ids = []; raizFase(a.id).forEach(function (t) { ids.push(t.id); ids = ids.concat(descendientes(t.id)); }); for (var i = 0; i < ids.length; i++) await sb.from('project_tasks').delete().eq('id', ids[i]); await sb.from('project_areas').delete().eq('id', a.id); areas = areas.filter(function (x) { return x.id !== a.id; }); tareas = tareas.filter(function (t) { return t.area_id !== a.id; }); hitos = hitos.filter(function (hh) { return hh.area_id !== a.id; }); pintar(); }); } }
     ], true));
 
     if (a && areas.length > 1) arrastrable(head, gripA, a, areas, 'project_areas'); else gripA.style.visibility = 'hidden';
@@ -590,10 +710,34 @@
 
     if (abierta_) {
       var lista = raizFase(a ? a.id : null);
-      if (!lista.length) caja.appendChild(el('div', 'empty', 'Sin tareas todavía.'));
-      lista.forEach(function (t, i) { caja.appendChild(renderTarea(t, numero + '.' + (i + 1), lista)); });
+      if (!lista.length && !hitosDeFase(a ? a.id : null).length) caja.appendChild(el('div', 'empty', 'Sin tareas todavía.'));
+      lista.forEach(function (t, i) { caja.appendChild(renderTarea(t, numero + '.' + pad2(i + 1), lista)); });
+      hitosDeFase(a ? a.id : null).forEach(function (h) { caja.appendChild(filaHito(h)); });
     }
     return caja;
+  }
+  function modalDescFase(a) {
+    var host = $('modalHost'); var ov = el('div', 'overlay'); var m = el('div', 'modal'); m.style.maxWidth = '480px';
+    m.appendChild(el('h2', null, 'Descripción de la fase')); m.appendChild(el('div', 'hint', a.name));
+    var ta = el('textarea'); ta.rows = 4; ta.value = a.description || ''; ta.style.marginTop = '10px'; ta.placeholder = 'Información interna de la fase (no se muestra al cliente).'; m.appendChild(ta);
+    var acc = el('div', 'row'); acc.style.justifyContent = 'flex-end'; acc.style.marginTop = '14px';
+    var cancel = el('button', 'btn', 'Cancelar'); cancel.onclick = function () { host.innerHTML = ''; };
+    var save = el('button', 'pbtn', 'Guardar'); save.onclick = async function () { a.description = ta.value.trim() || null; await sb.from('project_areas').update({ description: a.description }).eq('id', a.id); host.innerHTML = ''; };
+    acc.appendChild(cancel); acc.appendChild(save); m.appendChild(acc);
+    ov.appendChild(m); ov.onclick = function (e) { if (e.target === ov) host.innerHTML = ''; }; host.innerHTML = ''; host.appendChild(ov); setTimeout(function () { ta.focus(); }, 0);
+  }
+  async function duplicarFase(a) {
+    var ra = await sb.from('project_areas').insert({ project_id: actual.id, account_id: cuenta, name: a.name + ' (copia)', description: a.description || null, client_visible: a.client_visible, position: areas.length }).select('*').single();
+    if (ra.error) { alert(ra.error.message); return; }
+    var nueva = ra.data; areas.push(nueva);
+    var origen = raizFase(a.id), map = {};
+    // Copia tareas + subtareas por profundidad.
+    var todas = origen.slice(); origen.forEach(function (t) { descendientes(t.id).forEach(function (id) { var o = tareas.find(function (x) { return x.id === id; }); if (o) todas.push(o); }); });
+    var pend = todas.slice(), guard = 0;
+    while (pend.length && guard < 9999) { guard++; var t = pend.shift(); var parentNuevo = t.parent_id ? map[t.parent_id] : null; if (t.parent_id && !parentNuevo) { pend.push(t); continue; } var r = await sb.from('project_tasks').insert({ project_id: actual.id, account_id: cuenta, area_id: nueva.id, parent_id: parentNuevo, name: t.name, description: t.description || null, status: 'pending', client_visible: t.client_visible, position: t.position }).select('*').single(); if (!r.error) { map[t.id] = r.data.id; tareas.push(r.data); } }
+    var oh = hitosDeFase(a.id);
+    for (var i = 0; i < oh.length; i++) { var rh = await sb.from('project_milestones').insert({ project_id: actual.id, account_id: cuenta, area_id: nueva.id, name: oh[i].name, client_visible: oh[i].client_visible, position: oh[i].position }).select('*').single(); if (!rh.error) hitos.push(rh.data); }
+    abrirArea(nueva.id); pintar(); tocar();
   }
 
   function renderTarea(t, numero, hermanas) {
@@ -623,10 +767,11 @@
       { label: 'Editar detalles', onClick: function () { tareaAbierta = t.id; pintar(); } },
       { label: '+ Subtarea', onClick: async function () { var r = await sb.from('project_tasks').insert({ project_id: actual.id, account_id: cuenta, area_id: t.area_id, parent_id: t.id, name: 'Nueva subtarea', position: h.length }).select('*').single(); if (r.error) { alert(r.error.message); return; } tareas.push(r.data); tareaAbierta = t.id; pintar(); tocar(); } },
       { label: 'Duplicar', onClick: function () { duplicarTarea(t); } },
+      !t.parent_id ? { label: 'Mover a otra fase', onClick: function () { modalMoverFase(t); } } : null,
       { label: 'Convertir en subtarea de la anterior', disabled: hermanas.indexOf(t) <= 0, onClick: function () { var prev = hermanas[hermanas.indexOf(t) - 1]; if (prev) reparentar(t, prev.id); } },
-      { label: 'Subir un nivel', disabled: !t.parent_id, onClick: function () { var padre = tareas.find(function (x) { return x.id === t.parent_id; }); reparentar(t, padre ? padre.parent_id : null, padre ? padre.area_id : t.area_id); } },
+      { label: t.parent_id ? 'Convertir en tarea principal' : 'Subir un nivel', disabled: !t.parent_id, onClick: function () { var padre = tareas.find(function (x) { return x.id === t.parent_id; }); reparentar(t, padre ? padre.parent_id : null, padre ? padre.area_id : t.area_id); } },
       { label: t.client_visible === false ? 'Mostrar al cliente' : 'Ocultar al cliente', onClick: function () { t.client_visible = !(t.client_visible !== false); guardar(t, { client_visible: t.client_visible }).then(pintar); } },
-      { label: 'Eliminar', danger: true, onClick: async function () { if (!confirm('¿Eliminar "' + t.name + '" y sus subtareas?')) return; var ids = descendientes(t.id); ids.push(t.id); for (var i = 0; i < ids.length; i++) await sb.from('project_tasks').delete().eq('id', ids[i]); tareas = tareas.filter(function (x) { return ids.indexOf(x.id) < 0; }); pintar(); tocar(); } }
+      { label: 'Eliminar', danger: true, onClick: function () { var n = descendientes(t.id).length; confirmar('¿Eliminar esta ' + (t.parent_id ? 'subtarea' : 'tarea') + '?', 'Se eliminará “' + t.name + '”' + (n ? ' y ' + (t.parent_id ? 'sus ' + n + ' subtareas' : 'todas las subtareas que contiene') : '') + '.\n\nEsta acción no se puede deshacer.', 'Eliminar', async function () { var ids = descendientes(t.id); ids.push(t.id); for (var i = 0; i < ids.length; i++) await sb.from('project_tasks').delete().eq('id', ids[i]); tareas = tareas.filter(function (x) { return ids.indexOf(x.id) < 0; }); pintar(); tocar(); }); } }
     ], true));
     cont.appendChild(row);
 
@@ -634,8 +779,19 @@
 
     if (tareaAbierta === t.id) cont.appendChild(detalle(t));
 
-    if (h.length) { var ch = el('div', 'tchildren'); h.forEach(function (c, i) { ch.appendChild(renderTarea(c, numero + '.' + (i + 1), h)); }); cont.appendChild(ch); }
+    if (h.length) { var ch = el('div', 'tchildren'); h.forEach(function (c, i) { ch.appendChild(renderTarea(c, numero + '.' + pad2(i + 1), h)); }); cont.appendChild(ch); }
     return cont;
+  }
+  function modalMoverFase(t) {
+    var host = $('modalHost'); var ov = el('div', 'overlay'); var m = el('div', 'modal'); m.style.maxWidth = '380px';
+    m.appendChild(el('h2', null, 'Mover a otra fase')); m.appendChild(el('div', 'hint', t.name));
+    var s = el('select'); s.style.marginTop = '12px'; var o0 = el('option', null, 'Sin fase'); o0.value = ''; s.appendChild(o0);
+    areas.forEach(function (a) { var o = el('option', null, a.name); o.value = a.id; if (t.area_id === a.id) o.selected = true; s.appendChild(o); }); m.appendChild(s);
+    var acc = el('div', 'row'); acc.style.justifyContent = 'flex-end'; acc.style.marginTop = '14px';
+    var cancel = el('button', 'btn', 'Cancelar'); cancel.onclick = function () { host.innerHTML = ''; };
+    var save = el('button', 'pbtn', 'Mover'); save.onclick = async function () { var destino = s.value || null; var ids = descendientes(t.id); ids.push(t.id); for (var i = 0; i < ids.length; i++) { var o = tareas.find(function (x) { return x.id === ids[i]; }); if (o) { o.area_id = destino; } } await sb.from('project_tasks').update({ area_id: destino }).in('id', ids); tareas.forEach(function (x) { if (ids.indexOf(x.id) >= 0) x.area_id = destino; }); host.innerHTML = ''; abrirArea(destino || '__sin__'); pintar(); tocar(); };
+    acc.appendChild(cancel); acc.appendChild(save); m.appendChild(acc);
+    ov.appendChild(m); ov.onclick = function (e) { if (e.target === ov) host.innerHTML = ''; }; host.innerHTML = ''; host.appendChild(ov);
   }
 
   function descendientes(id) { var out = []; hijas(id).forEach(function (c) { out.push(c.id); out = out.concat(descendientes(c.id)); }); return out; }
