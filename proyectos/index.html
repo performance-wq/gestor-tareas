@@ -71,11 +71,14 @@
   .menu-btn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:15px;line-height:1;padding:0}
   .menu-btn.mini{width:22px;height:22px;font-size:13px}
   .menu-btn:hover{color:var(--text);border-color:var(--accent2)}
-  .menu-pop{position:absolute;right:0;top:32px;z-index:40;min-width:190px;background:#141018;border:1px solid var(--line);border-radius:10px;padding:5px;box-shadow:0 8px 26px rgba(0,0,0,.55)}
-  .menu-pop button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:12.5px;padding:8px 10px;border-radius:7px;cursor:pointer;font-family:inherit}
-  .menu-pop button:hover{background:rgba(255,255,255,.06)}
-  .menu-pop button.danger{color:var(--danger)}
-  .menu-pop button:disabled{opacity:.4;cursor:default}
+  /* Menú de acciones en PORTAL (se monta en document.body con position:fixed),
+     así ningún contenedor con overflow:hidden lo recorta y siempre cabe en la
+     pantalla, volteando hacia arriba si no cabe abajo. */
+  .menu-portal{position:fixed;z-index:1000;min-width:190px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow-y:auto;background:#141018;border:1px solid var(--line);border-radius:10px;padding:5px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+  .menu-portal button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:12.5px;padding:9px 11px;border-radius:7px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .menu-portal button:hover{background:rgba(255,255,255,.06)}
+  .menu-portal button.danger{color:var(--danger)}
+  .menu-portal button:disabled{opacity:.4;cursor:default}
 
   /* Tarjetas de proyecto */
   .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
@@ -201,15 +204,45 @@
   function estadoInfo(v) { v = estNorm(v); for (var i = 0; i < ESTADOS.length; i++) if (ESTADOS[i].v === v) return ESTADOS[i]; return ESTADOS[0]; }
   function pillEstado(v) { var e = estadoInfo(v), s = el('span', 'pstatus'); var d = el('span', 'pstatus-dot'); d.style.background = e.dot; s.appendChild(d); s.appendChild(document.createTextNode(e.lbl)); return s; }
 
-  // ---------------- Menú (⋮) ----------------
-  document.addEventListener('click', function () { document.querySelectorAll('.menu-pop').forEach(function (p) { p.classList.add('hidden'); }); });
+  // ---------------- Menú (⋮) en portal ----------------
+  // El menú se monta en document.body (no dentro de la fila) con position:fixed,
+  // de modo que NINGÚN contenedor con overflow:hidden pueda recortarlo. Se
+  // posiciona respecto al botón y se voltea/ajusta para caber siempre en la
+  // pantalla, en desktop y en móvil.
+  var menuAbierto = null;
+  function cerrarMenu() { if (menuAbierto) { menuAbierto.remove(); menuAbierto = null; } }
+  document.addEventListener('click', cerrarMenu);
+  window.addEventListener('resize', cerrarMenu);
+  // Cerrar al hacer scroll en cualquier contenedor (captura), para no dejar el
+  // menú flotando sobre una posición antigua.
+  window.addEventListener('scroll', cerrarMenu, true);
+  window.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrarMenu(); });
+
+  function posicionarMenu(pop, btn) {
+    var r = btn.getBoundingClientRect(), m = 8, vw = window.innerWidth, vh = window.innerHeight;
+    pop.style.left = '0px'; pop.style.top = '0px'; pop.style.visibility = 'hidden';
+    var pw = pop.offsetWidth, ph = pop.offsetHeight;
+    var left = Math.min(r.right - pw, vw - pw - m); left = Math.max(m, left);
+    var top = r.bottom + 4;
+    if (top + ph > vh - m) { var arriba = r.top - ph - 4; top = arriba >= m ? arriba : Math.max(m, vh - ph - m); }
+    pop.style.left = left + 'px'; pop.style.top = top + 'px'; pop.style.visibility = 'visible';
+  }
   function menuAcciones(items, mini) {
-    var wrap = el('div', 'menu-wrap');
+    var wrap = el('span', 'menu-wrap');
     var btn = el('button', 'menu-btn' + (mini ? ' mini' : ''), '⋮'); btn.title = 'Acciones'; btn.type = 'button';
-    var pop = el('div', 'menu-pop hidden');
-    items.forEach(function (it) { if (!it) return; var b = el('button', it.danger ? 'danger' : '', it.label); b.type = 'button'; if (it.disabled) b.disabled = true; b.onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); pop.classList.add('hidden'); it.onClick(); }; pop.appendChild(b); });
-    btn.onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); var abrir = pop.classList.contains('hidden'); document.querySelectorAll('.menu-pop').forEach(function (p) { p.classList.add('hidden'); }); if (abrir) pop.classList.remove('hidden'); };
-    wrap.appendChild(btn); wrap.appendChild(pop); return wrap;
+    btn.onclick = function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      var eraDeEste = menuAbierto && menuAbierto._owner === btn;
+      cerrarMenu();
+      if (eraDeEste) return;
+      var pop = el('div', 'menu-portal'); pop._owner = btn;
+      items.forEach(function (it) { if (!it) return; var b = el('button', it.danger ? 'danger' : '', it.label); b.type = 'button'; if (it.disabled) b.disabled = true; b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); cerrarMenu(); it.onClick(); }; pop.appendChild(b); });
+      pop.addEventListener('click', function (e) { e.stopPropagation(); });
+      document.body.appendChild(pop);
+      posicionarMenu(pop, btn);
+      menuAbierto = pop;
+    };
+    wrap.appendChild(btn); return wrap;
   }
 
   // ---------------- Acceso ----------------
