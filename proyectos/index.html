@@ -8,30 +8,33 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23140b24'/%3E%3Cpath d='M17 33.5l10 10L47 22' fill='none' stroke='%23b06bff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{--bg:#07050f;--panel:rgba(255,255,255,.045);--panel2:rgba(255,255,255,.08);--line:rgba(168,120,255,.22);--text:#ece7ff;--muted:#948bc4;--accent:#b06bff;--accent2:#35e5ff;--danger:#ff4d6d;--ok:#2ee6a6}
+  :root{--bg:#07050f;--panel:rgba(255,255,255,.045);--panel2:rgba(255,255,255,.08);--line:rgba(168,120,255,.22);--text:#ece7ff;--muted:#948bc4;--accent:#b06bff;--accent2:#35e5ff;--danger:#ff4d6d;--ok:#2ee6a6;--warn:#ff9f43}
   *{box-sizing:border-box}
   body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;display:flex;justify-content:center;position:relative;overflow-x:hidden}
   body::before,body::after{content:'';position:fixed;width:60vw;height:60vw;border-radius:50%;filter:blur(90px);opacity:.2;z-index:0;pointer-events:none}
   body::before{background:var(--accent);top:-20%;left:-15%}
   body::after{background:var(--accent2);bottom:-25%;right:-15%}
   h1{font-size:22px;margin:0;font-weight:700;background:linear-gradient(90deg,var(--accent2),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .wrap{width:100%;max-width:960px;min-width:0;padding:30px 22px 80px;position:relative;z-index:1}
+  .wrap{width:100%;max-width:1000px;min-width:0;padding:30px 22px 80px;position:relative;z-index:1}
   #loginView{max-width:380px}
   .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
   .user-bar{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap;min-width:0;max-width:100%}
   .user-bar #whoami{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .nav{display:flex;gap:6px;margin:14px 0 22px}
+  .nav{display:flex;gap:6px;margin:14px 0 22px;flex-wrap:wrap}
   .nav a{font-size:13px;padding:6px 14px;border-radius:9px;text-decoration:none;color:var(--muted);border:1px solid transparent}
   .nav a:hover{color:var(--text)}
   .nav a.on{color:var(--text);border-color:var(--line);background:var(--panel)}
   .btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none;display:inline-block}
   .btn:hover{border-color:var(--accent2)}
+  .btn.sm{padding:3px 9px;font-size:11.5px}
   .btn.danger{color:var(--danger);border-color:rgba(255,77,109,.4)}
   .pbtn{border:none;border-radius:9px;padding:9px 16px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07050f;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .pbtn.sm{padding:6px 12px;font-size:12px}
   .pbtn:disabled{opacity:.5}
   input,textarea,select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:var(--panel);color:var(--text);outline:none;width:100%}
   input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
   select option{background:#12102a}
+  textarea{resize:vertical}
   .msg{font-size:13px;margin-top:12px;padding:9px 11px;border-radius:8px}
   .msg.error{background:rgba(255,77,109,.15);color:#ff8fa3}
   .msg.ok{background:rgba(46,230,166,.14);color:#8ff5d2}
@@ -40,60 +43,91 @@
   .card{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--panel);margin-bottom:14px}
   .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
   .hint{font-size:11.5px;color:var(--muted)}
-  .row{display:flex;align-items:center;gap:9px}
+  .row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px}
   .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
   .bar>i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
   .bar.full>i{background:var(--ok)}
-  .pill{font-size:10.5px;border-radius:8px;padding:2px 8px;font-weight:600;white-space:nowrap;border:1px solid}
-  .p-pending{color:var(--muted);border-color:var(--line)}
-  .p-progress{color:var(--accent2);border-color:rgba(53,229,255,.4)}
-  .p-done{color:#8ff5d2;border-color:rgba(46,230,166,.4)}
-  .dot{width:13px;height:13px;border-radius:50%;border:1px solid var(--line);cursor:pointer;flex:0 0 auto}
-  .dot.on{background:var(--ok);border-color:var(--ok)}
-  .dot.mid{background:rgba(53,229,255,.5);border-color:var(--accent2)}
+  .empty{color:var(--muted);font-size:12.5px;padding:8px 2px}
+  .x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 3px;line-height:1}
+  .x:hover{color:var(--danger)}
+  .hidden{display:none!important}
   .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px}
   .tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13.5px;padding:9px 15px;cursor:pointer;font-family:inherit;margin-bottom:-1px}
   .tabs button.on{color:var(--text);border-bottom-color:var(--accent)}
-  /* ---- Áreas y tareas: lista compacta estilo Linear/ClickUp ---- */
-  .area{border:1px solid var(--line);border-radius:9px;margin-bottom:8px;overflow:hidden}
-  .area-h{display:flex;align-items:center;gap:7px;padding:5px 8px 5px 6px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap;cursor:pointer}
-  .area-h.plegada{border-bottom:none}
-  .area-chev{flex:0 0 auto;width:11px;text-align:center;color:var(--muted);font-size:9px;transition:transform .18s ease;user-select:none}
-  .area-chev.abierta{transform:rotate(90deg)}
-  .area-h b{font-size:12.5px}
-  .area-h .cnt{font-size:11px;color:var(--muted);margin-left:auto}
-  .area-bar{flex:0 0 auto;width:52px;height:4px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
-  .area-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .3s}
-  .area-bar.full>i{background:var(--ok)}
-  .area-pct{font-size:10.5px;color:var(--muted);white-space:nowrap;min-width:30px}
-  .area-h .btn{padding:3px 9px}
-  .task{border-bottom:1px solid var(--line)}
-  .task:last-child{border-bottom:none}
-  .task.dragging,.sub.dragging{opacity:.4}
-  .task-top{display:flex;align-items:center;gap:6px;padding:2px 8px 2px 6px;min-height:29px;position:relative}
-  .task-top:hover{background:rgba(255,255,255,.03)}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(4,2,12,.66);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+  .modal{width:100%;max-width:520px;border:1px solid var(--line);border-radius:16px;background:#0d0820;padding:20px}
+  .modal h2{margin:0 0 4px;font-size:17px}
+
+  /* Estado del proyecto */
+  .pstatus{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:2px 9px;white-space:nowrap;flex:0 0 auto}
+  .pstatus-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .estado-select{width:auto;padding:5px 9px;font-size:12px;border-radius:9px}
+
+  /* Menú de acciones (⋮) */
+  .menu-wrap{position:relative;flex:0 0 auto}
+  .menu-btn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:15px;line-height:1;padding:0}
+  .menu-btn.mini{width:22px;height:22px;font-size:13px}
+  .menu-btn:hover{color:var(--text);border-color:var(--accent2)}
+  .menu-pop{position:absolute;right:0;top:32px;z-index:40;min-width:190px;background:#141018;border:1px solid var(--line);border-radius:10px;padding:5px;box-shadow:0 8px 26px rgba(0,0,0,.55)}
+  .menu-pop button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:12.5px;padding:8px 10px;border-radius:7px;cursor:pointer;font-family:inherit}
+  .menu-pop button:hover{background:rgba(255,255,255,.06)}
+  .menu-pop button.danger{color:var(--danger)}
+  .menu-pop button:disabled{opacity:.4;cursor:default}
+
+  /* Tarjetas de proyecto */
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .pcard{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px 15px;cursor:pointer;transition:border-color .15s}
+  .pcard:hover{border-color:var(--accent2)}
+  .pcard .t{font-size:15px;font-weight:700;line-height:1.25}
+  .pcard .meta{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+  .pcard .pcttop{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px}
+  .pcard .pct{font-size:15px;font-weight:700}
+
+  /* Árbol de tareas */
+  .tphase{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;overflow:hidden}
+  .tphase-h{display:flex;align-items:center;gap:7px;padding:6px 8px 6px 6px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap;cursor:pointer}
+  .tphase-h.plegada{border-bottom:none}
+  .num{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;flex:0 0 auto;min-width:18px}
+  .chev{flex:0 0 auto;width:11px;text-align:center;color:var(--muted);font-size:9px;transition:transform .18s ease;user-select:none;cursor:pointer}
+  .chev.abierta{transform:rotate(90deg)}
+  .chev.oculto{visibility:hidden}
+  .tphase-h b{font-size:12.5px}
+  .tphase-h input.nm{flex:1;min-width:80px;background:none;border:none;padding:0;font-size:12.5px;font-weight:700;color:var(--text)}
+  .tphase-h .cnt{font-size:11px;color:var(--muted)}
+  .mini-bar{flex:0 0 auto;width:52px;height:4px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+  .mini-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px}
+  .mini-bar.full>i{background:var(--ok)}
+  .pctm{font-size:10.5px;color:var(--muted);white-space:nowrap;min-width:30px}
+  .trow{display:flex;align-items:center;gap:5px;padding:1px 8px 1px 4px;min-height:28px;position:relative;border-bottom:1px solid rgba(168,120,255,.09)}
+  .trow:hover{background:rgba(255,255,255,.03)}
   .drop-antes{box-shadow:inset 0 2px 0 0 var(--accent2)}
   .drop-despues{box-shadow:inset 0 -2px 0 0 var(--accent2)}
-  .grip{flex:0 0 auto;width:12px;text-align:center;cursor:grab;color:var(--muted);font-size:12px;line-height:1;opacity:0;user-select:none}
-  .task-top:hover .grip,.sub:hover .grip{opacity:.55}
-  .grip:active{cursor:grabbing}
-  .task-name{flex:1;min-width:0;background:none;border:none;padding:0;font-size:13px;font-weight:600;color:var(--text)}
-  .task.done .task-name{text-decoration:line-through;color:var(--muted)}
-  .task-pct{font-size:10.5px;color:var(--muted);white-space:nowrap}
-  .sub{display:flex;align-items:center;gap:6px;padding:2px 8px 2px 20px;min-height:25px;position:relative}
-  .sub:hover{background:rgba(255,255,255,.03)}
-  .sub input{flex:1;min-width:0;background:none;border:none;padding:0;font-size:12px}
-  .sub.done input{text-decoration:line-through;color:var(--muted)}
-  .x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 3px;line-height:1}
-  .x:hover{color:var(--danger)}
-  .detail{border-top:1px dashed var(--line);margin:0 8px 8px;padding-top:9px;display:flex;flex-direction:column;gap:9px}
-  .track{border:1px solid var(--line);border-radius:8px;padding:9px;background:rgba(0,0,0,.25)}
-  .empty{color:var(--muted);font-size:12.5px;padding:7px 2px}
-  .plist a{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;text-decoration:none;color:var(--text);background:var(--panel)}
-  .plist a:hover{border-color:var(--accent2)}
-  .tag{background:rgba(176,107,255,.14);color:#d9bcff;border-radius:7px;padding:2px 8px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-  /* ---- Bitácora: línea de tiempo cronológica ---- */
+  .grip{flex:0 0 auto;width:11px;text-align:center;cursor:grab;color:var(--muted);font-size:11px;opacity:0;user-select:none}
+  .trow:hover .grip,.tphase-h:hover .grip{opacity:.5}
+  .sicon{flex:0 0 auto;width:18px;height:18px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;user-select:none;line-height:1}
+  .sicon.done{background:var(--ok);border-color:var(--ok);color:#07050f}
+  .sicon.prog{color:var(--accent2);border-color:var(--accent2)}
+  .sicon.paused{color:var(--warn);border-color:var(--warn)}
+  .sicon.derived{cursor:default;opacity:.85}
+  .tname{flex:1;min-width:60px;background:none;border:none;padding:0;font-size:12.5px;color:var(--text)}
+  .trow.done .tname{text-decoration:line-through;color:var(--muted)}
+  .tpct{font-size:10px;color:var(--muted);white-space:nowrap}
+  .eye{flex:0 0 auto;cursor:pointer;font-size:12px;color:var(--muted);opacity:.6;user-select:none}
+  .eye.off{color:var(--danger);opacity:.9}
+  .tchildren{margin-left:14px;border-left:1px solid var(--line);padding-left:0}
+  .tdetail{border-top:1px dashed var(--line);margin:2px 8px 6px 26px;padding-top:8px;display:flex;flex-direction:column;gap:8px}
+  .addrow{padding:4px 8px 6px}
+
+  /* Compartir */
+  .toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer}
+  .toggle input{width:auto}
+  .linkbox{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .linkbox input{flex:1;min-width:180px;font-size:12px}
+
+  /* Bitácora */
   .form-log{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel);margin:8px 0 16px}
   .timeline{position:relative;margin:0 0 0 5px;padding-left:16px;border-left:1px solid var(--line)}
   .tl-item{position:relative;padding:5px 6px 5px 4px;cursor:pointer;border-radius:6px}
@@ -106,21 +140,7 @@
   .tl-item:hover .tl-x{opacity:.6}
   .tl-sum{font-size:12.5px;color:var(--text);margin-top:1px}
   .tl-detail{margin-top:8px;display:flex;flex-direction:column;gap:8px;cursor:default}
-  .tl-field .lbl{margin-bottom:2px}
   .tl-field .val{font-size:13px;white-space:pre-wrap;line-height:1.4}
-  /* ---- Estado del proyecto ---- */
-  .pstatus{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:2px 9px;white-space:nowrap;flex:0 0 auto}
-  .pstatus-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-  .estado-select{width:auto;padding:5px 9px;font-size:12px;border-radius:9px}
-  /* ---- Menú de acciones (⋮) ---- */
-  .menu-wrap{position:relative;flex:0 0 auto}
-  .menu-btn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:15px;line-height:1;padding:0}
-  .menu-btn:hover{color:var(--text);border-color:var(--accent2)}
-  .menu-pop{position:absolute;right:0;top:32px;z-index:40;min-width:180px;background:#141018;border:1px solid var(--line);border-radius:10px;padding:5px;box-shadow:0 8px 26px rgba(0,0,0,.55)}
-  .menu-pop button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:12.5px;padding:8px 10px;border-radius:7px;cursor:pointer;font-family:inherit}
-  .menu-pop button:hover{background:rgba(255,255,255,.06)}
-  .menu-pop button.danger{color:var(--danger)}
-  .hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -146,6 +166,7 @@
   </div>
   <div id="body"></div>
 </div>
+<div id="modalHost"></div>
 
 <script>
 (function () {
@@ -154,241 +175,231 @@
   var sb = window.supabase.createClient(URL_SB, KEY);
   var $ = function (i) { return document.getElementById(i); };
 
-  var me = null, cuenta = null, proyectos = [], actual = null;
-  var areas = [], tareas = [], bitacora = [], pestana = 'tareas', abierta = null, bloqueo = null;
-  var arrastreId = null, arrastreTabla = null, logAbierto = null, areasAbiertas = {};
+  var me = null, cuenta = null, proyectos = [], actual = null, resumenPct = {};
+  var areas = [], tareas = [], bitacora = [], pestana = 'tareas', bloqueo = null;
+  var arrastreId = null, arrastreTabla = null, logAbierto = null, areasAbiertas = {}, tareaAbierta = null;
 
-  function msg(el, t, k) { el.innerHTML = t ? '<div class="msg ' + k + '">' + t + '</div>' : ''; }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  function msg(elm, t, k) { elm.innerHTML = t ? '<div class="msg ' + k + '">' + t + '</div>' : ''; }
   function hoy() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  var MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  var MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  function fechaCorta(iso) { var p = String(iso || '').slice(0, 10).split('-'); if (p.length !== 3) return iso || ''; var t = parseInt(p[2], 10) + ' ' + (MESES[parseInt(p[1], 10) - 1] || ''); if (String(new Date().getFullYear()) !== p[0]) t += ' ' + p[0]; return t; }
+  function fechaLarga(iso) { var p = String(iso || '').slice(0, 10).split('-'); if (p.length !== 3) return ''; return parseInt(p[2], 10) + ' de ' + MESES_L[parseInt(p[1], 10) - 1] + ' de ' + p[0]; }
 
-  // ---------------- Estado del proyecto ----------------
+  // ---------------- Estados del proyecto ----------------
   var ESTADOS = [
-    { v: 'active',    lbl: 'Activo',     emoji: '🟢', dot: '#2ee6a6' },
-    { v: 'pending',   lbl: 'Pendiente',  emoji: '🟡', dot: '#f7d154' },
-    { v: 'on_hold',   lbl: 'En espera',  emoji: '🟠', dot: '#ff9f43' },
-    { v: 'done',      lbl: 'Finalizado', emoji: '🔵', dot: '#35e5ff' },
-    { v: 'cancelled', lbl: 'Cancelado',  emoji: '🔴', dot: '#ff4d6d' }
+    { v: 'active', lbl: 'Activo', dot: '#2ee6a6' },
+    { v: 'paused', lbl: 'Pausado', dot: '#ff9f43' },
+    { v: 'done', lbl: 'Finalizado', dot: '#35e5ff' },
+    { v: 'inactive', lbl: 'Inactivo', dot: '#948bc4' },
+    { v: 'archived', lbl: 'Archivado', dot: '#6b6688' }
   ];
-  function estadoInfo(v) { for (var i = 0; i < ESTADOS.length; i++) if (ESTADOS[i].v === v) return ESTADOS[i]; return ESTADOS[0]; }
-  function pillEstado(v) {
-    var e = estadoInfo(v), s = el('span', 'pstatus');
-    var d = el('span', 'pstatus-dot'); d.style.background = e.dot;
-    s.appendChild(d); s.appendChild(document.createTextNode(e.lbl));
-    return s;
-  }
+  // Mapea estados antiguos a la nueva lista, sin romper filas guardadas.
+  var ALIAS_EST = { on_hold: 'paused', pending: 'active', cancelled: 'inactive' };
+  function estNorm(v) { return ALIAS_EST[v] || v; }
+  function estadoInfo(v) { v = estNorm(v); for (var i = 0; i < ESTADOS.length; i++) if (ESTADOS[i].v === v) return ESTADOS[i]; return ESTADOS[0]; }
+  function pillEstado(v) { var e = estadoInfo(v), s = el('span', 'pstatus'); var d = el('span', 'pstatus-dot'); d.style.background = e.dot; s.appendChild(d); s.appendChild(document.createTextNode(e.lbl)); return s; }
 
-  // ---------------- Menú de acciones (⋮) ----------------
-  document.addEventListener('click', function () {
-    document.querySelectorAll('.menu-pop').forEach(function (p) { p.classList.add('hidden'); });
-  });
-  function menuAcciones(items) {
+  // ---------------- Menú (⋮) ----------------
+  document.addEventListener('click', function () { document.querySelectorAll('.menu-pop').forEach(function (p) { p.classList.add('hidden'); }); });
+  function menuAcciones(items, mini) {
     var wrap = el('div', 'menu-wrap');
-    var btn = el('button', 'menu-btn', '⋮'); btn.title = 'Acciones'; btn.type = 'button';
+    var btn = el('button', 'menu-btn' + (mini ? ' mini' : ''), '⋮'); btn.title = 'Acciones'; btn.type = 'button';
     var pop = el('div', 'menu-pop hidden');
-    items.forEach(function (it) {
-      var b = el('button', it.danger ? 'danger' : '', it.label); b.type = 'button';
-      b.onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); pop.classList.add('hidden'); it.onClick(); };
-      pop.appendChild(b);
-    });
-    btn.onclick = function (ev) {
-      ev.preventDefault(); ev.stopPropagation();
-      var abrir = pop.classList.contains('hidden');
-      document.querySelectorAll('.menu-pop').forEach(function (p) { p.classList.add('hidden'); });
-      if (abrir) pop.classList.remove('hidden');
-    };
-    wrap.appendChild(btn); wrap.appendChild(pop);
-    return wrap;
-  }
-
-  // ---------------- Duplicar / Eliminar ----------------
-  // Copia la estructura (áreas, tareas, subtareas, prioridades, indicadores de
-  // seguimiento) pero NO el avance, responsables, fechas ni bitácora: el nuevo
-  // proyecto nace limpio, listo para reutilizarse como plantilla.
-  async function duplicarProyecto(p) {
-    var res = await Promise.all([
-      sb.from('project_areas').select('*').eq('project_id', p.id).order('position'),
-      sb.from('project_tasks').select('*').eq('project_id', p.id).order('position')
-    ]);
-    var oAreas = res[0].data || [], oTasks = res[1].data || [];
-
-    var np = await sb.from('projects').insert({
-      name: p.name + ' (copia)', description: p.description || null,
-      account_id: cuenta, owner_id: me.id, status: 'pending'
-    }).select('id').single();
-    if (np.error) { alert('No se pudo duplicar: ' + np.error.message); return null; }
-    var nid = np.data.id, areaMap = {}, taskMap = {};
-
-    for (var i = 0; i < oAreas.length; i++) {
-      var a = oAreas[i];
-      var ra = await sb.from('project_areas').insert({ project_id: nid, account_id: cuenta, name: a.name, position: a.position }).select('id').single();
-      if (!ra.error) areaMap[a.id] = ra.data.id;
-    }
-
-    function limpiaTracking(tr) { return (Array.isArray(tr) ? tr : []).map(function (m) { return { label: m.label, value: '' }; }); }
-    function copiaTarea(t, parentNuevo) {
-      return sb.from('project_tasks').insert({
-        project_id: nid, account_id: cuenta,
-        area_id: t.area_id ? (areaMap[t.area_id] || null) : null,
-        parent_id: parentNuevo,
-        name: t.name, description: t.description || null,
-        responsible: null, priority: t.priority, due_date: null, status: 'pending',
-        tracking_enabled: t.tracking_enabled, tracking: limpiaTracking(t.tracking),
-        position: t.position
-      }).select('id').single();
-    }
-    var padres = oTasks.filter(function (t) { return !t.parent_id; });
-    var hijas = oTasks.filter(function (t) { return t.parent_id; });
-    for (var j = 0; j < padres.length; j++) { var rp = await copiaTarea(padres[j], null); if (!rp.error) taskMap[padres[j].id] = rp.data.id; }
-    for (var k = 0; k < hijas.length; k++) { var rh = await copiaTarea(hijas[k], taskMap[hijas[k].parent_id] || null); if (!rh.error) taskMap[hijas[k].id] = rh.data.id; }
-
-    return nid;
-  }
-  async function accionDuplicar(p) {
-    var nid = await duplicarProyecto(p);
-    if (nid) { history.pushState({}, '', '?p=' + nid); verProyecto(nid); }
-  }
-  async function accionEliminar(p) {
-    if (!confirm('¿Estás seguro de eliminar este proyecto?\nEsta acción no se puede deshacer.')) return;
-    var r = await sb.from('projects').delete().eq('id', p.id);
-    if (r.error) { alert('No se pudo eliminar: ' + r.error.message); return; }
-    history.pushState({}, '', '/proyectos/');
-    listaProyectos();
+    items.forEach(function (it) { if (!it) return; var b = el('button', it.danger ? 'danger' : '', it.label); b.type = 'button'; if (it.disabled) b.disabled = true; b.onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); pop.classList.add('hidden'); it.onClick(); }; pop.appendChild(b); });
+    btn.onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); var abrir = pop.classList.contains('hidden'); document.querySelectorAll('.menu-pop').forEach(function (p) { p.classList.add('hidden'); }); if (abrir) pop.classList.remove('hidden'); };
+    wrap.appendChild(btn); wrap.appendChild(pop); return wrap;
   }
 
   // ---------------- Acceso ----------------
   $('loginBtn').addEventListener('click', entrar);
   $('password').addEventListener('keydown', function (e) { if (e.key === 'Enter') entrar(); });
   $('outBtn').addEventListener('click', function () { sb.auth.signOut(); });
-
   async function entrar() {
     var e = $('email').value.trim(), p = $('password').value;
     if (!e || !p) { msg($('loginMsg'), 'Completa correo y contraseña.', 'error'); return; }
     $('loginBtn').disabled = true; msg($('loginMsg'), '', '');
     var r = await sb.auth.signInWithPassword({ email: e, password: p });
-    $('loginBtn').disabled = false;
-    if (r.error) msg($('loginMsg'), r.error.message, 'error');
+    $('loginBtn').disabled = false; if (r.error) msg($('loginMsg'), r.error.message, 'error');
   }
-
   sb.auth.onAuthStateChange(async function (_ev, s) {
     if (s && s.user) {
-      // Mismo guard que el resto: usuario Y empresa deben estar activos.
       var a = await sb.rpc('is_active_user');
-      if (a.error || !a.data) {
-        bloqueo = 'Tu cuenta está desactivada. Contacta al administrador.';
-        await sb.auth.signOut(); return;
-      }
+      if (a.error || !a.data) { bloqueo = 'Tu cuenta está desactivada. Contacta al administrador.'; await sb.auth.signOut(); return; }
       me = s.user;
       var pr = await sb.from('profiles').select('account_id').eq('id', me.id).maybeSingle();
       cuenta = pr.data ? pr.data.account_id : null;
-      $('whoami').textContent = me.email;
-      $('loginView').classList.add('hidden');
-      $('appView').classList.remove('hidden');
+      $('whoami').textContent = me.email; $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
       abrirDesdeURL();
-    } else {
-      me = null;
-      $('appView').classList.add('hidden');
-      $('loginView').classList.remove('hidden');
-      if (bloqueo) { msg($('loginMsg'), bloqueo, 'error'); bloqueo = null; }
-    }
+    } else { me = null; $('appView').classList.add('hidden'); $('loginView').classList.remove('hidden'); if (bloqueo) { msg($('loginMsg'), bloqueo, 'error'); bloqueo = null; } }
   });
 
-  // ---------------- Avance (derivado, nunca guardado) ----------------
+  // ---------------- Avance por hojas (sin doble conteo) ----------------
   function porPos(a, b) { return (a.position || 0) - (b.position || 0); }
   function hijas(id) { return tareas.filter(function (t) { return t.parent_id === id; }).sort(porPos); }
-  function raiz() { return tareas.filter(function (t) { return !t.parent_id; }).sort(porPos); }
-  function avance(t) {
-    var h = hijas(t.id);
-    if (h.length) return h.filter(function (s) { return s.status === 'done'; }).length / h.length;
-    return t.status === 'done' ? 1 : 0;
-  }
-  function estado(t) {
-    var h = hijas(t.id);
-    if (!h.length) return t.status;
-    var d = h.filter(function (s) { return s.status === 'done'; }).length;
-    if (d === h.length) return 'done';
-    if (d > 0 || h.some(function (s) { return s.status === 'in_progress'; })) return 'in_progress';
+  function raizFase(areaId) { return tareas.filter(function (t) { return !t.parent_id && (areaId ? t.area_id === areaId : !t.area_id); }).sort(porPos); }
+  function hojasDe(t) { var h = hijas(t.id); if (!h.length) return [t]; var out = []; h.forEach(function (c) { out = out.concat(hojasDe(c)); }); return out; }
+  function pctNodo(t) { var L = hojasDe(t); var d = L.filter(function (x) { return x.status === 'done'; }).length; return { done: d, total: L.length, pct: L.length ? d / L.length : 0 }; }
+  function pctFase(areaId) { var r = raizFase(areaId); var L = []; r.forEach(function (t) { L = L.concat(hojasDe(t)); }); var d = L.filter(function (x) { return x.status === 'done'; }).length; return { done: d, total: L.length, pct: L.length ? d / L.length : 0 }; }
+  function todasLasHojas() { return tareas.filter(function (t) { return !hijas(t.id).length; }); }
+  function pctProyecto() { var L = todasLasHojas(); var d = L.filter(function (x) { return x.status === 'done'; }).length; return { done: d, total: L.length, pct: L.length ? d / L.length : 0 }; }
+  function estadoNodo(t) {
+    var h = hijas(t.id); if (!h.length) return t.status;
+    var L = hojasDe(t); var d = L.filter(function (x) { return x.status === 'done'; }).length;
+    if (L.length && d === L.length) return 'done';
+    if (d > 0 || L.some(function (x) { return x.status === 'in_progress'; })) return 'in_progress';
     return 'pending';
   }
-  function avanceProyecto() {
-    var r = raiz(); if (!r.length) return 0;
-    return r.reduce(function (a, t) { return a + avance(t); }, 0) / r.length;
-  }
-  var ETIQ = { pending: 'Pendiente', in_progress: 'En proceso', done: 'Completado' };
+  function iconoEstado(st) { return st === 'done' ? '✓' : st === 'in_progress' ? '◐' : st === 'paused' ? '—' : '○'; }
+  function claseEstado(st) { return st === 'done' ? 'done' : st === 'in_progress' ? 'prog' : st === 'paused' ? 'paused' : ''; }
 
-  // ---------------- Acordeón de etapas (áreas) ----------------
-  // Cada etapa se pliega/despliega. Por defecto TODAS contraídas al abrir el
-  // proyecto; solo se recuerdan las que el usuario expande. Se guarda por
-  // proyecto en localStorage, así el estado sobrevive re-render y recarga
-  // mientras el usuario sigue en ese proyecto.
-  function claveAreas() { return 'areasAbiertas_' + (actual ? actual.id : ''); }
-  function cargarAreasAbiertas() {
-    try { areasAbiertas = JSON.parse(localStorage.getItem(claveAreas()) || '{}') || {}; }
-    catch (_) { areasAbiertas = {}; }
-  }
-  function guardarAreasAbiertas() {
-    try { localStorage.setItem(claveAreas(), JSON.stringify(areasAbiertas)); } catch (_) {}
-  }
-  function areaAbierta(key) { return !!areasAbiertas[key]; }
+  // ---------------- Acordeón de fases ----------------
+  function claveAreas() { return 'fasesAbiertas_' + (actual ? actual.id : ''); }
+  function cargarAreasAbiertas() { try { areasAbiertas = JSON.parse(localStorage.getItem(claveAreas()) || '{}') || {}; } catch (_) { areasAbiertas = {}; } }
+  function guardarAreasAbiertas() { try { localStorage.setItem(claveAreas(), JSON.stringify(areasAbiertas)); } catch (_) {} }
   function abrirArea(key) { areasAbiertas[key] = true; guardarAreasAbiertas(); }
-  function toggleArea(key) {
-    if (areasAbiertas[key]) delete areasAbiertas[key]; else areasAbiertas[key] = true;
-    guardarAreasAbiertas(); pintar();
-  }
+  function toggleArea(key) { if (areasAbiertas[key]) delete areasAbiertas[key]; else areasAbiertas[key] = true; guardarAreasAbiertas(); pintar(); }
 
   // ---------------- Navegación ----------------
-  function abrirDesdeURL() {
-    var id = new URLSearchParams(location.search).get('p');
-    if (id) verProyecto(id); else listaProyectos();
-  }
+  function abrirDesdeURL() { var id = new URLSearchParams(location.search).get('p'); if (id) verProyecto(id); else listaProyectos(); }
   window.addEventListener('popstate', abrirDesdeURL);
 
-  // ---------------- Lista de proyectos ----------------
+  async function guardar(t, campos) { Object.assign(t, campos); var r = await sb.from('project_tasks').update(campos).eq('id', t.id); if (r.error) alert('No se pudo guardar: ' + r.error.message); tocar(); }
+  // "Tocar" el proyecto: actualiza updated_at para que la vista pública muestre la última actualización.
+  function tocar() { if (actual) { actual.updated_at = new Date().toISOString(); sb.from('projects').update({ updated_at: actual.updated_at }).eq('id', actual.id); } }
+
+  // ---------------- Lista de proyectos (tarjetas) ----------------
   async function listaProyectos() {
     actual = null;
     var b = $('body'); b.innerHTML = '<div class="empty">Cargando…</div>';
-    var r = await sb.from('projects').select('id,name,description,status,created_at').order('created_at', { ascending: false });
-    if (r.error) { b.innerHTML = '<div class="msg error">' + r.error.message + '</div>'; return; }
-    proyectos = r.data || [];
+    var res = await Promise.all([
+      sb.from('projects').select('*').order('created_at', { ascending: false }),
+      sb.from('project_tasks').select('id,project_id,parent_id,status')
+    ]);
+    if (res[0].error) { b.innerHTML = '<div class="msg error">' + res[0].error.message + '</div>'; return; }
+    proyectos = res[0].data || [];
+    // % por proyecto: hojas (sin hijos) completadas / total.
+    resumenPct = {};
+    var byProj = {}; (res[1].data || []).forEach(function (t) { (byProj[t.project_id] = byProj[t.project_id] || []).push(t); });
+    Object.keys(byProj).forEach(function (pid) {
+      var list = byProj[pid]; var conHijos = {}; list.forEach(function (t) { if (t.parent_id) conHijos[t.parent_id] = 1; });
+      var hojas = list.filter(function (t) { return !conHijos[t.id]; });
+      var d = hojas.filter(function (t) { return t.status === 'done'; }).length;
+      resumenPct[pid] = { done: d, total: hojas.length, pct: hojas.length ? Math.round(d / hojas.length * 100) : 0 };
+    });
     b.innerHTML = '';
 
-    var c = el('div', 'card');
-    c.appendChild(el('div', 'lbl', 'Nuevo proyecto'));
-    var fila = el('div', 'row'); fila.style.marginTop = '10px';
-    var inp = el('input'); inp.placeholder = 'Nombre del proyecto (ej. Lanzamiento Q3)';
-    var bt = el('button', 'pbtn', 'Crear');
-    bt.onclick = async function () {
-      var n = inp.value.trim(); if (!n) return;
-      bt.disabled = true;
-      var r2 = await sb.from('projects').insert({ name: n, account_id: cuenta, owner_id: me.id }).select('id').single();
-      bt.disabled = false;
-      if (r2.error) { alert('No se pudo crear: ' + r2.error.message); return; }
-      verProyecto(r2.data.id, true);
-    };
-    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') bt.click(); });
-    fila.appendChild(inp); fila.appendChild(bt);
-    c.appendChild(fila);
-    b.appendChild(c);
+    var top = el('div', 'row'); top.style.justifyContent = 'space-between'; top.style.marginBottom = '14px';
+    top.appendChild(el('div', 'lbl', 'Proyectos'));
+    var nuevo = el('button', 'pbtn sm', '+ Nuevo proyecto'); nuevo.onclick = function () { modalProyecto(null); };
+    top.appendChild(nuevo); b.appendChild(top);
 
-    if (!proyectos.length) { b.appendChild(el('div', 'empty', 'Todavía no hay proyectos. Crea el primero arriba.')); return; }
-    var lista = el('div', 'plist');
+    if (!proyectos.length) { b.appendChild(el('div', 'empty', 'Todavía no hay proyectos. Crea el primero con “+ Nuevo proyecto”.')); return; }
+    var g = el('div', 'pgrid');
     proyectos.forEach(function (p) {
-      var a = el('a'); a.href = '?p=' + p.id;
-      a.onclick = function (e) { e.preventDefault(); verProyecto(p.id, true); };
-      var izq = el('div'); izq.style.flex = '1'; izq.style.minWidth = '0';
-      izq.appendChild(el('div', null, p.name));
-      if (p.description) izq.appendChild(el('div', 'hint', p.description));
-      a.appendChild(izq);
-      a.appendChild(pillEstado(p.status));
-      a.appendChild(el('span', 'hint', String(p.created_at || '').slice(0, 10)));
-      a.appendChild(menuAcciones([
-        { label: 'Duplicar proyecto', onClick: function () { accionDuplicar(p); } },
-        { label: 'Eliminar proyecto', danger: true, onClick: function () { accionEliminar(p); } }
-      ]));
-      lista.appendChild(a);
+      var rp = resumenPct[p.id] || { pct: 0, done: 0, total: 0 };
+      var card = el('div', 'pcard');
+      var head = el('div', 'row'); head.style.justifyContent = 'space-between'; head.style.alignItems = 'flex-start';
+      head.appendChild(el('div', 't', p.name));
+      head.appendChild(menuProyecto(p)); card.appendChild(head);
+      var meta = el('div', 'meta');
+      meta.innerHTML = (p.client ? 'Cliente: ' + escapar(p.client) + '<br>' : '') + (p.niche ? 'Nicho: ' + escapar(p.niche) + '<br>' : '') + (p.start_date ? 'Inicio: ' + fechaCorta(p.start_date) + '<br>' : '') + (p.end_date ? 'Fin estimado: ' + fechaCorta(p.end_date) : '');
+      card.appendChild(meta);
+      var estRow = el('div', 'row'); estRow.style.marginTop = '9px'; estRow.appendChild(pillEstado(p.status)); card.appendChild(estRow);
+      var pt = el('div', 'pcttop'); pt.appendChild(el('span', 'lbl', 'Avance')); pt.appendChild(el('span', 'pct', rp.pct + '%')); card.appendChild(pt);
+      var bar = el('div', 'bar' + (rp.pct >= 100 ? ' full' : '')); bar.style.marginTop = '4px'; var fi = el('i'); fi.style.width = rp.pct + '%'; bar.appendChild(fi); card.appendChild(bar);
+      card.onclick = function (e) { if (e.target.closest('.menu-wrap')) return; verProyecto(p.id, true); };
+      g.appendChild(card);
     });
-    b.appendChild(lista);
+    b.appendChild(g);
   }
+  function escapar(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+
+  function menuProyecto(p) {
+    return menuAcciones([
+      { label: 'Abrir proyecto', onClick: function () { verProyecto(p.id, true); } },
+      { label: 'Editar datos', onClick: function () { modalProyecto(p); } },
+      { label: 'Cambiar estado', onClick: function () { modalEstado(p); } },
+      { label: 'Copiar enlace público', onClick: function () { copiarEnlace(p); } },
+      { label: p.status === 'archived' ? 'Desarchivar' : 'Archivar', onClick: async function () { var nv = p.status === 'archived' ? 'active' : 'archived'; await sb.from('projects').update({ status: nv }).eq('id', p.id); p.status = nv; if (actual && actual.id === p.id) actual.status = nv; listaProyectos(); } },
+      { label: 'Duplicar proyecto', onClick: function () { accionDuplicar(p); } },
+      { label: 'Eliminar proyecto', danger: true, onClick: function () { accionEliminar(p); } }
+    ]);
+  }
+
+  // ---------------- Modal crear/editar proyecto ----------------
+  function modalProyecto(p) {
+    var esNuevo = !p; p = p || {};
+    var host = $('modalHost'); var ov = el('div', 'overlay'); var m = el('div', 'modal');
+    m.appendChild(el('h2', null, esNuevo ? 'Nuevo proyecto' : 'Editar proyecto'));
+    function campo(lbl, val, ph, tipo, ta) { var w = el('div', 'field'); w.appendChild(el('label', null, lbl)); var i = ta ? el('textarea') : el('input'); if (ta) i.rows = 2; if (tipo) i.type = tipo; i.value = val || ''; i.placeholder = ph || ''; w.appendChild(i); m.appendChild(w); return i; }
+    var iName = campo('Nombre del proyecto *', p.name, 'Ej. Implementación de Sistema de Ventas');
+    var iClient = campo('Nombre del cliente', p.client, 'Ej. Empresa ABC');
+    var iNiche = campo('Nicho', p.niche, 'Ej. Servicios profesionales');
+    var g = el('div', 'grid');
+    var wI = el('div', 'field'); wI.appendChild(el('label', null, 'Fecha de inicio')); var iStart = el('input'); iStart.type = 'date'; iStart.value = p.start_date || (esNuevo ? hoy() : ''); wI.appendChild(iStart); g.appendChild(wI);
+    var wF = el('div', 'field'); wF.appendChild(el('label', null, 'Fin estimado (opcional)')); var iEnd = el('input'); iEnd.type = 'date'; iEnd.value = p.end_date || ''; wF.appendChild(iEnd); g.appendChild(wF);
+    m.appendChild(g);
+    var wS = el('div', 'field'); wS.appendChild(el('label', null, 'Estado inicial')); var iStat = el('select'); ESTADOS.forEach(function (e2) { var o = el('option', null, e2.lbl); o.value = e2.v; if (estNorm(p.status || 'active') === e2.v) o.selected = true; iStat.appendChild(o); }); wS.appendChild(iStat); m.appendChild(wS);
+    var iDesc = campo('Descripción general (opcional)', p.description, '', null, true);
+    var acc = el('div', 'row'); acc.style.justifyContent = 'flex-end'; acc.style.marginTop = '6px';
+    var cancel = el('button', 'btn', 'Cancelar'); cancel.onclick = function () { host.innerHTML = ''; };
+    var save = el('button', 'pbtn', esNuevo ? 'Crear proyecto' : 'Guardar');
+    save.onclick = async function () {
+      var n = iName.value.trim(); if (!n) { alert('El nombre es obligatorio.'); return; }
+      save.disabled = true;
+      var campos = { name: n, client: iClient.value.trim() || null, niche: iNiche.value.trim() || null, start_date: iStart.value || null, end_date: iEnd.value || null, status: iStat.value, description: iDesc.value.trim() || null };
+      if (esNuevo) {
+        var r = await sb.from('projects').insert(Object.assign({ account_id: cuenta, owner_id: me.id }, campos)).select('id').single();
+        if (r.error) { alert(r.error.message); save.disabled = false; return; }
+        host.innerHTML = ''; verProyecto(r.data.id, true);
+      } else {
+        var e2 = await sb.from('projects').update(campos).eq('id', p.id);
+        if (e2.error) { alert(e2.error.message); save.disabled = false; return; }
+        Object.assign(p, campos); if (actual && actual.id === p.id) Object.assign(actual, campos);
+        host.innerHTML = ''; if (actual) pintar(); else listaProyectos();
+      }
+    };
+    acc.appendChild(cancel); acc.appendChild(save); m.appendChild(acc);
+    ov.appendChild(m); ov.onclick = function (e) { if (e.target === ov) host.innerHTML = ''; };
+    host.innerHTML = ''; host.appendChild(ov); setTimeout(function () { iName.focus(); }, 0);
+  }
+  function modalEstado(p) {
+    var host = $('modalHost'); var ov = el('div', 'overlay'); var m = el('div', 'modal'); m.style.maxWidth = '360px';
+    m.appendChild(el('h2', null, 'Cambiar estado')); m.appendChild(el('div', 'hint', p.name));
+    var s = el('select'); s.style.marginTop = '12px'; ESTADOS.forEach(function (e2) { var o = el('option', null, e2.lbl); o.value = e2.v; if (estNorm(p.status) === e2.v) o.selected = true; s.appendChild(o); }); m.appendChild(s);
+    var acc = el('div', 'row'); acc.style.justifyContent = 'flex-end'; acc.style.marginTop = '14px';
+    var cancel = el('button', 'btn', 'Cancelar'); cancel.onclick = function () { host.innerHTML = ''; };
+    var save = el('button', 'pbtn', 'Guardar'); save.onclick = async function () { await sb.from('projects').update({ status: s.value }).eq('id', p.id); p.status = s.value; if (actual && actual.id === p.id) actual.status = s.value; host.innerHTML = ''; if (actual) pintar(); else listaProyectos(); };
+    acc.appendChild(cancel); acc.appendChild(save); m.appendChild(acc);
+    ov.appendChild(m); ov.onclick = function (e) { if (e.target === ov) host.innerHTML = ''; }; host.innerHTML = ''; host.appendChild(ov);
+  }
+
+  // ---------------- Enlace público ----------------
+  function urlPublica(token) { return location.origin + '/progreso/?t=' + token; }
+  function nuevoToken() { var abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789', s = '', arr = new Uint8Array(16); (window.crypto || window.msCrypto).getRandomValues(arr); for (var i = 0; i < 16; i++) s += abc[arr[i] % abc.length]; return s; }
+  async function asegurarToken(p) { if (p.public_token && p.public_enabled) return p.public_token; var tk = p.public_token || nuevoToken(); var r = await sb.from('projects').update({ public_token: tk, public_enabled: true }).eq('id', p.id); if (r.error) { alert(r.error.message); return null; } p.public_token = tk; p.public_enabled = true; return tk; }
+  async function copiarEnlace(p) { var tk = await asegurarToken(p); if (!tk) return; copiarTexto(urlPublica(tk)); alert('Enlace público copiado:\n' + urlPublica(tk)); }
+  function copiarTexto(txt) { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).catch(function () { fallbackCopy(txt); }); else fallbackCopy(txt); }
+  function fallbackCopy(txt) { var t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (_) {} t.remove(); }
+
+  // ---------------- Duplicar / Eliminar ----------------
+  async function duplicarProyecto(p) {
+    var res = await Promise.all([sb.from('project_areas').select('*').eq('project_id', p.id).order('position'), sb.from('project_tasks').select('*').eq('project_id', p.id).order('position')]);
+    var oAreas = res[0].data || [], oTasks = res[1].data || [];
+    var np = await sb.from('projects').insert({ name: p.name + ' (copia)', description: p.description || null, client: p.client || null, niche: p.niche || null, account_id: cuenta, owner_id: me.id, status: 'active' }).select('id').single();
+    if (np.error) { alert('No se pudo duplicar: ' + np.error.message); return null; }
+    var nid = np.data.id, areaMap = {}, taskMap = {};
+    for (var i = 0; i < oAreas.length; i++) { var a = oAreas[i]; var ra = await sb.from('project_areas').insert({ project_id: nid, account_id: cuenta, name: a.name, position: a.position, client_visible: a.client_visible }).select('id').single(); if (!ra.error) areaMap[a.id] = ra.data.id; }
+    function copia(t, parentNuevo) { return sb.from('project_tasks').insert({ project_id: nid, account_id: cuenta, area_id: t.area_id ? (areaMap[t.area_id] || null) : null, parent_id: parentNuevo, name: t.name, description: t.description || null, responsible: null, priority: t.priority, due_date: null, status: 'pending', client_visible: t.client_visible, position: t.position }).select('id').single(); }
+    // Copia en orden de profundidad (padres antes que hijos).
+    var pendientes = oTasks.slice(), guard = 0;
+    while (pendientes.length && guard < 9999) { guard++; var t = pendientes.shift(); var parentNuevo = t.parent_id ? taskMap[t.parent_id] : null; if (t.parent_id && !parentNuevo) { pendientes.push(t); continue; } var r = await copia(t, parentNuevo); if (!r.error) taskMap[t.id] = r.data.id; }
+    return nid;
+  }
+  async function accionDuplicar(p) { var nid = await duplicarProyecto(p); if (nid) verProyecto(nid, true); }
+  async function accionEliminar(p) { if (!confirm('¿Eliminar el proyecto "' + p.name + '"?\nSe borran sus tareas y bitácora. No se puede deshacer.')) return; var r = await sb.from('projects').delete().eq('id', p.id); if (r.error) { alert('No se pudo eliminar: ' + r.error.message); return; } history.pushState({}, '', '/proyectos/'); listaProyectos(); }
 
   // ---------------- Vista de proyecto ----------------
   async function verProyecto(id, push) {
@@ -401,525 +412,275 @@
       sb.from('project_log').select('*').eq('project_id', id).order('entry_date', { ascending: false })
     ]);
     if (!res[0].data) { b.innerHTML = '<div class="msg error">No se encontró el proyecto.</div>'; return; }
-    actual = res[0].data;
-    cargarAreasAbiertas(); // etapas contraídas por defecto, salvo las recordadas
+    actual = res[0].data; cargarAreasAbiertas();
     areas = res[1].data || [];
-    tareas = (res[2].data || []).map(function (t) { t.tracking = Array.isArray(t.tracking) ? t.tracking : []; return t; });
+    tareas = res[2].data || [];
     bitacora = res[3].data || [];
     pintar();
   }
 
   function pintar() {
     var b = $('body'); b.innerHTML = '';
-
-    var volver = el('a', 'hint', '← Todos los proyectos');
-    volver.href = '/proyectos/'; volver.style.textDecoration = 'none';
+    var volver = el('a', 'hint', '← Todos los proyectos'); volver.href = '/proyectos/'; volver.style.textDecoration = 'none';
     volver.onclick = function (e) { e.preventDefault(); history.pushState({}, '', '/proyectos/'); listaProyectos(); };
     b.appendChild(volver);
 
-    var cab = el('div', 'row'); cab.style.margin = '10px 0 16px'; cab.style.justifyContent = 'space-between'; cab.style.flexWrap = 'wrap'; cab.style.gap = '10px';
-    var h = el('h1', null, actual.name); h.style.fontSize = '20px'; h.style.margin = '0'; h.style.minWidth = '0';
-    cab.appendChild(h);
+    // Cabecera del proyecto
+    var cab = el('div', 'row'); cab.style.margin = '10px 0 12px'; cab.style.justifyContent = 'space-between';
+    var h = el('h1', null, actual.name); h.style.fontSize = '20px'; h.style.margin = '0'; h.style.minWidth = '0'; cab.appendChild(h);
     var ctr = el('div', 'row'); ctr.style.gap = '8px';
-    // Selector de estado del proyecto (con color por estado).
-    var sel = el('select', 'estado-select');
-    ESTADOS.forEach(function (e2) {
-      var op = el('option', null, e2.emoji + ' ' + e2.lbl); op.value = e2.v;
-      if (actual.status === e2.v) op.selected = true;
-      sel.appendChild(op);
-    });
-    sel.onchange = async function () {
-      var rr = await sb.from('projects').update({ status: sel.value }).eq('id', actual.id);
-      if (rr.error) { alert('No se pudo cambiar el estado: ' + rr.error.message); return; }
-      actual.status = sel.value;
-      var lp = proyectos.find(function (x) { return x.id === actual.id; }); if (lp) lp.status = sel.value;
-    };
+    var sel = el('select', 'estado-select'); ESTADOS.forEach(function (e2) { var o = el('option', null, e2.lbl); o.value = e2.v; if (estNorm(actual.status) === e2.v) o.selected = true; sel.appendChild(o); });
+    sel.onchange = async function () { await sb.from('projects').update({ status: sel.value }).eq('id', actual.id); actual.status = sel.value; };
     ctr.appendChild(sel);
-    ctr.appendChild(menuAcciones([
-      { label: 'Duplicar proyecto', onClick: function () { accionDuplicar(actual); } },
-      { label: 'Eliminar proyecto', danger: true, onClick: function () { accionEliminar(actual); } }
-    ]));
-    cab.appendChild(ctr);
-    b.appendChild(cab);
+    ctr.appendChild(menuProyecto(actual)); cab.appendChild(ctr); b.appendChild(cab);
 
-    // Resumen: avance global y contadores
-    var r = raiz();
-    var cont = { pending: 0, in_progress: 0, done: 0 };
-    r.forEach(function (t) { cont[estado(t)]++; });
-    var pct = Math.round(avanceProyecto() * 100);
+    var meta = el('div', 'hint'); meta.style.margin = '-4px 0 12px';
+    meta.textContent = [actual.client ? 'Cliente: ' + actual.client : '', actual.niche ? 'Nicho: ' + actual.niche : '', actual.start_date ? 'Inicio: ' + fechaCorta(actual.start_date) : '', actual.end_date ? 'Fin: ' + fechaCorta(actual.end_date) : ''].filter(Boolean).join(' · ');
+    b.appendChild(meta);
+
+    // Avance
+    var pr = pctProyecto(); var pct = Math.round(pr.pct * 100);
     var res = el('div', 'card');
-    var top = el('div', 'row'); top.style.justifyContent = 'space-between';
-    top.appendChild(el('span', 'lbl', 'Avance del proyecto'));
-    var n = el('span', null, pct + '%'); n.style.fontSize = '24px'; n.style.fontWeight = '700';
-    top.appendChild(n);
-    res.appendChild(top);
-    var bar = el('div', 'bar' + (pct >= 100 ? ' full' : '')); bar.style.margin = '10px 0';
-    var fill = el('i'); fill.style.width = pct + '%'; bar.appendChild(fill);
-    res.appendChild(bar);
-    res.appendChild(el('div', 'hint', cont.pending + ' pendiente · ' + cont.in_progress + ' en proceso · ' + cont.done + ' completado'));
+    var top = el('div', 'row'); top.style.justifyContent = 'space-between'; top.appendChild(el('span', 'lbl', 'Avance general'));
+    var n = el('span', null, pct + '%'); n.style.fontSize = '24px'; n.style.fontWeight = '700'; top.appendChild(n); res.appendChild(top);
+    var bar = el('div', 'bar' + (pct >= 100 ? ' full' : '')); bar.style.margin = '10px 0'; var fill = el('i'); fill.style.width = pct + '%'; bar.appendChild(fill); res.appendChild(bar);
+    res.appendChild(el('div', 'hint', pr.done + ' tareas completadas de ' + pr.total + ' · ' + (pr.total - pr.done) + ' pendientes'));
     b.appendChild(res);
 
-    var tabs = el('div', 'tabs');
-    [['tareas', 'Tareas'], ['bitacora', 'Bitácora']].forEach(function (t) {
-      var x = el('button', pestana === t[0] ? 'on' : '', t[1]);
-      x.onclick = function () { pestana = t[0]; pintar(); };
-      tabs.appendChild(x);
-    });
-    b.appendChild(tabs);
+    // Acciones del enlace
+    var accCard = el('div', 'row'); accCard.style.margin = '0 0 14px'; accCard.style.gap = '8px';
+    var edit = el('button', 'btn sm', 'Editar proyecto'); edit.onclick = function () { modalProyecto(actual); }; accCard.appendChild(edit);
+    var cop = el('button', 'btn sm', 'Copiar enlace'); cop.onclick = function () { copiarEnlace(actual); }; accCard.appendChild(cop);
+    var prev = el('button', 'btn sm', 'Vista previa'); prev.onclick = async function () { var tk = await asegurarToken(actual); if (tk) window.open(urlPublica(tk), '_blank'); }; accCard.appendChild(prev);
+    var cfg = el('button', 'btn sm', 'Configuración del enlace'); cfg.onclick = function () { modalCompartir(); }; accCard.appendChild(cfg);
+    b.appendChild(accCard);
 
+    var tabs = el('div', 'tabs');
+    [['tareas', 'Tareas'], ['bitacora', 'Bitácora']].forEach(function (t) { var x = el('button', pestana === t[0] ? 'on' : '', t[1]); x.onclick = function () { pestana = t[0]; pintar(); }; tabs.appendChild(x); });
+    b.appendChild(tabs);
     var zona = el('div'); b.appendChild(zona);
     if (pestana === 'tareas') pintarTareas(zona); else pintarBitacora(zona);
   }
 
-  // ---------------- Tareas por área ----------------
-  function pintarTareas(z) {
-    var nueva = el('div', 'row'); nueva.style.marginBottom = '16px';
-    var ia = el('input'); ia.placeholder = 'Nueva área o fase (ej. Creativos, Landing, Publicidad)';
-    var ba = el('button', 'btn', '+ Área');
-    ba.onclick = async function () {
-      var n = ia.value.trim(); if (!n) return;
-      var r = await sb.from('project_areas').insert({ project_id: actual.id, account_id: cuenta, name: n, position: areas.length }).select('*').single();
-      if (r.error) { alert(r.error.message); return; }
-      areas.push(r.data); abrirArea(r.data.id); ia.value = ''; pintar();
-    };
-    ia.addEventListener('keydown', function (e) { if (e.key === 'Enter') ba.click(); });
-    nueva.appendChild(ia); nueva.appendChild(ba);
-    z.appendChild(nueva);
+  // ---------------- Compartir avance (config del enlace) ----------------
+  function modalCompartir() {
+    var host = $('modalHost'); var ov = el('div', 'overlay'); var m = el('div', 'modal');
+    m.appendChild(el('h2', null, 'Compartir avance'));
+    m.appendChild(el('div', 'hint', 'Enlace público de solo lectura para el cliente. No requiere iniciar sesión.'));
+    var estado = el('div'); estado.style.marginTop = '12px'; m.appendChild(estado);
+    var showCard = el('div'); showCard.style.marginTop = '14px'; m.appendChild(showCard);
 
-    var sinArea = raiz().filter(function (t) { return !t.area_id; });
-    if (!areas.length && !sinArea.length) {
-      z.appendChild(el('div', 'empty', 'Empieza creando un área (Estrategia, Creativos, Landing…) y añade tareas dentro.'));
-      return;
+    function refrescar() {
+      estado.innerHTML = '';
+      var tg = el('label', 'toggle'); var cb = el('input'); cb.type = 'checkbox'; cb.checked = !!actual.public_enabled;
+      cb.onchange = async function () {
+        if (cb.checked) { var tk = actual.public_token || nuevoToken(); await sb.from('projects').update({ public_token: tk, public_enabled: true }).eq('id', actual.id); actual.public_token = tk; actual.public_enabled = true; }
+        else { await sb.from('projects').update({ public_enabled: false }).eq('id', actual.id); actual.public_enabled = false; }
+        refrescar();
+      };
+      tg.appendChild(cb); tg.appendChild(document.createTextNode('Enlace público activado')); estado.appendChild(tg);
+
+      if (actual.public_enabled && actual.public_token) {
+        var lb = el('div', 'linkbox'); var inp = el('input'); inp.value = urlPublica(actual.public_token); inp.readOnly = true; lb.appendChild(inp);
+        var c = el('button', 'btn sm', 'Copiar'); c.onclick = function () { inp.select(); copiarTexto(inp.value); c.textContent = 'Copiado ✓'; setTimeout(function () { c.textContent = 'Copiar'; }, 1300); }; lb.appendChild(c);
+        var v = el('button', 'btn sm', 'Abrir'); v.onclick = function () { window.open(inp.value, '_blank'); }; lb.appendChild(v);
+        estado.appendChild(lb);
+        var acc = el('div', 'row'); acc.style.marginTop = '8px';
+        var re = el('button', 'btn sm', 'Regenerar enlace'); re.onclick = async function () { if (!confirm('Al regenerar, el enlace anterior dejará de funcionar. ¿Continuar?')) return; var tk = nuevoToken(); await sb.from('projects').update({ public_token: tk }).eq('id', actual.id); actual.public_token = tk; refrescar(); }; acc.appendChild(re);
+        estado.appendChild(acc);
+        estado.appendChild(el('div', 'hint', 'Token aleatorio y no adivinable. Regenerar invalida el anterior.'));
+      } else if (!actual.public_enabled) {
+        estado.appendChild(el('div', 'hint', 'El enlace está desactivado. Actívalo para compartir el avance.'));
+      }
+
+      // Qué se muestra al cliente
+      showCard.innerHTML = '';
+      showCard.appendChild(el('div', 'lbl', 'Qué mostrar al cliente'));
+      var show = (actual.public_show && typeof actual.public_show === 'object') ? actual.public_show : {};
+      [['niche', 'Mostrar nicho'], ['dates', 'Mostrar fechas'], ['completed', 'Mostrar tareas completadas'], ['pending', 'Mostrar tareas pendientes'], ['pct_task', 'Mostrar porcentaje por tarea']].forEach(function (o) {
+        var tg2 = el('label', 'toggle'); tg2.style.marginTop = '7px'; var cb2 = el('input'); cb2.type = 'checkbox'; cb2.checked = show[o[0]] !== false;
+        cb2.onchange = async function () { show[o[0]] = cb2.checked; actual.public_show = show; await sb.from('projects').update({ public_show: show }).eq('id', actual.id); };
+        tg2.appendChild(cb2); tg2.appendChild(document.createTextNode(o[1])); showCard.appendChild(tg2);
+      });
     }
-    areas.forEach(function (a) { z.appendChild(bloqueArea(a)); });
-    if (sinArea.length) z.appendChild(bloqueArea(null));
+    refrescar();
+    var acc = el('div', 'row'); acc.style.justifyContent = 'flex-end'; acc.style.marginTop = '16px';
+    var cerrar = el('button', 'pbtn', 'Listo'); cerrar.onclick = function () { host.innerHTML = ''; }; acc.appendChild(cerrar); m.appendChild(acc);
+    ov.appendChild(m); ov.onclick = function (e) { if (e.target === ov) host.innerHTML = ''; }; host.innerHTML = ''; host.appendChild(ov);
   }
 
-  function bloqueArea(a) {
-    var key = a ? a.id : '__sin__', abierta_ = areaAbierta(key);
-    var caja = el('div', 'area');
-    var head = el('div', 'area-h' + (abierta_ ? '' : ' plegada'));
+  // ---------------- Lista de tareas (fases + árbol recursivo numerado) ----------------
+  function pintarTareas(z) {
+    var nueva = el('div', 'row'); nueva.style.marginBottom = '14px';
+    var ia = el('input'); ia.placeholder = 'Nueva fase (ej. Captación, Landing Page, Publicidad)';
+    var ba = el('button', 'btn', '+ Nueva fase');
+    ba.onclick = async function () { var n = ia.value.trim(); if (!n) return; var r = await sb.from('project_areas').insert({ project_id: actual.id, account_id: cuenta, name: n, position: areas.length }).select('*').single(); if (r.error) { alert(r.error.message); return; } areas.push(r.data); abrirArea(r.data.id); ia.value = ''; pintar(); };
+    ia.addEventListener('keydown', function (e) { if (e.key === 'Enter') ba.click(); });
+    nueva.appendChild(ia); nueva.appendChild(ba); z.appendChild(nueva);
 
-    var gripA = el('span', 'grip', '⠿'); gripA.title = 'Arrastra para reordenar el área';
-    head.appendChild(gripA);
+    var sinFase = raizFase(null);
+    if (!areas.length && !sinFase.length) { z.appendChild(el('div', 'empty', 'Empieza creando una fase (Captación, Landing Page…) y añade tareas dentro.')); return; }
+    var num = 0;
+    areas.forEach(function (a) { num++; z.appendChild(bloqueFase(a, num)); });
+    if (sinFase.length) { num++; z.appendChild(bloqueFase(null, num)); }
+  }
 
-    // Chevron ▶ / ▼ del acordeón
-    var chev = el('span', 'area-chev' + (abierta_ ? ' abierta' : ''), '▶');
-    head.appendChild(chev);
+  function bloqueFase(a, numero) {
+    var key = a ? a.id : '__sin__', abierta_ = !!areasAbiertas[key];
+    var caja = el('div', 'tphase');
+    var head = el('div', 'tphase-h' + (abierta_ ? '' : ' plegada'));
+    var gripA = el('span', 'grip', '⠿'); gripA.title = 'Reordenar fase'; head.appendChild(gripA);
+    var chev = el('span', 'chev' + (abierta_ ? ' abierta' : ''), '▶'); head.appendChild(chev);
+    head.appendChild(el('span', 'num', numero + '.'));
+    if (a) { var nm = el('input', 'nm'); nm.value = a.name; nm.onblur = function () { if (nm.value.trim() && nm.value !== a.name) { a.name = nm.value.trim(); sb.from('project_areas').update({ name: a.name }).eq('id', a.id); tocar(); } }; nm.addEventListener('keydown', function (e) { if (e.key === 'Enter') nm.blur(); }); nm.onclick = function (e) { e.stopPropagation(); }; head.appendChild(nm); }
+    else head.appendChild(el('b', null, 'Sin fase'));
 
-    head.appendChild(el('b', null, a ? a.name : 'Sin área'));
+    var f = pctFase(a ? a.id : null); var pct = Math.round(f.pct * 100);
+    head.appendChild(el('span', 'cnt', f.done + '/' + f.total));
+    var mb = el('span', 'mini-bar' + (pct >= 100 ? ' full' : '')); var mi = el('i'); mi.style.width = pct + '%'; mb.appendChild(mi); head.appendChild(mb);
+    head.appendChild(el('span', 'pctm', pct + '%'));
 
-    var lista = raiz().filter(function (t) { return a ? t.area_id === a.id : !t.area_id; });
-    var hechas = lista.filter(function (t) { return estado(t) === 'done'; }).length;
-    var pct = lista.length ? Math.round(lista.reduce(function (s, t) { return s + avance(t); }, 0) / lista.length * 100) : 0;
-
-    head.appendChild(el('span', 'cnt', hechas + '/' + lista.length));
-    var barra = el('span', 'area-bar' + (pct >= 100 ? ' full' : ''));
-    var bi = el('i'); bi.style.width = pct + '%'; barra.appendChild(bi);
-    head.appendChild(barra);
-    head.appendChild(el('span', 'area-pct', pct + '%'));
-
-    var add = el('button', 'btn', '+ Tarea');
-    add.onclick = async function () {
-      var r = await sb.from('project_tasks').insert({
-        project_id: actual.id, account_id: cuenta, area_id: a ? a.id : null, name: 'Nueva tarea', position: lista.length
-      }).select('*').single();
-      if (r.error) { alert(r.error.message); return; }
-      r.data.tracking = []; tareas.push(r.data);
-      abrirArea(key); // al añadir una tarea, la etapa se despliega para verla
-      abierta = r.data.id; pintar();
-    };
+    var add = el('button', 'btn sm', '+ Tarea'); add.style.marginLeft = 'auto';
+    add.onclick = async function (e) { e.stopPropagation(); var lista = raizFase(a ? a.id : null); var r = await sb.from('project_tasks').insert({ project_id: actual.id, account_id: cuenta, area_id: a ? a.id : null, name: 'Nueva tarea', position: lista.length }).select('*').single(); if (r.error) { alert(r.error.message); return; } tareas.push(r.data); abrirArea(key); pintar(); tocar(); };
     head.appendChild(add);
 
-    if (a && areas.length > 1) arrastrable(head, gripA, a, areas, 'project_areas');
-    else gripA.style.visibility = 'hidden';
+    if (a) { var eye = el('span', 'eye' + (a.client_visible === false ? ' off' : ''), a.client_visible === false ? '🚫' : '👁'); eye.title = a.client_visible === false ? 'Oculta al cliente' : 'Visible para el cliente'; eye.onclick = async function (e) { e.stopPropagation(); a.client_visible = !(a.client_visible !== false); await sb.from('project_areas').update({ client_visible: a.client_visible }).eq('id', a.id); pintar(); }; head.appendChild(eye); }
+    if (a) head.appendChild(menuAcciones([
+      { label: 'Renombrar fase', onClick: function () { var n = prompt('Nombre de la fase:', a.name); if (n && n.trim()) { a.name = n.trim(); sb.from('project_areas').update({ name: a.name }).eq('id', a.id); pintar(); } } },
+      { label: a.client_visible === false ? 'Mostrar al cliente' : 'Ocultar al cliente', onClick: async function () { a.client_visible = !(a.client_visible !== false); await sb.from('project_areas').update({ client_visible: a.client_visible }).eq('id', a.id); pintar(); } },
+      { label: 'Eliminar fase', danger: true, onClick: async function () { if (!confirm('¿Eliminar la fase "' + a.name + '"? Sus tareas quedarán sin fase.')) return; await sb.from('project_areas').delete().eq('id', a.id); areas = areas.filter(function (x) { return x.id !== a.id; }); tareas.forEach(function (t) { if (t.area_id === a.id) t.area_id = null; }); pintar(); } }
+    ], true));
 
-    if (a) {
-      var del = el('button', 'x', '✕'); del.title = 'Eliminar área';
-      del.onclick = async function () {
-        if (!confirm('¿Eliminar el área "' + a.name + '"? Sus tareas quedarán sin área.')) return;
-        await sb.from('project_areas').delete().eq('id', a.id);
-        areas = areas.filter(function (x) { return x.id !== a.id; });
-        tareas.forEach(function (t) { if (t.area_id === a.id) t.area_id = null; });
-        pintar();
-      };
-      head.appendChild(del);
-    }
-
-    // Clic en el encabezado (menos botones y manija) = plegar/desplegar
-    head.addEventListener('click', function (e) {
-      if (e.target.closest('button') || e.target.classList.contains('grip')) return;
-      toggleArea(key);
-    });
+    if (a && areas.length > 1) arrastrable(head, gripA, a, areas, 'project_areas'); else gripA.style.visibility = 'hidden';
+    head.addEventListener('click', function (e) { if (e.target.closest('button') || e.target.classList.contains('grip') || e.target.classList.contains('eye') || e.target.tagName === 'INPUT') return; toggleArea(key); });
     caja.appendChild(head);
 
-    // Contenido colapsable: las tareas (y con ellas las subtareas) solo se
-    // dibujan si la etapa está desplegada.
     if (abierta_) {
+      var lista = raizFase(a ? a.id : null);
       if (!lista.length) caja.appendChild(el('div', 'empty', 'Sin tareas todavía.'));
-      lista.forEach(function (t) { caja.appendChild(filaTarea(t, lista)); });
+      lista.forEach(function (t, i) { caja.appendChild(renderTarea(t, numero + '.' + (i + 1), lista)); });
     }
     return caja;
   }
 
-  async function guardar(t, campos) {
-    Object.assign(t, campos);
-    var r = await sb.from('project_tasks').update(campos).eq('id', t.id);
-    if (r.error) alert('No se pudo guardar: ' + r.error.message);
+  function renderTarea(t, numero, hermanas) {
+    var h = hijas(t.id), est = estadoNodo(t), pr = pctNodo(t), pct = Math.round(pr.pct * 100);
+    var cont = el('div');
+    var row = el('div', 'trow' + (est === 'done' ? ' done' : ''));
+
+    var grip = el('span', 'grip', '⠿'); grip.title = 'Reordenar'; row.appendChild(grip);
+    var chev = el('span', 'chev' + (tareaAbierta === t.id ? ' abierta' : '') + (h.length ? '' : ''), '▸');
+    chev.onclick = function () { tareaAbierta = tareaAbierta === t.id ? null : t.id; pintar(); }; row.appendChild(chev);
+    row.appendChild(el('span', 'num', numero));
+
+    // Icono de estado
+    var derived = h.length > 0;
+    var si = el('span', 'sicon ' + claseEstado(est) + (derived ? ' derived' : ''), iconoEstado(est));
+    si.title = derived ? 'Estado automático según subtareas' : 'Marcar (○ → ✓)';
+    if (!derived) si.onclick = function () { guardar(t, { status: t.status === 'done' ? 'pending' : 'done' }).then(pintar); };
+    row.appendChild(si);
+
+    var nom = el('input', 'tname'); nom.value = t.name; nom.onblur = function () { if (nom.value !== t.name) guardar(t, { name: nom.value }); }; nom.addEventListener('keydown', function (e) { if (e.key === 'Enter') nom.blur(); }); row.appendChild(nom);
+    if (h.length || derived) row.appendChild(el('span', 'tpct', pct + '%'));
+
+    var eye = el('span', 'eye' + (t.client_visible === false ? ' off' : ''), t.client_visible === false ? '🚫' : '👁'); eye.title = t.client_visible === false ? 'Oculta al cliente' : 'Visible para el cliente';
+    eye.onclick = function () { t.client_visible = !(t.client_visible !== false); guardar(t, { client_visible: t.client_visible }).then(pintar); }; row.appendChild(eye);
+
+    row.appendChild(menuAcciones([
+      { label: 'Editar detalles', onClick: function () { tareaAbierta = t.id; pintar(); } },
+      { label: '+ Subtarea', onClick: async function () { var r = await sb.from('project_tasks').insert({ project_id: actual.id, account_id: cuenta, area_id: t.area_id, parent_id: t.id, name: 'Nueva subtarea', position: h.length }).select('*').single(); if (r.error) { alert(r.error.message); return; } tareas.push(r.data); tareaAbierta = t.id; pintar(); tocar(); } },
+      { label: 'Duplicar', onClick: function () { duplicarTarea(t); } },
+      { label: 'Convertir en subtarea de la anterior', disabled: hermanas.indexOf(t) <= 0, onClick: function () { var prev = hermanas[hermanas.indexOf(t) - 1]; if (prev) reparentar(t, prev.id); } },
+      { label: 'Subir un nivel', disabled: !t.parent_id, onClick: function () { var padre = tareas.find(function (x) { return x.id === t.parent_id; }); reparentar(t, padre ? padre.parent_id : null, padre ? padre.area_id : t.area_id); } },
+      { label: t.client_visible === false ? 'Mostrar al cliente' : 'Ocultar al cliente', onClick: function () { t.client_visible = !(t.client_visible !== false); guardar(t, { client_visible: t.client_visible }).then(pintar); } },
+      { label: 'Eliminar', danger: true, onClick: async function () { if (!confirm('¿Eliminar "' + t.name + '" y sus subtareas?')) return; var ids = descendientes(t.id); ids.push(t.id); for (var i = 0; i < ids.length; i++) await sb.from('project_tasks').delete().eq('id', ids[i]); tareas = tareas.filter(function (x) { return ids.indexOf(x.id) < 0; }); pintar(); tocar(); } }
+    ], true));
+    cont.appendChild(row);
+
+    if (hermanas && hermanas.length > 1) arrastrable(row, grip, t, hermanas, 'project_tasks'); else grip.style.visibility = 'hidden';
+
+    if (tareaAbierta === t.id) cont.appendChild(detalle(t));
+
+    if (h.length) { var ch = el('div', 'tchildren'); h.forEach(function (c, i) { ch.appendChild(renderTarea(c, numero + '.' + (i + 1), h)); }); cont.appendChild(ch); }
+    return cont;
   }
 
-  // ---------------- Reordenar con Drag & Drop ----------------
-  // El orden se guarda en la columna position, igual que antes; solo cambia la
-  // interacción (arrastrar en vez de flechas). Un elemento solo puede soltarse
-  // dentro de su propia lista de hermanos: el arrastre se identifica por tabla
-  // y se comprueba que el id arrastrado pertenezca a la lista de destino.
-  function limpiarDrop() {
-    document.querySelectorAll('.drop-antes, .drop-despues').forEach(function (n) {
-      n.classList.remove('drop-antes', 'drop-despues');
-    });
+  function descendientes(id) { var out = []; hijas(id).forEach(function (c) { out.push(c.id); out = out.concat(descendientes(c.id)); }); return out; }
+  async function reparentar(t, nuevoPadre, nuevaArea) { var campos = { parent_id: nuevoPadre || null }; if (nuevaArea !== undefined) campos.area_id = nuevaArea || null; else if (nuevoPadre) { var p = tareas.find(function (x) { return x.id === nuevoPadre; }); if (p) campos.area_id = p.area_id; } campos.position = 999; await guardar(t, campos); pintar(); }
+  async function duplicarTarea(t) {
+    var nueva = { project_id: actual.id, account_id: cuenta, area_id: t.area_id, parent_id: t.parent_id, name: t.name + ' (copia)', description: t.description || null, priority: t.priority, status: 'pending', client_visible: t.client_visible, position: 999 };
+    var r = await sb.from('project_tasks').insert(nueva).select('*').single(); if (r.error) { alert(r.error.message); return; }
+    var map = {}; map[t.id] = r.data.id; tareas.push(r.data);
+    var desc = descendientes(t.id);
+    for (var i = 0; i < desc.length; i++) { var o = tareas.find(function (x) { return x.id === desc[i]; }); var rc = await sb.from('project_tasks').insert({ project_id: actual.id, account_id: cuenta, area_id: o.area_id, parent_id: map[o.parent_id], name: o.name, description: o.description || null, priority: o.priority, status: 'pending', client_visible: o.client_visible, position: o.position }).select('*').single(); if (!rc.error) { map[o.id] = rc.data.id; tareas.push(rc.data); } }
+    pintar(); tocar();
   }
 
-  function reordenar(lista, fromId, toId, antes, tabla) {
-    if (fromId === toId) return;
-    var from = -1, to = -1;
-    lista.forEach(function (x, i) { if (x.id === fromId) from = i; if (x.id === toId) to = i; });
-    if (from < 0 || to < 0) return;
-    var item = lista.splice(from, 1)[0];
-    to = lista.findIndex(function (x) { return x.id === toId; });
-    lista.splice(antes ? to : to + 1, 0, item);
-    lista.forEach(function (x, k) { x.position = k; });
-    pintar();
-    // Persiste el nuevo orden fila por fila (mismo patrón de guardado de antes).
-    (async function () {
-      for (var k = 0; k < lista.length; k++) {
-        var r = await sb.from(tabla).update({ position: k }).eq('id', lista[k].id);
-        if (r.error) { alert('No se pudo guardar el orden: ' + r.error.message); return; }
-      }
-    })();
-  }
-
-  // Conecta una fila como arrastrable: la manija inicia el arrastre y la fila
-  // entera es zona de destino, con indicador arriba/abajo según el cursor.
-  function arrastrable(fila, grip, item, lista, tabla) {
-    grip.draggable = true;
-    grip.addEventListener('dragstart', function (e) {
-      arrastreId = item.id; arrastreTabla = tabla;
-      fila.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      try { e.dataTransfer.setData('text/plain', item.id); } catch (_) {}
-      try { e.dataTransfer.setDragImage(fila, 10, 10); } catch (_) {}
-    });
-    grip.addEventListener('dragend', function () {
-      fila.classList.remove('dragging'); limpiarDrop(); arrastreId = null; arrastreTabla = null;
-    });
-    fila.addEventListener('dragover', function (e) {
-      if (arrastreId == null || arrastreTabla !== tabla) return;
-      if (item.id === arrastreId || !lista.some(function (x) { return x.id === arrastreId; })) return;
-      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-      limpiarDrop();
-      var rect = fila.getBoundingClientRect();
-      fila.classList.add((e.clientY - rect.top) < rect.height / 2 ? 'drop-antes' : 'drop-despues');
-    });
-    fila.addEventListener('drop', function (e) {
-      if (arrastreId == null || arrastreTabla !== tabla) return;
-      if (!lista.some(function (x) { return x.id === arrastreId; })) { limpiarDrop(); return; }
-      e.preventDefault();
-      var rect = fila.getBoundingClientRect();
-      var antes = (e.clientY - rect.top) < rect.height / 2, fromId = arrastreId;
-      limpiarDrop(); arrastreId = null; arrastreTabla = null;
-      reordenar(lista, fromId, item.id, antes, tabla);
-    });
-  }
-
-  function filaTarea(t, hermanas) {
-    var h = hijas(t.id), est = estado(t), pct = Math.round(avance(t) * 100);
-    var caja = el('div', 'task' + (est === 'done' ? ' done' : ''));
-
-    var top = el('div', 'task-top');
-
-    var grip = el('span', 'grip', '⠿'); grip.title = 'Arrastra para reordenar';
-    top.appendChild(grip);
-
-    var d = el('span', 'dot' + (est === 'done' ? ' on' : est === 'in_progress' ? ' mid' : ''));
-    d.title = h.length ? 'Estado automático según subtareas' : 'Marcar completada';
-    if (!h.length) d.onclick = async function () { await guardar(t, { status: t.status === 'done' ? 'pending' : 'done' }); pintar(); };
-    else d.style.cursor = 'default';
-    top.appendChild(d);
-
-    var nom = el('input', 'task-name'); nom.value = t.name;
-    nom.onblur = function () { if (nom.value !== t.name) guardar(t, { name: nom.value }); };
-    nom.addEventListener('keydown', function (e) { if (e.key === 'Enter') nom.blur(); });
-    top.appendChild(nom);
-
-    top.appendChild(el('span', 'task-pct', pct + '%'));
-    top.appendChild(el('span', 'pill p-' + (est === 'in_progress' ? 'progress' : est), ETIQ[est]));
-
-    var ver = el('button', 'x', abierta === t.id ? '▾' : '▸');
-    ver.onclick = function () { abierta = abierta === t.id ? null : t.id; pintar(); };
-    top.appendChild(ver);
-
-    var quitar = el('button', 'x', '✕'); quitar.title = 'Eliminar tarea';
-    quitar.onclick = async function () {
-      if (!confirm('¿Eliminar "' + t.name + '" y sus subtareas?')) return;
-      await sb.from('project_tasks').delete().eq('id', t.id);
-      tareas = tareas.filter(function (x) { return x.id !== t.id && x.parent_id !== t.id; });
-      pintar();
-    };
-    top.appendChild(quitar);
-    caja.appendChild(top);
-
-    // Arrastrar para reordenar dentro del área (solo si hay con quién intercambiar).
-    if (hermanas && hermanas.length > 1) arrastrable(top, grip, t, hermanas, 'project_tasks');
-    else grip.style.visibility = 'hidden';
-
-    if (h.length) {
-      var bar = el('div', 'bar' + (pct >= 100 ? ' full' : '')); bar.style.margin = '4px 8px 6px 26px';
-      var f = el('i'); f.style.width = pct + '%'; bar.appendChild(f); caja.appendChild(bar);
-    }
-
-    if (abierta === t.id) caja.appendChild(detalle(t, h));
-    return caja;
-  }
-
-  function detalle(t, h) {
-    var d = el('div', 'detail');
-
-    var desc = el('textarea'); desc.rows = 2; desc.placeholder = 'Descripción'; desc.value = t.description || '';
-    desc.onblur = function () { if (desc.value !== (t.description || '')) guardar(t, { description: desc.value || null }); };
-    d.appendChild(desc);
-
+  function detalle(t) {
+    var d = el('div', 'tdetail');
+    var wd = el('div'); wd.appendChild(el('div', 'lbl', 'Descripción interna (no visible para el cliente)'));
+    var desc = el('textarea'); desc.rows = 2; desc.placeholder = 'Notas y coordinación del equipo'; desc.value = t.description || ''; desc.style.marginTop = '3px';
+    desc.onblur = function () { if (desc.value !== (t.description || '')) guardar(t, { description: desc.value || null }); }; wd.appendChild(desc); d.appendChild(wd);
     var g = el('div', 'grid');
     function campo(lbl, node) { var w = el('div'); w.appendChild(el('div', 'lbl', lbl)); node.style.marginTop = '4px'; w.appendChild(node); return w; }
-
-    var resp = el('input'); resp.placeholder = 'Sin asignar'; resp.value = t.responsible || '';
-    resp.onblur = function () { if (resp.value !== (t.responsible || '')) guardar(t, { responsible: resp.value || null }); };
-    g.appendChild(campo('Responsable', resp));
-
-    var pri = el('select');
-    [['low', 'Baja'], ['medium', 'Media'], ['high', 'Alta']].forEach(function (o) {
-      var op = el('option', null, o[1]); op.value = o[0]; if (t.priority === o[0]) op.selected = true; pri.appendChild(op);
-    });
-    pri.onchange = function () { guardar(t, { priority: pri.value }); };
-    g.appendChild(campo('Prioridad', pri));
-
-    var fec = el('input'); fec.type = 'date'; fec.value = t.due_date || '';
-    fec.onchange = function () { guardar(t, { due_date: fec.value || null }); };
-    g.appendChild(campo('Fecha (opcional)', fec));
-
-    if (!h.length) {
-      var st = el('select');
-      [['pending', 'Pendiente'], ['in_progress', 'En proceso'], ['done', 'Completado']].forEach(function (o) {
-        var op = el('option', null, o[1]); op.value = o[0]; if (t.status === o[0]) op.selected = true; st.appendChild(op);
-      });
-      st.onchange = async function () { await guardar(t, { status: st.value }); pintar(); };
-      g.appendChild(campo('Estado', st));
-    }
+    var resp = el('input'); resp.placeholder = 'Sin asignar'; resp.value = t.responsible || ''; resp.onblur = function () { if (resp.value !== (t.responsible || '')) guardar(t, { responsible: resp.value || null }); }; g.appendChild(campo('Responsable', resp));
+    var fec = el('input'); fec.type = 'date'; fec.value = t.due_date || ''; fec.onchange = function () { guardar(t, { due_date: fec.value || null }); }; g.appendChild(campo('Fecha (opcional)', fec));
+    if (!hijas(t.id).length) { var st = el('select'); [['pending', '○ Pendiente'], ['in_progress', '◐ En progreso'], ['done', '✓ Completado'], ['paused', '— Pausado']].forEach(function (o) { var op = el('option', null, o[1]); op.value = o[0]; if (t.status === o[0]) op.selected = true; st.appendChild(op); }); st.onchange = function () { guardar(t, { status: st.value }).then(pintar); }; g.appendChild(campo('Estado', st)); }
     d.appendChild(g);
-
-    // Subtareas
-    var sw = el('div');
-    sw.appendChild(el('div', 'lbl', 'Subtareas'));
-    h.forEach(function (s) {
-      var f = el('div', 'sub' + (s.status === 'done' ? ' done' : ''));
-      var sg = el('span', 'grip', '⠿'); sg.title = 'Arrastra para reordenar';
-      var sd = el('span', 'dot' + (s.status === 'done' ? ' on' : ''));
-      sd.onclick = async function () { await guardar(s, { status: s.status === 'done' ? 'pending' : 'done' }); pintar(); };
-      var si = el('input'); si.value = s.name;
-      si.onblur = function () { if (si.value !== s.name) guardar(s, { name: si.value }); };
-      si.addEventListener('keydown', function (e) { if (e.key === 'Enter') si.blur(); });
-      var sx = el('button', 'x', '✕'); sx.title = 'Eliminar subtarea';
-      sx.onclick = async function () {
-        if (!confirm('¿Eliminar la subtarea "' + s.name + '"?')) return;
-        await sb.from('project_tasks').delete().eq('id', s.id);
-        tareas = tareas.filter(function (x) { return x.id !== s.id; }); pintar();
-      };
-      f.appendChild(sg); f.appendChild(sd); f.appendChild(si); f.appendChild(sx);
-      if (h.length > 1) arrastrable(f, sg, s, h, 'project_tasks');
-      else sg.style.visibility = 'hidden';
-      sw.appendChild(f);
-    });
-    var addSub = el('div', 'row'); addSub.style.marginTop = '6px'; addSub.style.paddingLeft = '24px';
-    var si2 = el('input'); si2.placeholder = 'Nueva subtarea';
-    var sb2 = el('button', 'btn', 'Agregar');
-    sb2.onclick = async function () {
-      var n = si2.value.trim(); if (!n) return;
-      var r = await sb.from('project_tasks').insert({
-        project_id: actual.id, account_id: cuenta, area_id: t.area_id, parent_id: t.id, name: n, position: h.length
-      }).select('*').single();
-      if (r.error) { alert(r.error.message); return; }
-      r.data.tracking = []; tareas.push(r.data); pintar();
-    };
+    var addSub = el('div', 'row'); addSub.style.marginTop = '4px';
+    var si2 = el('input'); si2.placeholder = 'Nueva subtarea'; var sb2 = el('button', 'btn sm', 'Agregar subtarea');
+    sb2.onclick = async function () { var n = si2.value.trim(); if (!n) return; var hh = hijas(t.id); var r = await sb.from('project_tasks').insert({ project_id: actual.id, account_id: cuenta, area_id: t.area_id, parent_id: t.id, name: n, position: hh.length }).select('*').single(); if (r.error) { alert(r.error.message); return; } tareas.push(r.data); pintar(); tocar(); };
     si2.addEventListener('keydown', function (e) { if (e.key === 'Enter') sb2.click(); });
-    addSub.appendChild(si2); addSub.appendChild(sb2);
-    sw.appendChild(addSub);
-    d.appendChild(sw);
-
-    // Seguimiento opcional
-    if (!t.tracking_enabled) {
-      var on = el('button', 'btn', '+ Añadir seguimiento a esta tarea');
-      on.style.alignSelf = 'flex-start';
-      on.onclick = async function () { await guardar(t, { tracking_enabled: true }); pintar(); };
-      d.appendChild(on);
-    } else {
-      var tw = el('div', 'track');
-      var th = el('div', 'row'); th.style.justifyContent = 'space-between';
-      th.appendChild(el('span', 'lbl', 'Seguimiento'));
-      var off = el('button', 'x', '✕'); off.title = 'Quitar seguimiento';
-      off.onclick = async function () { await guardar(t, { tracking_enabled: false }); pintar(); };
-      th.appendChild(off);
-      tw.appendChild(th);
-
-      (t.tracking || []).forEach(function (m, i) {
-        var f = el('div', 'row'); f.style.marginTop = '6px';
-        var l = el('input'); l.placeholder = 'Indicador'; l.value = m.label || '';
-        var v = el('input'); v.placeholder = 'Valor'; v.value = m.value || ''; v.style.maxWidth = '120px';
-        function sync() { t.tracking[i] = { label: l.value, value: v.value }; guardar(t, { tracking: t.tracking }); }
-        l.onblur = sync; v.onblur = sync;
-        var x = el('button', 'x', '✕');
-        x.onclick = async function () { t.tracking.splice(i, 1); await guardar(t, { tracking: t.tracking }); pintar(); };
-        f.appendChild(l); f.appendChild(v); f.appendChild(x);
-        tw.appendChild(f);
-      });
-      if (!(t.tracking || []).length) tw.appendChild(el('div', 'hint', 'Sin indicadores. Agrega los que necesites medir.'));
-      var mas = el('button', 'btn', '+ Indicador'); mas.style.marginTop = '8px';
-      mas.onclick = async function () { t.tracking.push({ label: '', value: '' }); await guardar(t, { tracking: t.tracking }); pintar(); };
-      tw.appendChild(mas);
-      d.appendChild(tw);
-    }
+    addSub.appendChild(si2); addSub.appendChild(sb2); d.appendChild(addSub);
     return d;
   }
 
-  // ---------------- Bitácora ----------------
-  // Color por área: los nombres conocidos usan el color pedido; cualquier otro
-  // recibe uno estable derivado del propio nombre (misma área → mismo color).
-  var COLOR_AREA = {
-    'trafico': '#b06bff', 'tráfico': '#b06bff', 'trafico pago': '#b06bff', 'tráfico pago': '#b06bff',
-    'desarrollo': '#35e5ff', 'dev': '#35e5ff',
-    'diseno': '#2ee6a6', 'diseño': '#2ee6a6',
-    'copy': '#ff9f43', 'copywriting': '#ff9f43',
-    'ventas': '#ff4d6d',
-    'automatizaciones': '#f7d154', 'automatizacion': '#f7d154', 'automatización': '#f7d154',
-    'crm': '#5b8cff',
-    'general': '#948bc4'
-  };
+  // ---------------- Drag & Drop ----------------
+  function limpiarDrop() { document.querySelectorAll('.drop-antes, .drop-despues').forEach(function (n) { n.classList.remove('drop-antes', 'drop-despues'); }); }
+  function reordenar(lista, fromId, toId, antes, tabla) {
+    if (fromId === toId) return;
+    var from = -1; lista.forEach(function (x, i) { if (x.id === fromId) from = i; });
+    if (from < 0) return; var item = lista.splice(from, 1)[0];
+    var to = lista.findIndex(function (x) { return x.id === toId; }); lista.splice(antes ? to : to + 1, 0, item);
+    lista.forEach(function (x, k) { x.position = k; }); pintar();
+    (async function () { for (var k = 0; k < lista.length; k++) { var r = await sb.from(tabla).update({ position: k }).eq('id', lista[k].id); if (r.error) { alert('No se pudo guardar el orden: ' + r.error.message); return; } } tocar(); })();
+  }
+  function arrastrable(fila, grip, item, lista, tabla) {
+    grip.draggable = true;
+    grip.addEventListener('dragstart', function (e) { arrastreId = item.id; arrastreTabla = tabla; fila.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', item.id); } catch (_) {} try { e.dataTransfer.setDragImage(fila, 10, 10); } catch (_) {} });
+    grip.addEventListener('dragend', function () { fila.classList.remove('dragging'); limpiarDrop(); arrastreId = null; arrastreTabla = null; });
+    fila.addEventListener('dragover', function (e) { if (arrastreId == null || arrastreTabla !== tabla) return; if (item.id === arrastreId || !lista.some(function (x) { return x.id === arrastreId; })) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; limpiarDrop(); var rect = fila.getBoundingClientRect(); fila.classList.add((e.clientY - rect.top) < rect.height / 2 ? 'drop-antes' : 'drop-despues'); });
+    fila.addEventListener('drop', function (e) { if (arrastreId == null || arrastreTabla !== tabla) return; if (!lista.some(function (x) { return x.id === arrastreId; })) { limpiarDrop(); return; } e.preventDefault(); var rect = fila.getBoundingClientRect(); var antes = (e.clientY - rect.top) < rect.height / 2, fromId = arrastreId; limpiarDrop(); arrastreId = null; arrastreTabla = null; reordenar(lista, fromId, item.id, antes, tabla); });
+  }
+
+  // ---------------- Bitácora (interna) ----------------
+  var COLOR_AREA = { 'trafico': '#b06bff', 'tráfico': '#b06bff', 'desarrollo': '#35e5ff', 'diseno': '#2ee6a6', 'diseño': '#2ee6a6', 'copy': '#ff9f43', 'ventas': '#ff4d6d', 'automatizaciones': '#f7d154', 'general': '#948bc4' };
   var PALETA_AREA = ['#b06bff', '#35e5ff', '#2ee6a6', '#ff9f43', '#ff4d6d', '#f7d154', '#5b8cff', '#22d3ee', '#a3e635', '#ff2fd0'];
-  function colorArea(nombre) {
-    var k = (nombre || '').trim().toLowerCase();
-    if (COLOR_AREA[k]) return COLOR_AREA[k];
-    var s = 0;
-    for (var i = 0; i < k.length; i++) s = (s * 31 + k.charCodeAt(i)) >>> 0;
-    return PALETA_AREA[k ? s % PALETA_AREA.length : 0];
-  }
-
-  // Resumen de una línea (~80–120 caracteres), cortado en un espacio.
-  function resumenLog(txt) {
-    var s = (txt || '').replace(/\s+/g, ' ').trim();
-    if (s.length <= 120) return s;
-    var c = s.slice(0, 110), esp = c.lastIndexOf(' ');
-    if (esp > 70) c = c.slice(0, esp);
-    return c + '…';
-  }
-
-  var MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  function fechaCorta(iso) {
-    var p = String(iso || '').slice(0, 10).split('-');
-    if (p.length !== 3) return iso || '';
-    var txt = parseInt(p[2], 10) + ' ' + (MESES[parseInt(p[1], 10) - 1] || '');
-    if (String(new Date().getFullYear()) !== p[0]) txt += ' ' + p[0];
-    return txt;
-  }
-
+  function colorArea(nombre) { var k = (nombre || '').trim().toLowerCase(); if (COLOR_AREA[k]) return COLOR_AREA[k]; var s = 0; for (var i = 0; i < k.length; i++) s = (s * 31 + k.charCodeAt(i)) >>> 0; return PALETA_AREA[k ? s % PALETA_AREA.length : 0]; }
+  function resumenLog(txt) { var s = (txt || '').replace(/\s+/g, ' ').trim(); if (s.length <= 120) return s; var c = s.slice(0, 110), esp = c.lastIndexOf(' '); if (esp > 70) c = c.slice(0, esp); return c + '…'; }
   function pintarBitacora(z) {
-    // --- Formulario en acordeón: oculto hasta pulsar "+ Registrar cambio" ---
-    var toggle = el('button', 'pbtn', '+ Registrar cambio');
+    z.appendChild(el('div', 'hint', 'La bitácora es interna y no se muestra al cliente.'));
+    var toggle = el('button', 'pbtn', '+ Registrar cambio'); toggle.style.marginTop = '8px';
     var panel = el('div', 'form-log'); panel.style.display = 'none';
-
-    var g = el('div', 'grid');
-    var fecha = el('input'); fecha.type = 'date'; fecha.value = hoy();
-    var area = el('input'); area.placeholder = 'Área (Tráfico, Diseño, Ventas…)';
-    g.appendChild(fecha); g.appendChild(area);
-    panel.appendChild(g);
-
+    var g = el('div', 'grid'); var fecha = el('input'); fecha.type = 'date'; fecha.value = hoy(); var area = el('input'); area.placeholder = 'Área (Tráfico, Diseño, Ventas…)'; g.appendChild(fecha); g.appendChild(area); panel.appendChild(g);
     function ta(ph) { var x = el('textarea'); x.rows = 2; x.placeholder = ph; x.style.marginTop = '9px'; return x; }
-    var cambio = ta('Cambio realizado *');
-    var motivo = ta('Motivo del cambio');
-    var result = ta('Resultado obtenido');
-    var notas = ta('Observaciones');
+    var cambio = ta('Cambio realizado *'), motivo = ta('Motivo del cambio'), result = ta('Resultado obtenido'), notas = ta('Observaciones');
     [cambio, motivo, result, notas].forEach(function (x) { panel.appendChild(x); });
-
     var bt = el('button', 'pbtn', 'Registrar'); bt.style.marginTop = '11px';
-    bt.onclick = async function () {
-      if (!area.value.trim() || !cambio.value.trim()) { alert('El área y el cambio son obligatorios.'); return; }
-      bt.disabled = true;
-      var r = await sb.from('project_log').insert({
-        project_id: actual.id, account_id: cuenta, entry_date: fecha.value || hoy(),
-        area: area.value.trim(), change_text: cambio.value.trim(),
-        reason: motivo.value.trim() || null, result: result.value.trim() || null,
-        notes: notas.value.trim() || null, created_by: me.id
-      }).select('*').single();
-      bt.disabled = false;
-      if (r.error) { alert(r.error.message); return; }
-      bitacora.unshift(r.data);
-      // Al guardar, pintar() vuelve a dibujar la pestaña: formulario cerrado y
-      // campos limpios, sin trabajo extra.
-      pintar();
-    };
+    bt.onclick = async function () { if (!area.value.trim() || !cambio.value.trim()) { alert('El área y el cambio son obligatorios.'); return; } bt.disabled = true; var r = await sb.from('project_log').insert({ project_id: actual.id, account_id: cuenta, entry_date: fecha.value || hoy(), area: area.value.trim(), change_text: cambio.value.trim(), reason: motivo.value.trim() || null, result: result.value.trim() || null, notes: notas.value.trim() || null, created_by: me.id }).select('*').single(); bt.disabled = false; if (r.error) { alert(r.error.message); return; } bitacora.unshift(r.data); pintar(); };
     panel.appendChild(bt);
-
-    toggle.onclick = function () {
-      var abrir = panel.style.display === 'none';
-      panel.style.display = abrir ? 'block' : 'none';
-      toggle.textContent = abrir ? 'Cancelar' : '+ Registrar cambio';
-      if (abrir) setTimeout(function () { area.focus(); }, 0);
-    };
-
-    z.appendChild(toggle);
-    z.appendChild(panel);
-
-    // --- Historial como línea de tiempo ---
+    toggle.onclick = function () { var abrir = panel.style.display === 'none'; panel.style.display = abrir ? 'block' : 'none'; toggle.textContent = abrir ? 'Cancelar' : '+ Registrar cambio'; if (abrir) setTimeout(function () { area.focus(); }, 0); };
+    z.appendChild(toggle); z.appendChild(panel);
     if (!bitacora.length) { z.appendChild(el('div', 'empty', 'Todavía no hay cambios registrados.')); return; }
-    var tl = el('div', 'timeline');
-    bitacora.forEach(function (e2) { tl.appendChild(filaLog(e2)); });
-    z.appendChild(tl);
+    var tl = el('div', 'timeline'); bitacora.forEach(function (e2) { tl.appendChild(filaLog(e2)); }); z.appendChild(tl);
   }
-
   function filaLog(e2) {
-    var color = colorArea(e2.area), expandido = logAbierto === e2.id;
-    var item = el('div', 'tl-item');
-
-    var dot = el('span', 'tl-dot'); dot.style.background = color;
-    item.appendChild(dot);
-
-    var head = el('div', 'tl-head');
-    var a = el('span', 'tl-area', e2.area); a.style.color = color;
-    head.appendChild(a);
-    head.appendChild(el('span', 'tl-date', fechaCorta(e2.entry_date)));
-    var x = el('button', 'x tl-x', '✕'); x.title = 'Eliminar registro';
-    x.onclick = async function (ev) {
-      ev.stopPropagation();
-      if (!confirm('¿Eliminar este registro?')) return;
-      await sb.from('project_log').delete().eq('id', e2.id);
-      bitacora = bitacora.filter(function (y) { return y.id !== e2.id; }); pintar();
-    };
-    head.appendChild(x);
-    item.appendChild(head);
-
-    // Cerrado: solo el resumen de una línea. Expandido: el detalle completo.
-    if (!expandido) {
-      item.appendChild(el('div', 'tl-sum', resumenLog(e2.change_text)));
-    } else {
-      var det = el('div', 'tl-detail');
-      det.onclick = function (ev) { ev.stopPropagation(); };
-      [['Cambio realizado', e2.change_text], ['Motivo', e2.reason], ['Resultado', e2.result], ['Observaciones', e2.notes]].forEach(function (p) {
-        if (!p[1]) return;
-        var w = el('div', 'tl-field');
-        w.appendChild(el('div', 'lbl', p[0]));
-        var v = el('div', 'val'); v.textContent = p[1];
-        w.appendChild(v); det.appendChild(w);
-      });
-      item.appendChild(det);
-    }
-
+    var color = colorArea(e2.area), expandido = logAbierto === e2.id; var item = el('div', 'tl-item');
+    var dot = el('span', 'tl-dot'); dot.style.background = color; item.appendChild(dot);
+    var head = el('div', 'tl-head'); var a = el('span', 'tl-area', e2.area); a.style.color = color; head.appendChild(a); head.appendChild(el('span', 'tl-date', fechaCorta(e2.entry_date)));
+    var x = el('button', 'x tl-x', '✕'); x.title = 'Eliminar'; x.onclick = async function (ev) { ev.stopPropagation(); if (!confirm('¿Eliminar este registro?')) return; await sb.from('project_log').delete().eq('id', e2.id); bitacora = bitacora.filter(function (y) { return y.id !== e2.id; }); pintar(); }; head.appendChild(x); item.appendChild(head);
+    if (!expandido) item.appendChild(el('div', 'tl-sum', resumenLog(e2.change_text)));
+    else { var det = el('div', 'tl-detail'); det.onclick = function (ev) { ev.stopPropagation(); }; [['Cambio realizado', e2.change_text], ['Motivo', e2.reason], ['Resultado', e2.result], ['Observaciones', e2.notes]].forEach(function (p) { if (!p[1]) return; var w = el('div', 'tl-field'); w.appendChild(el('div', 'lbl', p[0])); var v = el('div', 'val'); v.textContent = p[1]; w.appendChild(v); det.appendChild(w); }); item.appendChild(det); }
     item.onclick = function () { logAbierto = expandido ? null : e2.id; pintar(); };
     return item;
   }
