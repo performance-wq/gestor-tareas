@@ -419,6 +419,77 @@
   .meta-delete { color: var(--danger); background: none; border: 1px solid rgba(255,77,109,0.4); border-radius: 6px; padding: 4px 9px; font-size: 11.5px; cursor: pointer; }
   .meta-delete:hover { background: rgba(255,77,109,0.12); }
 
+  /* ---------- Vista de una sola columna ---------- */
+  .list-view { display: block; width: 100%; }
+  .pending-list { display: block; }
+  .list-empty { color: var(--muted); font-size: 12.5px; opacity: 0.7; padding: 14px 2px; }
+
+  /* Marca / tarea principal: un poco de aire arriba para separar frentes. */
+  .tnode.lvl-1 { margin-top: 4px; }
+  .tnode.lvl-1 > .brand-row { padding-top: 2px; padding-bottom: 2px; }
+  .tnode-text.is-grouper { cursor: pointer; }
+  .tnode-text.is-grouper.editing { cursor: text; outline: none; }
+  .lvl-1 > .tnode-row > .tnode-text.is-grouper { text-transform: none; letter-spacing: 0.2px; }
+
+  /* Responsable inline (a la derecha de la actividad) */
+  .assignee-chip {
+    font-size: 10.5px; border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+    background: rgba(53,229,255,0.12); color: #a7ecff; border: 1px solid rgba(53,229,255,0.28);
+    cursor: pointer; transition: all 0.14s ease;
+  }
+  .assignee-chip:hover { border-color: var(--accent2); color: #d6f7ff; }
+  .assignee-chip.empty { background: transparent; color: var(--muted); border: 1px dashed var(--line); opacity: 0; }
+  .tnode-row:hover .assignee-chip.empty { opacity: 0.7; }
+  .assignee-chip.empty:hover { opacity: 1; }
+
+  /* Conteo de pendientes en las marcas */
+  .group-count { font-size: 10.5px; color: var(--muted); white-space: nowrap; font-weight: 600; }
+  .group-count.complete { color: var(--ok, #2ee6a6); font-weight: 500; opacity: 0.8; }
+
+  /* Botón nueva tarea principal */
+  .addroot-btn {
+    margin-top: 12px; width: 100%; text-align: left;
+    border: 1px dashed var(--line); background: transparent; color: var(--muted);
+    border-radius: 9px; padding: 9px 12px; font-size: 13px; font-family: inherit; cursor: pointer;
+    transition: color 0.16s ease, border-color 0.16s ease;
+  }
+  .addroot-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* ---------- Historial de completadas ---------- */
+  .list-sep { height: 1px; background: var(--line); margin: 22px 0 4px; }
+  .completed-section { margin-top: 6px; }
+  .completed-head {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 8px 4px; border-radius: 8px; user-select: none; transition: background 0.12s ease;
+  }
+  .completed-head:hover { background: rgba(255,255,255,0.035); }
+  .completed-chev { color: var(--muted); font-size: 11px; transition: transform 0.18s ease; }
+  .completed-chev.open { transform: rotate(90deg); }
+  .completed-title { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); }
+  .completed-count { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .completed-body { padding: 6px 2px 2px; animation: fadeInUp 0.18s ease; }
+  .completed-empty { color: var(--muted); font-size: 12.5px; opacity: 0.7; padding: 8px 2px; }
+
+  .completed-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  .completed-item:last-child { border-bottom: none; }
+  .completed-restore {
+    flex: 0 0 15px; width: 15px; height: 15px; margin-top: 1px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    background: var(--ok, #2ee6a6); color: #07050f; font-size: 10px; border: 1px solid var(--ok, #2ee6a6);
+    transition: filter 0.14s ease;
+  }
+  .completed-restore:hover { filter: brightness(1.15); }
+  .completed-info { flex: 1; min-width: 0; }
+  .completed-name { font-size: 12.5px; color: var(--muted); text-decoration: line-through; line-height: 17px; }
+  .completed-meta { font-size: 11px; color: var(--muted); opacity: 0.85; margin-top: 1px; }
+
+  /* Resumen "completadas hoy" por responsable */
+  .tally { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 12px; background: var(--panel); }
+  .tally-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 6px; }
+  .tally-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; font-size: 12.5px; }
+  .tally-name { color: var(--text); }
+  .tally-num { color: var(--accent2); font-weight: 600; font-size: 12px; }
+
   footer#count { margin-top: 26px; color: var(--muted); font-size: 12px; }
 
   /* Auth screen */
@@ -507,18 +578,7 @@
     </div>
   </div>
 
-  <div id="matrixView" class="matrix-grid">
-    <div class="quadrant q1" data-q="q1">
-      <h4>Urgente e importante</h4>
-      <div class="qlist" data-q="q1"></div>
-      <button class="qadd" data-q="q1">+ Nueva tarea</button>
-    </div>
-    <div class="quadrant q2" data-q="q2">
-      <h4>Importante, no urgente</h4>
-      <div class="qlist" data-q="q2"></div>
-      <button class="qadd" data-q="q2">+ Nueva tarea</button>
-    </div>
-  </div>
+  <div id="matrixView" class="list-view"></div>
 
   <footer id="count"></footer>
 </div>
@@ -631,15 +691,16 @@
   // ---------------- Data helpers ----------------
 
   function uid() { return 't' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+  function nowISO() { return new Date().toISOString(); }
 
   function newTask(urgent, important) {
-    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: !!urgent, important: !!important, assignee: null, subtasks: [], collapsed: false };
+    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: !!urgent, important: !!important, assignee: null, subtasks: [], collapsed: false, createdAt: nowISO(), completedAt: null };
   }
 
   // Un nodo de tarea tiene el MISMO shape en cualquier nivel del árbol, de modo
   // que una subtarea se comporta exactamente igual que una tarea principal.
   function newNode() {
-    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: false, important: true, assignee: null, subtasks: [], collapsed: false };
+    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: false, important: true, assignee: null, subtasks: [], collapsed: false, createdAt: nowISO(), completedAt: null };
   }
 
   // Normaliza un nodo (rellena campos faltantes) y recorre sus hijos recursivamente.
@@ -653,6 +714,10 @@
     if (typeof t.assignee === 'undefined') t.assignee = null;
     if (!Array.isArray(t.subtasks)) t.subtasks = [];
     if (typeof t.collapsed === 'undefined') t.collapsed = false;
+    if (typeof t.createdAt === 'undefined') t.createdAt = null;
+    // Migración: si una tarea vieja ya está completada pero sin marca de tiempo,
+    // no inventamos una fecha; queda null y el historial la muestra como "—".
+    if (typeof t.completedAt === 'undefined') t.completedAt = null;
     if (!t.id) t.id = uid();
     t.subtasks.forEach(ensureNode);
     return t;
@@ -744,6 +809,7 @@
     if (error || !data) { saveStatusEl.textContent = 'Error al cargar proyecto.'; return; }
     currentBoard = data;
     localStorage.setItem('lastBoard_' + currentUser.id, currentBoard.id);
+    loadCollapse();
     // Compatibilidad: data puede ser un array (formato antiguo: solo tareas)
     // o un objeto { tasks, tags } (formato nuevo con catálogo de etiquetas).
     const raw = currentBoard.data;
@@ -978,6 +1044,20 @@
     });
     dateRow.appendChild(delBtn);
 
+    // Responsable de la actividad. Queda asociado al nodo incluso tras completarlo.
+    const assigneeRow = document.createElement('div');
+    assigneeRow.className = 'meta-row';
+    const assigneeLabel = document.createElement('label');
+    assigneeLabel.textContent = 'Responsable:';
+    const assigneeInput = document.createElement('input');
+    assigneeInput.type = 'text';
+    assigneeInput.value = task.assignee || '';
+    assigneeInput.placeholder = 'Ej. Sandra';
+    assigneeInput.setAttribute('list', 'assignee-names');
+    assigneeInput.addEventListener('change', function () { task.assignee = assigneeInput.value.trim() || null; save(); render(); });
+    assigneeRow.appendChild(assigneeLabel);
+    assigneeRow.appendChild(assigneeInput);
+
     const tagsRow = document.createElement('div');
     tagsRow.className = 'meta-row';
     const tagsLabel = document.createElement('label');
@@ -1008,6 +1088,7 @@
     tagsRow.appendChild(tagsWrap);
 
     panel.appendChild(dateRow);
+    panel.appendChild(assigneeRow);
     panel.appendChild(tagsRow);
 
     // Selector: elige de las etiquetas ya creadas o crea una nueva.
@@ -1076,9 +1157,22 @@
     return { total: total, done: done };
   }
 
-  // Marca (o desmarca) un nodo y TODOS sus descendientes.
+  // Una actividad operativa es una HOJA (sin subtareas). Las tareas con
+  // subtareas son AGRUPADORES (marca / proyecto / frente de trabajo) y no
+  // cuentan como productividad ni pasan al historial: solo agrupan.
+  function isLeaf(node) { return !(node.subtasks && node.subtasks.length); }
+
+  // Sella / limpia la marca de finalización de una hoja al completarla.
+  function stampLeaf(node, val) {
+    if (val) { if (!node.completedAt) node.completedAt = nowISO(); }
+    else { node.completedAt = null; }
+  }
+
+  // Marca (o desmarca) un nodo y TODOS sus descendientes. Al completar, cada
+  // hoja recibe su fecha/hora de finalización; al desmarcar, se limpia.
   function setDoneRecursive(node, val) {
     node.done = val;
+    if (isLeaf(node)) stampLeaf(node, val);
     (node.subtasks || []).forEach(function (c) { setDoneRecursive(c, val); });
   }
 
@@ -1129,6 +1223,82 @@
       const el = matrixViewEl.querySelector('.tnode[data-id="' + id + '"] > .tnode-row > .tnode-text');
       if (el) el.focus();
     });
+  }
+
+  // ---------------- Estado de plegado POR USUARIO ----------------
+  // El plegado no se guarda en el board compartido (sería común a todos): cada
+  // usuario organiza su propio espacio. Se persiste en localStorage por
+  // usuario + board, así al refrescar se conserva qué grupos dejó abiertos/cerrados.
+  let collapseState = {};
+  function collapseKey() { return 'collapse_' + (currentUser ? currentUser.id : 'anon') + '_' + (currentBoard ? currentBoard.id : '0'); }
+  function loadCollapse() {
+    try { collapseState = JSON.parse(localStorage.getItem(collapseKey()) || '{}') || {}; }
+    catch (_) { collapseState = {}; }
+  }
+  function saveCollapse() {
+    try { localStorage.setItem(collapseKey(), JSON.stringify(collapseState)); } catch (_) {}
+  }
+  function isCollapsed(id) { return !!collapseState[id]; }
+  function setCollapsed(id, val) { if (val) collapseState[id] = 1; else delete collapseState[id]; saveCollapse(); }
+
+  // Sección de completadas: abierta/cerrada, también por usuario.
+  function completedOpen() { return localStorage.getItem('doneOpen_' + (currentUser ? currentUser.id : 'anon')) === '1'; }
+  function setCompletedOpen(v) { try { localStorage.setItem('doneOpen_' + (currentUser ? currentUser.id : 'anon'), v ? '1' : '0'); } catch (_) {} }
+
+  // ---------------- Hojas, agrupadores y conteos ----------------
+
+  // ¿El nodo (o su subárbol) tiene alguna actividad operativa pendiente?
+  function hasPendingLeaf(node) {
+    if (isLeaf(node)) return !node.done;
+    return (node.subtasks || []).some(hasPendingLeaf);
+  }
+  // Nº de actividades operativas (hojas) pendientes bajo un nodo.
+  function pendingLeafCount(node) {
+    if (isLeaf(node)) return node.done ? 0 : 1;
+    return (node.subtasks || []).reduce(function (a, c) { return a + pendingLeafCount(c); }, 0);
+  }
+  // Todas las hojas completadas del árbol, con su marca (raíz) asociada.
+  function completedLeaves() {
+    const out = [];
+    function walk(list, rootName) {
+      (list || []).forEach(function (n) {
+        const brand = rootName || (n.text || '').trim();
+        if (isLeaf(n)) { if (n.done) out.push({ node: n, brand: rootName || '' }); }
+        else walk(n.subtasks, brand);
+      });
+    }
+    (tasks || []).forEach(function (root) { walk([root], (root.text || '').trim()); });
+    return out;
+  }
+
+  // ---------------- Fecha / hora en español ----------------
+  const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  function fmtFecha(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.getDate() + ' ' + MESES[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function fmtHora(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    let h = d.getHours(); const m = String(d.getMinutes()).padStart(2, '0');
+    const ap = h < 12 ? 'AM' : 'PM'; h = h % 12; if (h === 0) h = 12;
+    return h + ':' + m + ' ' + ap;
+  }
+  function esHoy(iso) {
+    if (!iso) return false;
+    const d = new Date(iso); if (isNaN(d)) return false;
+    const n = new Date();
+    return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+  }
+
+  // Nombres de responsables ya usados (para autocompletar sin imponer una lista fija).
+  function knownAssignees() {
+    const set = {};
+    flattenTasks(tasks).forEach(function (n) { const a = (n.assignee || '').trim(); if (a) set[a] = 1; });
+    return Object.keys(set).sort();
   }
 
   // ---------------- Etiquetas reutilizables ----------------
@@ -1263,11 +1433,23 @@
     return 'inside';
   }
 
-  // Renderiza un nodo y, recursivamente, TODOS sus descendientes. Es el mismo
-  // componente en cualquier nivel: cada nodo puede editarse, completarse,
-  // colapsarse/expandirse, tener sus propias subtareas, etiquetas, fecha y eliminarse.
+  // Hijos VISIBLES en la vista de pendientes: se ocultan las actividades (hojas)
+  // ya completadas —viven en el historial inferior— y los agrupadores que se
+  // quedaron sin trabajo pendiente. La marca (raíz) siempre permanece visible.
+  function visibleChildren(node) {
+    return (node.subtasks || []).filter(function (c) {
+      return isLeaf(c) ? !c.done : hasPendingLeaf(c);
+    });
+  }
+
+  // Renderiza un nodo y, recursivamente, sus descendientes PENDIENTES. Es el
+  // mismo componente en cualquier nivel: la marca principal agrupa y sus hojas
+  // son las actividades operativas. Cada nodo puede editarse, completarse,
+  // plegarse, tener subtareas, responsable, etiquetas y fecha.
   function renderNode(node, level) {
-    const hasKids = (node.subtasks || []).length > 0;
+    const leaf = isLeaf(node);
+    const kids = visibleChildren(node);
+    const hasKids = kids.length > 0;
     const isRoot = level === 1;
 
     const wrap = document.createElement('div');
@@ -1275,7 +1457,9 @@
     wrap.dataset.id = node.id;
 
     const row = document.createElement('div');
-    row.className = 'tnode-row' + (node.done ? ' done' : '');
+    // La tachadura solo aplica a hojas (actividades). Los agrupadores nunca se
+    // muestran completados: solo agrupan y llevan su conteo de pendientes.
+    row.className = 'tnode-row' + (leaf && node.done ? ' done' : '') + (isRoot ? ' brand-row' : '');
 
     // Zonas de drop: soltar arriba/abajo (hermano) o al centro (anidar como hijo).
     row.addEventListener('dragover', function (e) {
@@ -1316,11 +1500,13 @@
     });
     grip.addEventListener('dragend', function () { wrap.classList.remove('dragging'); clearDropIndicators(); dragId = null; });
 
-    function toggleCollapse() { if (hasKids) { node.collapsed = !node.collapsed; save(); render(); } }
+    // El plegado se recuerda POR USUARIO (localStorage), no en el board común.
+    const collapsed = isCollapsed(node.id);
+    function toggleCollapse() { if (hasKids) { setCollapsed(node.id, !isCollapsed(node.id)); render(); } }
 
-    // Triángulo ▸ / ▾ (solo si tiene hijos). La CSS lo gira al expandir.
+    // Triángulo ▸ / ▾ (solo si tiene hijos visibles). La CSS lo gira al expandir.
     const chevron = document.createElement('span');
-    chevron.className = 'tnode-chevron' + (hasKids ? '' : ' hidden-chevron') + (hasKids && !node.collapsed ? ' expanded' : '');
+    chevron.className = 'tnode-chevron' + (hasKids ? '' : ' hidden-chevron') + (hasKids && !collapsed ? ' expanded' : '');
     chevron.textContent = '▸';
     chevron.title = 'Expandir / contraer';
     chevron.addEventListener('click', toggleCollapse);
@@ -1335,16 +1521,33 @@
       save(); render();
     });
 
-    // Texto editable
+    // Texto. En una hoja se edita directamente (clic = escribir). En un agrupador
+    // (marca/proyecto con actividades) el clic sobre el nombre PLIEGA/DESPLIEGA;
+    // para renombrarlo se hace doble clic. Así el nombre es a la vez control de
+    // navegación y editable, sin perder ninguna de las dos capacidades.
     const text = document.createElement('div');
     text.className = 'tnode-text';
-    text.contentEditable = 'true';
-    text.dataset.placeholder = isRoot ? 'Escribe la tarea...' : 'Subtarea...';
+    const grouper = !leaf;
+    text.contentEditable = grouper ? 'false' : 'true';
+    text.dataset.placeholder = isRoot ? 'Nombre de la marca o proyecto...' : 'Actividad...';
     text.textContent = node.text;
+    if (grouper) {
+      text.classList.add('is-grouper');
+      text.title = 'Clic: plegar/desplegar · doble clic: renombrar';
+      text.addEventListener('click', function () { toggleCollapse(); });
+      text.addEventListener('dblclick', function () {
+        text.contentEditable = 'true';
+        text.classList.add('editing');
+        text.focus();
+        const r = document.createRange(); r.selectNodeContents(text);
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      });
+      text.addEventListener('blur', function () { text.contentEditable = 'false'; text.classList.remove('editing'); });
+    }
     text.addEventListener('input', function () { node.text = text.textContent; save(); });
     text.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); text.blur(); }
-      else if (e.key === 'Backspace' && text.textContent === '' && !hasKids && !isRoot) {
+      else if (e.key === 'Backspace' && text.textContent === '' && leaf && !isRoot) {
         e.preventDefault();
         removeNodeAnimated(node.id);
       }
@@ -1359,7 +1562,7 @@
       const child = newNode();
       node.subtasks = node.subtasks || [];
       node.subtasks.push(child);
-      node.collapsed = false;
+      setCollapsed(node.id, false);
       save(); render();
       focusNode(child.id);
     });
@@ -1388,13 +1591,31 @@
       badge.textContent = dueLabel(node.dueDate);
       meta.appendChild(badge);
     }
-    // Progreso como fracción compacta (2/4) en vez de barra: misma información,
-    // una fracción del espacio.
-    const prog = subProgress(node);
-    if (prog.total > 0) {
+    // Responsable de la actividad (solo hojas), a la derecha. Siempre visible
+    // para poder asignarlo con un clic; si no hay, muestra un hueco tenue.
+    if (leaf) {
+      const who = document.createElement('span');
+      const asg = (node.assignee || '').trim();
+      who.className = 'assignee-chip' + (asg ? '' : ' empty');
+      who.textContent = asg || 'Responsable';
+      who.title = 'Asignar responsable';
+      who.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openMetaId = node.id; render();
+        requestAnimationFrame(function () {
+          const inp = matrixViewEl.querySelector('.tnode[data-id="' + node.id + '"] .meta-panel input[list="assignee-names"]');
+          if (inp) inp.focus();
+        });
+      });
+      meta.appendChild(who);
+    }
+    // Agrupadores: conteo de actividades pendientes ("N pendientes") en lugar de
+    // la fracción. Las tareas agrupadoras no cuentan como productividad.
+    if (!leaf) {
+      const pc = pendingLeafCount(node);
       const count = document.createElement('span');
-      count.className = 'progress-count' + (prog.done === prog.total ? ' complete' : '');
-      count.textContent = prog.done + '/' + prog.total;
+      count.className = 'group-count' + (pc === 0 ? ' complete' : '');
+      count.textContent = pc === 0 ? 'al día' : (isRoot ? (pc + (pc === 1 ? ' pendiente' : ' pendientes')) : String(pc));
       meta.appendChild(count);
     }
 
@@ -1410,12 +1631,12 @@
     // Panel de opciones (fecha / etiquetas / eliminar)
     wrap.appendChild(renderMetaPanel(node));
 
-    // Hijos (recursivo) con animación de expandir/contraer e indentación tipo árbol
+    // Hijos VISIBLES (pendientes) con animación de expandir/contraer.
     const childrenWrap = document.createElement('div');
-    childrenWrap.className = 'tnode-children' + (hasKids && !node.collapsed ? ' expanded' : '');
+    childrenWrap.className = 'tnode-children' + (hasKids && !collapsed ? ' expanded' : '');
     const childrenInner = document.createElement('div');
     childrenInner.className = 'tnode-children-inner';
-    (node.subtasks || []).forEach(function (child) {
+    kids.forEach(function (child) {
       childrenInner.appendChild(renderNode(child, level + 1));
     });
     childrenWrap.appendChild(childrenInner);
@@ -1424,63 +1645,169 @@
     return wrap;
   }
 
-  function quadrantKey(t) {
-    // Solo 2 columnas: q1 = urgente e importante, q2 = importante (no urgente).
-    return t.urgent && t.important ? 'q1' : 'q2';
+  // Mueve un nodo al nivel superior (marca): soltar en zona vacía de la lista.
+  function moveNodeToRoot(dId) {
+    const c = findCtx(dId);
+    if (!c) return;
+    const drag = c.node;
+    c.list.splice(c.index, 1);
+    tasks.push(drag);
+  }
+
+  // Crea una nueva marca / tarea principal al final de la lista.
+  function addRootTask() {
+    const t = newTask(true, true);
+    tasks.push(t);
+    openMetaId = null;
+    save();
+    render();
+    focusNode(t.id);
+  }
+
+  // ---------------- Historial de completadas ----------------
+
+  function renderCompletedSection(container, doneList) {
+    const section = document.createElement('div');
+    section.className = 'completed-section';
+    const open = completedOpen();
+
+    const head = document.createElement('div');
+    head.className = 'completed-head';
+    const chev = document.createElement('span');
+    chev.className = 'completed-chev' + (open ? ' open' : '');
+    chev.textContent = '▸';
+    const title = document.createElement('span');
+    title.className = 'completed-title';
+    title.textContent = 'Tareas completadas';
+    const cnt = document.createElement('span');
+    cnt.className = 'completed-count';
+    cnt.textContent = '(' + doneList.length + ')';
+    head.appendChild(chev);
+    head.appendChild(title);
+    head.appendChild(cnt);
+    head.addEventListener('click', function () { setCompletedOpen(!completedOpen()); render(); });
+    section.appendChild(head);
+
+    if (open) {
+      const body = document.createElement('div');
+      body.className = 'completed-body';
+
+      // Resumen "hoy" por responsable (según la fecha REAL de finalización).
+      const hoy = doneList.filter(function (d) { return esHoy(d.node.completedAt); });
+      if (hoy.length) {
+        const byPerson = {};
+        hoy.forEach(function (d) { const p = (d.node.assignee || '').trim() || 'Sin responsable'; byPerson[p] = (byPerson[p] || 0) + 1; });
+        const tally = document.createElement('div');
+        tally.className = 'tally';
+        const th = document.createElement('div'); th.className = 'tally-head'; th.textContent = 'Completadas hoy';
+        tally.appendChild(th);
+        Object.keys(byPerson).sort(function (a, b) { return byPerson[b] - byPerson[a]; }).forEach(function (p) {
+          const r = document.createElement('div'); r.className = 'tally-row';
+          const nm = document.createElement('span'); nm.className = 'tally-name'; nm.textContent = p;
+          const n = document.createElement('span'); n.className = 'tally-num'; n.textContent = byPerson[p] + (byPerson[p] === 1 ? ' tarea' : ' tareas');
+          r.appendChild(nm); r.appendChild(n); tally.appendChild(r);
+        });
+        body.appendChild(tally);
+      }
+
+      if (!doneList.length) {
+        const empty = document.createElement('div');
+        empty.className = 'completed-empty';
+        empty.textContent = 'Aún no hay actividades completadas.';
+        body.appendChild(empty);
+      }
+      doneList.forEach(function (d) {
+        const item = document.createElement('div');
+        item.className = 'completed-item';
+        const ck = document.createElement('span');
+        ck.className = 'completed-restore';
+        ck.textContent = '✓';
+        ck.title = 'Restaurar a pendientes';
+        ck.addEventListener('click', function () { setDoneRecursive(d.node, false); save(); render(); });
+        const info = document.createElement('div');
+        info.className = 'completed-info';
+        const nm = document.createElement('div');
+        nm.className = 'completed-name';
+        nm.textContent = d.node.text || '(sin título)';
+        const meta = document.createElement('div');
+        meta.className = 'completed-meta';
+        const parts = [];
+        if (d.brand && d.brand !== (d.node.text || '').trim()) parts.push(d.brand);
+        if ((d.node.assignee || '').trim()) parts.push(d.node.assignee.trim());
+        parts.push(fmtFecha(d.node.completedAt));
+        const hora = fmtHora(d.node.completedAt);
+        if (hora) parts.push(hora);
+        meta.textContent = parts.join(' · ');
+        info.appendChild(nm);
+        info.appendChild(meta);
+        item.appendChild(ck);
+        item.appendChild(info);
+        body.appendChild(item);
+      });
+      section.appendChild(body);
+    }
+    container.appendChild(section);
   }
 
   function render() {
-    const qlists = {
-      q1: matrixViewEl.querySelector('.qlist[data-q="q1"]'),
-      q2: matrixViewEl.querySelector('.qlist[data-q="q2"]')
-    };
-    Object.keys(qlists).forEach(function (k) { qlists[k].innerHTML = ''; });
+    matrixViewEl.innerHTML = '';
     tasks.forEach(recomputeDone);
-    tasks.forEach(function (t) { qlists[quadrantKey(t)].appendChild(renderNode(t, 1)); });
-    const all = flattenTasks(tasks);
-    countEl.textContent = all.length + ' tarea(s) · ' + all.filter(function (t) { return t.done; }).length + ' completada(s)';
+
+    // Autocompletado de responsables (nombres ya usados).
+    let dl = document.getElementById('assignee-names');
+    if (!dl) { dl = document.createElement('datalist'); dl.id = 'assignee-names'; document.body.appendChild(dl); }
+    dl.innerHTML = '';
+    knownAssignees().forEach(function (n) { const o = document.createElement('option'); o.value = n; dl.appendChild(o); });
+
+    // Lista de pendientes: una sola columna. Las marcas (raíces con subtareas)
+    // siempre se muestran; una raíz-hoja completada pasa al historial.
+    const pend = document.createElement('div');
+    pend.className = 'pending-list';
+    // Soltar en el hueco de la lista mueve el nodo a nivel de marca.
+    pend.addEventListener('dragover', function (e) { if (dragId) { e.preventDefault(); } });
+    pend.addEventListener('drop', function (e) {
+      if (!dragId) return;
+      e.preventDefault();
+      clearDropIndicators();
+      moveNodeToRoot(dragId);
+      dragId = null; save(); render();
+    });
+
+    const roots = tasks.filter(function (r) { return isLeaf(r) ? !r.done : true; });
+    if (!roots.length) {
+      const empty = document.createElement('div');
+      empty.className = 'list-empty';
+      empty.textContent = 'No hay tareas pendientes. Crea una marca o proyecto para empezar.';
+      pend.appendChild(empty);
+    } else {
+      roots.forEach(function (r) { pend.appendChild(renderNode(r, 1)); });
+    }
+    matrixViewEl.appendChild(pend);
+
+    // Botón para crear una nueva marca / tarea principal.
+    const addBtn = document.createElement('button');
+    addBtn.className = 'addroot-btn';
+    addBtn.textContent = '＋ Nueva tarea principal';
+    addBtn.addEventListener('click', addRootTask);
+    matrixViewEl.appendChild(addBtn);
+
+    // Historial de completadas (plegable, contraído por defecto).
+    const doneList = completedLeaves().sort(function (a, b) {
+      return (b.node.completedAt || '').localeCompare(a.node.completedAt || '');
+    });
+    if (doneList.length) {
+      const sep = document.createElement('div'); sep.className = 'list-sep';
+      matrixViewEl.appendChild(sep);
+      renderCompletedSection(matrixViewEl, doneList);
+    }
+
+    // Pie: cuenta ACTIVIDADES operativas (hojas), no agrupadores.
+    const leaves = flattenTasks(tasks).filter(isLeaf);
+    const doneCount = leaves.filter(function (t) { return t.done; }).length;
+    countEl.textContent = leaves.length + ' actividad(es) · ' + doneCount + ' completada(s)';
     if (tagsPanel.classList.contains('open')) renderTagsManager();
     renderNotifyBanner();
   }
-
-  // ---------------- Drag & drop on quadrants ----------------
-
-  matrixViewEl.querySelectorAll('.qlist').forEach(function (list) {
-    list.addEventListener('dragover', function (e) {
-      if (!dragId) return;
-      e.preventDefault();
-      clearDropIndicators();
-      list.closest('.quadrant').classList.add('drag-over');
-    });
-    list.addEventListener('dragleave', function () {
-      list.closest('.quadrant').classList.remove('drag-over');
-    });
-    list.addEventListener('drop', function (e) {
-      e.preventDefault();
-      list.closest('.quadrant').classList.remove('drag-over');
-      if (!dragId) return;
-      // Soltar en zona vacía de una columna: mueve la tarea a nivel superior
-      // con ese cuadrante (urgente/importante). Sirve también para "sacar" subtareas.
-      moveNodeToColumn(dragId, list.dataset.q);
-      dragId = null;
-      clearDropIndicators();
-      save();
-      render();
-    });
-  });
-
-  matrixViewEl.querySelectorAll('.qadd').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const q = btn.dataset.q;
-      // q1 = urgente e importante ; q2 = importante, no urgente
-      const t = newTask(q === 'q1', true);
-      tasks.push(t);
-      openMetaId = null;
-      save();
-      render();
-      focusNode(t.id);
-    });
-  });
 
   setAuthMode('signin');
 })();
