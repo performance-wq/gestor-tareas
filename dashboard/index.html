@@ -490,6 +490,95 @@
   .tally-name { color: var(--text); }
   .tally-num { color: var(--accent2); font-weight: 600; font-size: 12px; }
 
+  /* ---------- Ciclo de vida / estado ---------- */
+  .st-chip { font-size: 10.5px; border-radius: 6px; padding: 1px 7px; font-weight: 600; white-space: nowrap; }
+  .st-pending { background: rgba(148,139,196,0.16); color: var(--muted); }
+  .st-in_progress { background: rgba(255,159,67,0.16); color: #ffc48a; }
+  .st-completed { background: rgba(46,230,166,0.16); color: #7ff0c9; }
+  .st-archived { background: rgba(91,140,255,0.16); color: #aac2ff; }
+  .start-btn { font-size: 10.5px; border-radius: 6px; padding: 1px 8px; cursor: pointer; background: rgba(255,159,67,0.14); color: #ffc48a; border: 1px solid rgba(255,159,67,0.4); white-space: nowrap; }
+  .start-btn:hover { background: rgba(255,159,67,0.25); }
+  .tnode-check.disabled { opacity: 0.35; cursor: not-allowed; }
+  .tnode-check.hidden-check { visibility: hidden; }
+  .assignee-chip.ro { cursor: default; background: rgba(148,139,196,0.1); color: var(--muted); border-color: var(--line); }
+
+  .life-btn { font-size: 12px; border-radius: 8px; padding: 5px 11px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-family: inherit; }
+  .life-btn:hover { border-color: var(--accent2); }
+  .life-btn.start { background: rgba(255,159,67,0.14); color: #ffc48a; border-color: rgba(255,159,67,0.4); }
+  .life-btn.complete { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #07050f; font-weight: 700; border: none; }
+  .life-btn.small { font-size: 11px; padding: 3px 9px; }
+  .meta-actions { gap: 6px; flex-wrap: wrap; }
+
+  /* ---------- Meta: responsable / fechas / candados ---------- */
+  .meta-select { border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; font-family: inherit; font-size: 12px; background: var(--panel-strong); color: var(--text); }
+  .meta-select option { background: #12102a; color: var(--text); }
+  .meta-locked { font-size: 12px; color: var(--muted); }
+  .meta-hint { font-size: 11px; color: var(--muted); }
+  .meta-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; margin: 4px 0 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,0.2); }
+  .meta-drow { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; }
+  .meta-dlabel { color: var(--muted); }
+  .meta-dval { color: var(--text); }
+
+  /* ---------- Historial por tarea ---------- */
+  .history-list { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 6px; background: rgba(0,0,0,0.2); max-height: 210px; overflow-y: auto; }
+  .history-item { padding: 4px 0; border-bottom: 1px solid var(--line); }
+  .history-item:last-child { border-bottom: none; }
+  .history-when { font-size: 10.5px; color: var(--muted); }
+  .history-msg { font-size: 12.5px; color: var(--text); }
+
+  /* ---------- Completadas / archivadas ---------- */
+  .completed-dates { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 3px; }
+  .cdate { font-size: 10.5px; color: var(--muted); }
+  .completed-name { display: flex; align-items: center; gap: 8px; }
+  .completed-acts { display: flex; gap: 6px; margin-top: 6px; }
+
+  /* ---------- Toggle Lista / Dashboard ---------- */
+  .view-toggle { display: flex; gap: 6px; margin: 4px 0 14px; }
+  .vt-btn { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 9px; padding: 7px 16px; font-size: 13px; font-family: inherit; cursor: pointer; }
+  .vt-btn.active { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #07050f; font-weight: 700; border: none; }
+
+  /* ---------- Dashboard ---------- */
+  .dash-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 8px; }
+  .dash-f { display: flex; flex-direction: column; gap: 4px; }
+  .dash-f label { font-size: 11px; color: var(--muted); }
+  .dash-f select, .dash-range input { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 13px; background: var(--panel); color: var(--text); font-family: inherit; }
+  .dash-f select option { background: #12102a; }
+  .dash-range { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .dash-note { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 720px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--panel); text-align: center; }
+  .kpi-n { font-size: 26px; font-weight: 800; letter-spacing: 0.5px; }
+  .kpi-t { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+  .kpi-ini .kpi-n { color: #ffc48a; }
+  .kpi-pen .kpi-n { color: var(--muted); }
+  .kpi-prog .kpi-n { color: #ffd7a8; }
+  .kpi-com .kpi-n { color: #7ff0c9; }
+  .kpi-arc .kpi-n { color: #aac2ff; }
+  .dash-block { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; background: var(--panel); }
+  .dash-block h3 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+  .dash-empty { color: var(--muted); font-size: 12.5px; opacity: 0.8; }
+  .perf-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .perf-row:last-child { border-bottom: none; }
+  .perf-name { font-weight: 600; font-size: 13.5px; }
+  .perf-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ps { font-size: 11.5px; border-radius: 7px; padding: 2px 8px; }
+  .ps.ini { background: rgba(255,159,67,0.14); color: #ffc48a; }
+  .ps.com { background: rgba(46,230,166,0.14); color: #7ff0c9; }
+  .ps.pen { background: rgba(148,139,196,0.14); color: var(--muted); }
+  .matrix-scroll { overflow-x: auto; }
+  .day-matrix { border-collapse: collapse; font-size: 12px; min-width: 100%; }
+  .day-matrix th, .day-matrix td { padding: 5px 8px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .day-matrix th { color: var(--muted); font-weight: 600; font-size: 11px; }
+  .dm-name { text-align: left !important; font-weight: 600; }
+  .dm-cell { color: var(--muted); }
+  .dm-cell.has { color: #7ff0c9; font-weight: 700; }
+  .dm-cell.has:hover { background: rgba(53,229,255,0.12); }
+  .drill-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--line); }
+  .drill-item:last-of-type { border-bottom: none; }
+  .di-check { color: var(--ok, #2ee6a6); }
+  .di-brand { color: var(--muted); font-size: 11.5px; margin-left: auto; }
+
   footer#count { margin-top: 26px; color: var(--muted); font-size: 12px; }
 
   /* Auth screen */
@@ -578,7 +667,13 @@
     </div>
   </div>
 
+  <div class="view-toggle">
+    <button id="toggleList" class="vt-btn active">Lista</button>
+    <button id="toggleDash" class="vt-btn">Dashboard</button>
+  </div>
+
   <div id="matrixView" class="list-view"></div>
+  <div id="dashboardView" class="dashboard-view" style="display:none"></div>
 
   <footer id="count"></footer>
 </div>
@@ -610,6 +705,7 @@
   const addMemberBtn = document.getElementById('addMemberBtn');
   const deleteBoardBtn = document.getElementById('deleteBoardBtn');
   const matrixViewEl = document.getElementById('matrixView');
+  const dashboardViewEl = document.getElementById('dashboardView');
   const notifyBanner = document.getElementById('notifyBanner');
   const countEl = document.getElementById('count');
   const tagsBtn = document.getElementById('tagsBtn');
@@ -620,12 +716,19 @@
   let boards = [];
   let currentBoard = null;
   let members = [];
-  let tasks = [];
   let tagCatalog = [];
   let saveTimer = null;
   let openMetaId = null;
   let openTagPickerId = null;
   let dragId = null;
+
+  // Modelo relacional (task_items): filas planas + índices por padre.
+  let items = [];        // filas de task_items del board actual
+  let byId = {};         // id -> fila
+  let kidsOf = {};       // parent_id ('__root' si raíz) -> [filas ordenadas]
+  let isAdmin = false;   // admin = dueño del board; operativos = miembros
+  let view = 'list';     // 'list' | 'dashboard'
+  let openHistoryId = null;
 
   // ---------------- Auth ----------------
 
@@ -687,53 +790,6 @@
       if (mensajeBloqueo) { showAuthMsg(mensajeBloqueo, 'error'); mensajeBloqueo = null; }
     }
   });
-
-  // ---------------- Data helpers ----------------
-
-  function uid() { return 't' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
-  function nowISO() { return new Date().toISOString(); }
-
-  function newTask(urgent, important) {
-    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: !!urgent, important: !!important, assignee: null, subtasks: [], collapsed: false, createdAt: nowISO(), completedAt: null };
-  }
-
-  // Un nodo de tarea tiene el MISMO shape en cualquier nivel del árbol, de modo
-  // que una subtarea se comporta exactamente igual que una tarea principal.
-  function newNode() {
-    return { id: uid(), text: '', done: false, tags: [], dueDate: null, urgent: false, important: true, assignee: null, subtasks: [], collapsed: false, createdAt: nowISO(), completedAt: null };
-  }
-
-  // Normaliza un nodo (rellena campos faltantes) y recorre sus hijos recursivamente.
-  // Migra las subtareas antiguas ({id,text,done}) a nodos completos automáticamente.
-  function ensureNode(t) {
-    if (typeof t.done === 'undefined') t.done = false;
-    if (!t.tags) t.tags = [];
-    if (typeof t.dueDate === 'undefined') t.dueDate = null;
-    if (typeof t.urgent === 'undefined') t.urgent = false;
-    if (typeof t.important === 'undefined') t.important = false;
-    if (typeof t.assignee === 'undefined') t.assignee = null;
-    if (!Array.isArray(t.subtasks)) t.subtasks = [];
-    if (typeof t.collapsed === 'undefined') t.collapsed = false;
-    if (typeof t.createdAt === 'undefined') t.createdAt = null;
-    // Migración: si una tarea vieja ya está completada pero sin marca de tiempo,
-    // no inventamos una fecha; queda null y el historial la muestra como "—".
-    if (typeof t.completedAt === 'undefined') t.completedAt = null;
-    if (!t.id) t.id = uid();
-    t.subtasks.forEach(ensureNode);
-    return t;
-  }
-
-  function ensureFields(list) {
-    (list || []).forEach(function (t) {
-      // Migración de cuadrantes (solo aplica a la raíz): la matriz tiene 2 columnas
-      // (q1 = urgente+importante, q2 = importante). Reubica tareas de columnas eliminadas
-      // para que ninguna desaparezca.
-      if (!t.important && !t.urgent) { t.urgent = true; t.important = true; }
-      else if (t.urgent && !t.important) { t.important = true; }
-      ensureNode(t);
-    });
-    return list || [];
-  }
 
   // ---------------- Boards / projects ----------------
 
@@ -810,40 +866,67 @@
     currentBoard = data;
     localStorage.setItem('lastBoard_' + currentUser.id, currentBoard.id);
     loadCollapse();
-    // Compatibilidad: data puede ser un array (formato antiguo: solo tareas)
-    // o un objeto { tasks, tags } (formato nuevo con catálogo de etiquetas).
+    // Rol: admin = dueño del board; los miembros compartidos son operativos.
+    isAdmin = currentBoard.owner_id === currentUser.id;
+    // El catálogo de etiquetas sigue viviendo en boards.data.tags; las TAREAS
+    // ahora son relacionales (task_items), no el blob.
     const raw = currentBoard.data;
-    let loadedTasks, loadedTags;
-    if (Array.isArray(raw)) { loadedTasks = raw; loadedTags = []; }
-    else if (raw && typeof raw === 'object') {
-      loadedTasks = Array.isArray(raw.tasks) ? raw.tasks : [];
-      loadedTags = Array.isArray(raw.tags) ? raw.tags : [];
-    } else { loadedTasks = []; loadedTags = []; }
-    tasks = ensureFields(loadedTasks);
+    const loadedTags = (raw && typeof raw === 'object' && Array.isArray(raw.tags)) ? raw.tags : [];
     tagCatalog = normalizeTags(loadedTags);
-    // Garantiza que toda etiqueta usada en alguna tarea exista en el catálogo.
-    flattenTasks(tasks).forEach(function (n) { (n.tags || []).forEach(function (name) { ensureTag(name); }); });
-    openTagPickerId = null;
+    openTagPickerId = null; openMetaId = null; openHistoryId = null;
     boardNameInput.value = currentBoard.name;
+    boardNameInput.disabled = !isAdmin;
     renderBoardPicker();
     await loadMembers();
+    await loadItems();
     renderSharePanel();
     render();
   }
+
+  // ---------------- Carga relacional de tareas ----------------
+  async function loadItems() {
+    items = []; byId = {}; kidsOf = {};
+    if (!currentBoard) return;
+    const { data, error } = await sb.from('task_items').select('*').eq('board_id', currentBoard.id).order('position');
+    if (error) { saveStatusEl.textContent = 'Error al cargar tareas: ' + error.message; return; }
+    items = data || [];
+    indexItems();
+  }
+  function indexItems() {
+    byId = {}; kidsOf = {};
+    items.forEach(function (r) { byId[r.id] = r; });
+    items.forEach(function (r) { const k = r.parent_id || '__root'; (kidsOf[k] = kidsOf[k] || []).push(r); });
+    Object.keys(kidsOf).forEach(function (k) { kidsOf[k].sort(function (a, b) { return (a.position || 0) - (b.position || 0); }); });
+  }
+  function childrenOf(id) { return kidsOf[id || '__root'] || []; }
+  function rootItems() { return kidsOf['__root'] || []; }
+  function isLeaf(r) { return childrenOf(r.id).length === 0; }
+  function flatItems() { return items.slice(); }
 
   // ---------------- Sharing / members ----------------
 
   async function loadMembers() {
     members = [];
     if (!currentBoard) return;
-    const { data: ownerProfile } = await sb.from('profiles').select('id, email').eq('id', currentBoard.owner_id).maybeSingle();
-    if (ownerProfile) members.push({ id: ownerProfile.id, email: ownerProfile.email, isOwner: true });
+    const { data: ownerProfile } = await sb.from('profiles').select('id, email, full_name').eq('id', currentBoard.owner_id).maybeSingle();
+    if (ownerProfile) members.push({ id: ownerProfile.id, email: ownerProfile.email, full_name: ownerProfile.full_name, isOwner: true });
     const { data: memberRows } = await sb.from('board_members').select('user_id').eq('board_id', currentBoard.id);
     const ids = (memberRows || []).map(function (r) { return r.user_id; });
     if (ids.length) {
-      const { data: profs } = await sb.from('profiles').select('id, email').in('id', ids);
-      (profs || []).forEach(function (p) { members.push({ id: p.id, email: p.email, isOwner: false }); });
+      const { data: profs } = await sb.from('profiles').select('id, email, full_name').in('id', ids);
+      (profs || []).forEach(function (p) { members.push({ id: p.id, email: p.email, full_name: p.full_name, isOwner: false }); });
     }
+  }
+  // Nombre legible de un responsable (usuario real) o el nombre heredado (legacy).
+  function memberName(id) {
+    const m = members.find(function (x) { return x.id === id; });
+    if (!m) return null;
+    return (m.full_name && m.full_name.trim()) ? m.full_name.trim() : (m.email || '').split('@')[0];
+  }
+  function assigneeLabel(row) {
+    if (row.assignee_id) { return memberName(row.assignee_id) || 'Usuario'; }
+    if (row.assignee_legacy) { return row.assignee_legacy; }
+    return null;
   }
 
   function renderSharePanel() {
@@ -963,15 +1046,57 @@
 
   // ---------------- Save ----------------
 
+  // Guarda SOLO el catálogo de etiquetas en boards.data (las tareas son
+  // relacionales). Conserva la marca de migración para no reintroducir el blob.
   function save() {
     clearTimeout(saveTimer);
     saveStatusEl.textContent = 'Guardando...';
     saveTimer = setTimeout(async function () {
       if (!currentBoard) return;
-      const { error } = await sb.from('boards').update({ data: { tasks: tasks, tags: tagCatalog }, updated_at: new Date().toISOString() }).eq('id', currentBoard.id);
+      const base = (currentBoard.data && typeof currentBoard.data === 'object' && !Array.isArray(currentBoard.data)) ? currentBoard.data : {};
+      const nuevo = Object.assign({}, base, { tags: tagCatalog, migratedToTaskItems: true });
+      currentBoard.data = nuevo;
+      const { error } = await sb.from('boards').update({ data: nuevo, updated_at: new Date().toISOString() }).eq('id', currentBoard.id);
       saveStatusEl.textContent = error ? ('Error al guardar: ' + error.message) : 'Guardado';
       if (!error) setTimeout(function () { if (saveStatusEl.textContent === 'Guardado') saveStatusEl.textContent = ''; }, 1500);
     }, 400);
+  }
+
+  // ---------------- Mutaciones relacionales (task_items) ----------------
+  function statusOfChangeMsg(e) { saveStatusEl.textContent = e ? ('Error: ' + (e.message || e)) : 'Guardado'; if (!e) setTimeout(function () { if (saveStatusEl.textContent === 'Guardado') saveStatusEl.textContent = ''; }, 1200); }
+
+  // Actualiza columnas editables (solo admin, gateado también en backend).
+  async function updateItemFields(id, patch, rerender) {
+    const local = byId[id]; if (local) Object.assign(local, patch);
+    if (rerender !== false) render();
+    saveStatusEl.textContent = 'Guardando...';
+    const { error } = await sb.from('task_items').update(patch).eq('id', id);
+    statusOfChangeMsg(error);
+    if (error) { await loadItems(); render(); }
+  }
+  // Inserta una nueva tarea/subtarea (solo admin).
+  async function insertItem(parentId, title, focusIt) {
+    const siblings = childrenOf(parentId);
+    const pos = siblings.length ? Math.max.apply(null, siblings.map(function (s) { return s.position || 0; })) + 1 : 0;
+    const row = { account_id: currentBoard.account_id, board_id: currentBoard.id, parent_id: parentId || null, title: title || '', position: pos };
+    saveStatusEl.textContent = 'Guardando...';
+    const { data, error } = await sb.from('task_items').insert(row).select('*').single();
+    if (error) { statusOfChangeMsg(error); return null; }
+    items.push(data); indexItems(); statusOfChangeMsg(null);
+    if (parentId) setCollapsed(parentId, false);
+    render();
+    if (focusIt) focusNode(data.id);
+    return data;
+  }
+  // Llamadas a las RPCs de ciclo de vida (fechas del servidor + permisos backend).
+  async function lifecycle(fn, id) {
+    saveStatusEl.textContent = '...';
+    const { error } = await sb.rpc(fn, { p_id: id });
+    if (error) { alert(error.message); saveStatusEl.textContent = ''; return false; }
+    await loadItems(); render();
+    saveStatusEl.textContent = 'Guardado';
+    setTimeout(function () { if (saveStatusEl.textContent === 'Guardado') saveStatusEl.textContent = ''; }, 1200);
+    return true;
   }
 
   // ---------------- Due date helpers ----------------
@@ -1005,9 +1130,10 @@
   }
 
   function renderNotifyBanner() {
-    const all = flattenTasks(tasks);
-    const overdue = all.filter(function (t) { return !t.done && t.dueDate && daysUntil(t.dueDate) < 0; });
-    const today = all.filter(function (t) { return !t.done && t.dueDate && daysUntil(t.dueDate) === 0; });
+    const all = items.filter(isLeaf);
+    const pend = function (t) { return t.status !== 'completed' && t.status !== 'archived'; };
+    const overdue = all.filter(function (t) { return pend(t) && t.due_date && daysUntil(t.due_date) < 0; });
+    const today = all.filter(function (t) { return pend(t) && t.due_date && daysUntil(t.due_date) === 0; });
     if (!overdue.length && !today.length) {
       notifyBanner.classList.add('hidden');
       notifyBanner.textContent = '';
@@ -1020,202 +1146,204 @@
     notifyBanner.classList.remove('hidden');
   }
 
+  // Estado legible + clase de color.
+  const STATUS_LABEL = { pending: 'Pendiente', in_progress: 'En progreso', completed: 'Completada', archived: 'Archivada' };
+  function statusChip(status) {
+    const s = document.createElement('span');
+    s.className = 'st-chip st-' + status;
+    s.textContent = STATUS_LABEL[status] || status;
+    return s;
+  }
+
+  // Nombre de la marca (raíz) a la que pertenece una fila.
+  function rootBrand(row) {
+    let cur = row, guard = 0;
+    while (cur && cur.parent_id && guard < 50) { cur = byId[cur.parent_id]; guard++; }
+    return cur ? (cur.title || '').trim() : '';
+  }
+
+  // ¿El usuario actual puede ejecutar (iniciar/completar) esta actividad?
+  function canAct(row) { return isAdmin || row.assignee_id === currentUser.id; }
+
   // ---------------- Meta panel ----------------
+
+  const eventsCache = {};
+  async function loadEvents(id) {
+    const { data } = await sb.from('task_events').select('*').eq('task_id', id).order('created_at');
+    eventsCache[id] = data || [];
+    render();
+  }
+  // Historial en lenguaje natural.
+  function eventLine(ev) {
+    const who = ev.actor_id ? (memberName(ev.actor_id) || 'Alguien') : 'Sistema';
+    const d = ev.detail || {};
+    const nm = function (id) { return id ? (memberName(id) || 'usuario') : '—'; };
+    switch (ev.type) {
+      case 'created':      return who + ' creó la tarea.';
+      case 'assigned':     return who + ' asignó a ' + nm(d.to) + '.';
+      case 'unassigned':   return who + ' quitó el responsable.';
+      case 'reassigned':   return who + ' reasignó: ' + nm(d.from) + ' → ' + nm(d.to) + '.';
+      case 'due_changed':  return who + ' cambió la fecha de entrega: ' + (d.from || '—') + ' → ' + (d.to || '—') + '.';
+      case 'started':      return who + ' inició la tarea.';
+      case 'completed':    return who + ' completó la tarea.';
+      case 'reopened':     return who + ' reabrió la tarea.';
+      case 'archived':     return who + ' archivó la tarea.';
+      case 'unarchived':   return who + ' desarchivó la tarea.';
+      case 'child_deleted':return who + ' eliminó la subtarea "' + (d.title || '') + '".';
+      default:             return who + ' · ' + ev.type;
+    }
+  }
+
+  function metaLabeledDate(label, iso) {
+    const row = document.createElement('div'); row.className = 'meta-drow';
+    const l = document.createElement('span'); l.className = 'meta-dlabel'; l.textContent = label;
+    const v = document.createElement('span'); v.className = 'meta-dval';
+    v.textContent = iso ? (fmtFecha(iso) + ' · ' + fmtHora(iso)) : '—';
+    row.appendChild(l); row.appendChild(v); return row;
+  }
+  function lockedField(label, value) {
+    const row = document.createElement('div'); row.className = 'meta-row';
+    const l = document.createElement('label'); l.textContent = label;
+    const v = document.createElement('span'); v.className = 'meta-locked';
+    v.textContent = (value || '—') + '  🔒';
+    row.appendChild(l); row.appendChild(v); return row;
+  }
 
   function renderMetaPanel(task) {
     const panel = document.createElement('div');
     panel.className = 'meta-panel' + (openMetaId === task.id ? ' open' : '');
+    const leaf = isLeaf(task);
 
-    const dateRow = document.createElement('div');
-    dateRow.className = 'meta-row';
-    const dateLabel = document.createElement('label');
-    dateLabel.textContent = 'Vence:';
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.value = task.dueDate || '';
-    dateInput.addEventListener('change', function () { task.dueDate = dateInput.value || null; save(); render(); });
-    dateRow.appendChild(dateLabel);
-    dateRow.appendChild(dateInput);
-    const delBtn = document.createElement('button');
-    delBtn.className = 'meta-delete';
-    delBtn.textContent = 'Eliminar tarea';
-    delBtn.addEventListener('click', function () {
-      removeNodeAnimated(task.id);
-    });
-    dateRow.appendChild(delBtn);
+    // --- Estado + acciones de ciclo de vida (solo hojas) ---
+    if (leaf) {
+      const stRow = document.createElement('div'); stRow.className = 'meta-row';
+      const stL = document.createElement('label'); stL.textContent = 'Estado:';
+      stRow.appendChild(stL); stRow.appendChild(statusChip(task.status));
+      panel.appendChild(stRow);
 
-    // Responsable de la actividad. Queda asociado al nodo incluso tras completarlo.
-    const assigneeRow = document.createElement('div');
-    assigneeRow.className = 'meta-row';
-    const assigneeLabel = document.createElement('label');
-    assigneeLabel.textContent = 'Responsable:';
-    const assigneeInput = document.createElement('input');
-    assigneeInput.type = 'text';
-    assigneeInput.value = task.assignee || '';
-    assigneeInput.placeholder = 'Ej. Sandra';
-    assigneeInput.setAttribute('list', 'assignee-names');
-    assigneeInput.addEventListener('change', function () { task.assignee = assigneeInput.value.trim() || null; save(); render(); });
-    assigneeRow.appendChild(assigneeLabel);
-    assigneeRow.appendChild(assigneeInput);
+      const actRow = document.createElement('div'); actRow.className = 'meta-row meta-actions';
+      function actBtn(txt, cls, fn) { const b = document.createElement('button'); b.className = 'life-btn ' + cls; b.textContent = txt; b.addEventListener('click', fn); actRow.appendChild(b); }
+      if ((task.status === 'pending') && canAct(task)) actBtn('▶ Iniciar', 'start', function () { lifecycle('task_start', task.id); });
+      if ((task.status === 'pending' || task.status === 'in_progress') && canAct(task)) actBtn('✓ Completar', 'complete', function () { lifecycle('task_complete', task.id); });
+      if (task.status === 'completed' && isAdmin) { actBtn('↺ Reabrir', 'reopen', function () { lifecycle('task_reopen', task.id); }); actBtn('Archivar', 'archive', function () { lifecycle('task_archive', task.id); }); }
+      if (task.status === 'archived' && isAdmin) { actBtn('↺ Reabrir', 'reopen', function () { lifecycle('task_reopen', task.id); }); actBtn('Desarchivar', 'archive', function () { lifecycle('task_unarchive', task.id); }); }
+      if (actRow.childNodes.length) panel.appendChild(actRow);
+    }
 
-    const tagsRow = document.createElement('div');
-    tagsRow.className = 'meta-row';
-    const tagsLabel = document.createElement('label');
-    tagsLabel.textContent = 'Etiquetas:';
-    const tagsWrap = document.createElement('div');
-    tagsWrap.className = 'meta-tags';
+    // --- Responsable (usuario real). Editable solo por admin. ---
+    if (leaf) {
+      if (isAdmin) {
+        const aRow = document.createElement('div'); aRow.className = 'meta-row';
+        const aL = document.createElement('label'); aL.textContent = 'Responsable:';
+        const sel = document.createElement('select'); sel.className = 'meta-select';
+        const o0 = document.createElement('option'); o0.value = ''; o0.textContent = '— Sin asignar —'; sel.appendChild(o0);
+        members.forEach(function (m) { const o = document.createElement('option'); o.value = m.id; o.textContent = memberName(m.id) + (m.isOwner ? ' (admin)' : ''); if (task.assignee_id === m.id) o.selected = true; sel.appendChild(o); });
+        sel.addEventListener('change', function () { updateItemFields(task.id, { assignee_id: sel.value || null, assignee_legacy: null }); });
+        aRow.appendChild(aL); aRow.appendChild(sel);
+        if (task.assignee_legacy && !task.assignee_id) { const hint = document.createElement('span'); hint.className = 'meta-hint'; hint.textContent = '(antes: ' + task.assignee_legacy + ')'; aRow.appendChild(hint); }
+        panel.appendChild(aRow);
+      } else {
+        panel.appendChild(lockedField('Responsable:', assigneeLabel(task)));
+      }
+    }
+
+    // --- Fecha de entrega. Editable solo por admin. ---
+    if (isAdmin) {
+      const dRow = document.createElement('div'); dRow.className = 'meta-row';
+      const dL = document.createElement('label'); dL.textContent = 'Entrega:';
+      const dI = document.createElement('input'); dI.type = 'date'; dI.value = task.due_date || '';
+      dI.addEventListener('change', function () { updateItemFields(task.id, { due_date: dI.value || null }); });
+      dRow.appendChild(dL); dRow.appendChild(dI);
+      panel.appendChild(dRow);
+    } else if (task.due_date) {
+      panel.appendChild(lockedField('Entrega:', task.due_date));
+    }
+
+    // --- Fechas reales (siempre solo lectura; las genera el servidor) ---
+    if (leaf) {
+      const dates = document.createElement('div'); dates.className = 'meta-dates';
+      dates.appendChild(metaLabeledDate('Creación', task.created_at));
+      dates.appendChild(metaLabeledDate('Inicio', task.started_at));
+      dates.appendChild(metaLabeledDate('Finalización', task.completed_at));
+      dates.appendChild(metaLabeledDate('Archivo', task.archived_at));
+      panel.appendChild(dates);
+    }
+
+    // --- Etiquetas (edición solo admin) ---
+    const tagsRow = document.createElement('div'); tagsRow.className = 'meta-row';
+    const tagsLabel = document.createElement('label'); tagsLabel.textContent = 'Etiquetas:';
+    const tagsWrap = document.createElement('div'); tagsWrap.className = 'meta-tags';
     (task.tags || []).forEach(function (tag, i) {
-      const chip = document.createElement('span');
-      chip.className = 'meta-tag-chip';
-      chip.textContent = tag;
-      styleChip(chip, tagColor(tag));
-      const rm = document.createElement('button');
-      rm.textContent = '×';
-      rm.addEventListener('click', function () { task.tags.splice(i, 1); save(); render(); });
-      chip.appendChild(rm);
+      const chip = document.createElement('span'); chip.className = 'meta-tag-chip'; chip.textContent = tag; styleChip(chip, tagColor(tag));
+      if (isAdmin) { const rm = document.createElement('button'); rm.textContent = '×'; rm.addEventListener('click', function () { task.tags.splice(i, 1); updateItemFields(task.id, { tags: task.tags }); }); chip.appendChild(rm); }
       tagsWrap.appendChild(chip);
     });
-    // Botón para abrir el selector de etiquetas reutilizables.
-    const addTagBtn = document.createElement('button');
-    addTagBtn.className = 'tag-add-btn';
-    addTagBtn.textContent = '＋ Etiqueta';
-    addTagBtn.addEventListener('click', function () {
-      openTagPickerId = openTagPickerId === task.id ? null : task.id;
-      render();
-    });
-    tagsWrap.appendChild(addTagBtn);
-    tagsRow.appendChild(tagsLabel);
-    tagsRow.appendChild(tagsWrap);
-
-    panel.appendChild(dateRow);
-    panel.appendChild(assigneeRow);
+    if (isAdmin) {
+      const addTagBtn = document.createElement('button'); addTagBtn.className = 'tag-add-btn'; addTagBtn.textContent = '＋ Etiqueta';
+      addTagBtn.addEventListener('click', function () { openTagPickerId = openTagPickerId === task.id ? null : task.id; render(); });
+      tagsWrap.appendChild(addTagBtn);
+    }
+    tagsRow.appendChild(tagsLabel); tagsRow.appendChild(tagsWrap);
     panel.appendChild(tagsRow);
 
-    // Selector: elige de las etiquetas ya creadas o crea una nueva.
-    if (openTagPickerId === task.id) {
-      const picker = document.createElement('div');
-      picker.className = 'tag-picker';
-      if (!tagCatalog.length) {
-        const empty = document.createElement('div');
-        empty.className = 'tags-empty';
-        empty.textContent = 'Aún no hay etiquetas. Crea la primera abajo.';
-        picker.appendChild(empty);
-      }
+    if (isAdmin && openTagPickerId === task.id) {
+      const picker = document.createElement('div'); picker.className = 'tag-picker';
+      if (!tagCatalog.length) { const empty = document.createElement('div'); empty.className = 'tags-empty'; empty.textContent = 'Aún no hay etiquetas. Crea la primera abajo.'; picker.appendChild(empty); }
       tagCatalog.forEach(function (t) {
-        const opt = document.createElement('div');
-        opt.className = 'tag-opt';
-        const sw = document.createElement('span');
-        sw.className = 'tag-swatch';
-        sw.style.background = t.color;
-        const nm = document.createElement('span');
-        nm.className = 'tag-opt-name';
-        nm.textContent = t.name;
-        opt.appendChild(sw);
-        opt.appendChild(nm);
-        if ((task.tags || []).indexOf(t.name) >= 0) {
-          const ck = document.createElement('span');
-          ck.className = 'tag-opt-check';
-          ck.textContent = '✓';
-          opt.appendChild(ck);
-        }
-        opt.addEventListener('click', function () { toggleTaskTag(task, t.name); save(); render(); });
+        const opt = document.createElement('div'); opt.className = 'tag-opt';
+        const sw = document.createElement('span'); sw.className = 'tag-swatch'; sw.style.background = t.color;
+        const nm = document.createElement('span'); nm.className = 'tag-opt-name'; nm.textContent = t.name;
+        opt.appendChild(sw); opt.appendChild(nm);
+        if ((task.tags || []).indexOf(t.name) >= 0) { const ck = document.createElement('span'); ck.className = 'tag-opt-check'; ck.textContent = '✓'; opt.appendChild(ck); }
+        opt.addEventListener('click', function () { toggleTaskTag(task, t.name); save(); updateItemFields(task.id, { tags: task.tags }); });
         picker.appendChild(opt);
       });
-      const newRow = document.createElement('div');
-      newRow.className = 'tag-picker-new';
-      const newInput = document.createElement('input');
-      newInput.type = 'text';
-      newInput.placeholder = 'Crear nueva etiqueta + Enter';
-      newInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const val = newInput.value.trim();
-          if (val) { toggleTaskTag(task, val); newInput.value = ''; save(); render(); }
-        }
+      const newRow = document.createElement('div'); newRow.className = 'tag-picker-new';
+      const newInput = document.createElement('input'); newInput.type = 'text'; newInput.placeholder = 'Crear nueva etiqueta + Enter';
+      newInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); const val = newInput.value.trim(); if (val) { toggleTaskTag(task, val); newInput.value = ''; save(); updateItemFields(task.id, { tags: task.tags }); } } });
+      newRow.appendChild(newInput); picker.appendChild(newRow); panel.appendChild(picker);
+    }
+
+    // --- Historial de la tarea ---
+    const histRow = document.createElement('div'); histRow.className = 'meta-row';
+    const histBtn = document.createElement('button'); histBtn.className = 'tag-add-btn';
+    histBtn.textContent = openHistoryId === task.id ? 'Ocultar historial' : 'Ver historial';
+    histBtn.addEventListener('click', function () {
+      openHistoryId = openHistoryId === task.id ? null : task.id;
+      if (openHistoryId === task.id && !eventsCache[task.id]) loadEvents(task.id); else render();
+    });
+    histRow.appendChild(histBtn); panel.appendChild(histRow);
+    if (openHistoryId === task.id) {
+      const hist = document.createElement('div'); hist.className = 'history-list';
+      const evs = eventsCache[task.id];
+      if (!evs) { hist.textContent = 'Cargando…'; }
+      else if (!evs.length) { hist.textContent = 'Sin eventos registrados.'; }
+      else evs.forEach(function (ev) {
+        const it = document.createElement('div'); it.className = 'history-item';
+        const t = document.createElement('div'); t.className = 'history-when'; t.textContent = fmtFecha(ev.created_at) + ' · ' + fmtHora(ev.created_at);
+        const m = document.createElement('div'); m.className = 'history-msg'; m.textContent = eventLine(ev);
+        it.appendChild(t); it.appendChild(m); hist.appendChild(it);
       });
-      newRow.appendChild(newInput);
-      picker.appendChild(newRow);
-      panel.appendChild(picker);
-      requestAnimationFrame(function () {
-        const el = matrixViewEl.querySelector('.tnode[data-id="' + task.id + '"] .tag-picker-new input');
-        if (el && document.activeElement !== el) el.focus();
+      panel.appendChild(hist);
+    }
+
+    // --- Eliminar (solo admin; nunca completadas/archivadas) ---
+    if (isAdmin && task.status !== 'completed' && task.status !== 'archived') {
+      const delRow = document.createElement('div'); delRow.className = 'meta-row';
+      const delBtn = document.createElement('button'); delBtn.className = 'meta-delete';
+      delBtn.textContent = leaf ? 'Eliminar actividad' : 'Eliminar (y sus subtareas)';
+      delBtn.addEventListener('click', function () {
+        const kids = childrenOf(task.id).length;
+        const msg = '¿Eliminar "' + (task.title || 'esta tarea') + '"?' + (kids ? ' Se eliminarán también sus ' + kids + ' subtarea(s).' : '') + '\n\nEsta acción quedará registrada en el historial y no se puede deshacer.';
+        if (confirm(msg)) lifecycle('task_delete', task.id);
       });
+      delRow.appendChild(delBtn); panel.appendChild(delRow);
     }
 
     return panel;
   }
 
-  // ---------------- Card + Matrix rendering ----------------
-
-  // ---------------- Tree helpers (recursivo) ----------------
-
-  // Progreso según los hijos DIRECTOS de un nodo.
-  function subProgress(task) {
-    const subs = task.subtasks || [];
-    const total = subs.length;
-    const done = subs.filter(function (s) { return s.done; }).length;
-    return { total: total, done: done };
-  }
-
-  // Una actividad operativa es una HOJA (sin subtareas). Las tareas con
-  // subtareas son AGRUPADORES (marca / proyecto / frente de trabajo) y no
-  // cuentan como productividad ni pasan al historial: solo agrupan.
-  function isLeaf(node) { return !(node.subtasks && node.subtasks.length); }
-
-  // Sella / limpia la marca de finalización de una hoja al completarla.
-  function stampLeaf(node, val) {
-    if (val) { if (!node.completedAt) node.completedAt = nowISO(); }
-    else { node.completedAt = null; }
-  }
-
-  // Marca (o desmarca) un nodo y TODOS sus descendientes. Al completar, cada
-  // hoja recibe su fecha/hora de finalización; al desmarcar, se limpia.
-  function setDoneRecursive(node, val) {
-    node.done = val;
-    if (isLeaf(node)) stampLeaf(node, val);
-    (node.subtasks || []).forEach(function (c) { setDoneRecursive(c, val); });
-  }
-
-  // Recalcula "done" de abajo hacia arriba: un nodo con hijos queda completo solo
-  // si todos sus hijos lo están. Las hojas conservan su estado manual.
-  function recomputeDone(node) {
-    const subs = node.subtasks || [];
-    if (subs.length) {
-      subs.forEach(recomputeDone);
-      node.done = subs.every(function (c) { return c.done; });
-    }
-    return node.done;
-  }
-
-  // Aplana el árbol completo (raíz + descendientes) en una lista.
-  function flattenTasks(list, acc) {
-    acc = acc || [];
-    (list || []).forEach(function (t) { acc.push(t); flattenTasks(t.subtasks, acc); });
-    return acc;
-  }
-
-  // Elimina un nodo por id en cualquier nivel del árbol.
-  function removeNode(id) {
-    function walk(list) {
-      for (let i = 0; i < list.length; i++) {
-        if (list[i].id === id) { list.splice(i, 1); return true; }
-        if (walk(list[i].subtasks || [])) return true;
-      }
-      return false;
-    }
-    walk(tasks);
-  }
-
-  // Elimina con una pequeña animación de salida.
-  function removeNodeAnimated(id) {
-    const el = matrixViewEl.querySelector('.tnode[data-id="' + id + '"]');
-    if (el) {
-      el.classList.add('removing');
-      setTimeout(function () { removeNode(id); save(); render(); }, 170);
-    } else {
-      removeNode(id); save(); render();
-    }
-  }
+  // ---------------- Render de la lista ----------------
 
   // Enfoca el texto de un nodo recién creado.
   function focusNode(id) {
@@ -1223,6 +1351,11 @@
       const el = matrixViewEl.querySelector('.tnode[data-id="' + id + '"] > .tnode-row > .tnode-text');
       if (el) el.focus();
     });
+  }
+  // Elimina (solo admin) vía RPC con confirmación, gestionado desde el menú ⋯.
+  function removeNodeAnimated(id) {
+    const row = byId[id]; if (!row) return;
+    lifecycle('task_delete', id);
   }
 
   // ---------------- Estado de plegado POR USUARIO ----------------
@@ -1247,28 +1380,22 @@
 
   // ---------------- Hojas, agrupadores y conteos ----------------
 
+  // Una actividad (hoja) está "fuera de pendientes" si está completada o archivada.
+  function isDone(row) { return row.status === 'completed' || row.status === 'archived'; }
   // ¿El nodo (o su subárbol) tiene alguna actividad operativa pendiente?
-  function hasPendingLeaf(node) {
-    if (isLeaf(node)) return !node.done;
-    return (node.subtasks || []).some(hasPendingLeaf);
+  function hasPendingLeaf(row) {
+    if (isLeaf(row)) return !isDone(row);
+    return childrenOf(row.id).some(hasPendingLeaf);
   }
   // Nº de actividades operativas (hojas) pendientes bajo un nodo.
-  function pendingLeafCount(node) {
-    if (isLeaf(node)) return node.done ? 0 : 1;
-    return (node.subtasks || []).reduce(function (a, c) { return a + pendingLeafCount(c); }, 0);
+  function pendingLeafCount(row) {
+    if (isLeaf(row)) return isDone(row) ? 0 : 1;
+    return childrenOf(row.id).reduce(function (a, c) { return a + pendingLeafCount(c); }, 0);
   }
-  // Todas las hojas completadas del árbol, con su marca (raíz) asociada.
+  // Todas las hojas completadas/archivadas, con su marca (raíz) asociada.
   function completedLeaves() {
-    const out = [];
-    function walk(list, rootName) {
-      (list || []).forEach(function (n) {
-        const brand = rootName || (n.text || '').trim();
-        if (isLeaf(n)) { if (n.done) out.push({ node: n, brand: rootName || '' }); }
-        else walk(n.subtasks, brand);
-      });
-    }
-    (tasks || []).forEach(function (root) { walk([root], (root.text || '').trim()); });
-    return out;
+    return items.filter(function (r) { return isLeaf(r) && isDone(r); })
+      .map(function (r) { return { node: r, brand: rootBrand(r) }; });
   }
 
   // ---------------- Fecha / hora en español ----------------
@@ -1294,12 +1421,6 @@
     return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
   }
 
-  // Nombres de responsables ya usados (para autocompletar sin imponer una lista fija).
-  function knownAssignees() {
-    const set = {};
-    flattenTasks(tasks).forEach(function (n) { const a = (n.assignee || '').trim(); if (a) set[a] = 1; });
-    return Object.keys(set).sort();
-  }
 
   // ---------------- Etiquetas reutilizables ----------------
 
@@ -1344,80 +1465,67 @@
     else { ensureTag(name); task.tags.push(name); }
   }
   function setTagColor(name, color) { const t = findTag(name); if (t) t.color = color; }
+  function persistItemTags(row) { sb.from('task_items').update({ tags: row.tags }).eq('id', row.id).then(function () {}); }
   function renameTag(oldName, newName) {
     newName = (newName || '').trim();
     if (!newName || newName === oldName) return;
     const t = findTag(oldName);
     if (t) t.name = newName;
     tagCatalog = normalizeTags(tagCatalog); // deduplica si el nuevo nombre ya existía
-    flattenTasks(tasks).forEach(function (n) {
-      if (n.tags) { n.tags = n.tags.map(function (x) { return x === oldName ? newName : x; }); dedupeTags(n); }
+    items.forEach(function (n) {
+      if (Array.isArray(n.tags) && n.tags.indexOf(oldName) >= 0) { n.tags = n.tags.map(function (x) { return x === oldName ? newName : x; }); dedupeTags(n); persistItemTags(n); }
     });
   }
   function deleteTag(name) {
     tagCatalog = tagCatalog.filter(function (t) { return t.name !== name; });
-    flattenTasks(tasks).forEach(function (n) { if (n.tags) n.tags = n.tags.filter(function (x) { return x !== name; }); });
+    items.forEach(function (n) { if (Array.isArray(n.tags) && n.tags.indexOf(name) >= 0) { n.tags = n.tags.filter(function (x) { return x !== name; }); persistItemTags(n); } });
   }
   function mergeTag(from, into) {
     if (from === into) return;
-    flattenTasks(tasks).forEach(function (n) {
-      if (n.tags) { n.tags = n.tags.map(function (x) { return x === from ? into : x; }); dedupeTags(n); }
+    items.forEach(function (n) {
+      if (Array.isArray(n.tags) && n.tags.indexOf(from) >= 0) { n.tags = n.tags.map(function (x) { return x === from ? into : x; }); dedupeTags(n); persistItemTags(n); }
     });
     tagCatalog = tagCatalog.filter(function (t) { return t.name !== from; });
   }
 
-  // ---------------- Drag & drop: mover nodos en el árbol ----------------
+  // ---------------- Drag & drop: mover nodos (solo admin) ----------------
 
-  // Devuelve { node, list, index } de un nodo en cualquier nivel.
-  function findCtx(id, list) {
-    list = list || tasks;
-    for (let i = 0; i < list.length; i++) {
-      if (list[i].id === id) return { node: list[i], list: list, index: i };
-      const deep = findCtx(id, list[i].subtasks || []);
-      if (deep) return deep;
-    }
-    return null;
-  }
-  function findNode(id) { const c = findCtx(id); return c ? c.node : null; }
-  function isSelfOrDescendant(node, id) {
-    if (node.id === id) return true;
-    return (node.subtasks || []).some(function (c) { return isSelfOrDescendant(c, id); });
+  function descendantsOf(id) {
+    const out = {};
+    (function walk(pid) { childrenOf(pid).forEach(function (c) { out[c.id] = 1; walk(c.id); }); })(id);
+    return out;
   }
   // No se puede soltar sobre sí mismo ni dentro de su propia descendencia.
   function canDrop(dId, targetId) {
     if (!dId || !targetId || dId === targetId) return false;
-    const dn = findNode(dId);
-    return dn ? !isSelfOrDescendant(dn, targetId) : false;
+    return !descendantsOf(dId)[targetId];
   }
-  // Mueve un nodo relativo a un objetivo: 'before'/'after' (hermano) o 'inside' (hijo).
-  function moveNode(dId, targetId, zone) {
-    if (!canDrop(dId, targetId)) return;
-    const dctx = findCtx(dId);
-    if (!dctx) return;
-    const drag = dctx.node;
-    dctx.list.splice(dctx.index, 1);
-    const tctx = findCtx(targetId);
-    if (!tctx) { dctx.list.splice(dctx.index, 0, drag); return; }
-    if (zone === 'inside') {
-      tctx.node.subtasks = tctx.node.subtasks || [];
-      tctx.node.subtasks.push(drag);
-      tctx.node.collapsed = false;
-    } else {
-      const idx = tctx.index + (zone === 'after' ? 1 : 0);
-      tctx.list.splice(idx, 0, drag);
-      // Si queda como hermano de nivel superior, hereda el cuadrante del objetivo.
-      if (tctx.list === tasks) { drag.urgent = tctx.node.urgent; drag.important = tctx.node.important; }
+  // Reubica un nodo bajo newParent en la posición index y persiste el orden.
+  async function applyMove(dId, newParent, index) {
+    const drag = byId[dId]; if (!drag) return;
+    drag.parent_id = newParent || null;
+    let sibs = childrenOf(newParent).filter(function (s) { return s.id !== dId; });
+    sibs.splice(index, 0, drag);
+    const changed = [];
+    sibs.forEach(function (r, i) { if (r.position !== i) { r.position = i; changed.push(r); } });
+    indexItems(); render();
+    saveStatusEl.textContent = 'Guardando...';
+    await sb.from('task_items').update({ parent_id: newParent || null, position: drag.position }).eq('id', dId);
+    for (const r of changed) { if (r.id !== dId) await sb.from('task_items').update({ position: r.position }).eq('id', r.id); }
+    statusOfChangeMsg(null);
+  }
+  async function moveNode(dId, targetId, zone) {
+    if (!isAdmin || !canDrop(dId, targetId)) return;
+    const target = byId[targetId]; if (!target) return;
+    let newParent, index;
+    if (zone === 'inside') { newParent = target.id; index = childrenOf(target.id).filter(function (s) { return s.id !== dId; }).length; setCollapsed(target.id, false); }
+    else {
+      newParent = target.parent_id || null;
+      const sibs = childrenOf(newParent).filter(function (s) { return s.id !== dId; });
+      const ti = sibs.findIndex(function (s) { return s.id === targetId; });
+      index = (ti < 0 ? sibs.length : ti) + (zone === 'after' ? 1 : 0);
     }
-  }
-  // Mueve un nodo al nivel superior en una columna concreta (soltar en zona vacía).
-  function moveNodeToColumn(dId, q) {
-    const dctx = findCtx(dId);
-    if (!dctx) return;
-    const drag = dctx.node;
-    dctx.list.splice(dctx.index, 1);
-    drag.urgent = (q === 'q1');
-    drag.important = true;
-    tasks.push(drag);
+    await applyMove(dId, newParent, index);
   }
   function clearDropIndicators() {
     matrixViewEl.querySelectorAll('.drop-before, .drop-after, .drop-inside').forEach(function (el) {
@@ -1434,187 +1542,158 @@
   }
 
   // Hijos VISIBLES en la vista de pendientes: se ocultan las actividades (hojas)
-  // ya completadas —viven en el historial inferior— y los agrupadores que se
-  // quedaron sin trabajo pendiente. La marca (raíz) siempre permanece visible.
-  function visibleChildren(node) {
-    return (node.subtasks || []).filter(function (c) {
-      return isLeaf(c) ? !c.done : hasPendingLeaf(c);
+  // ya completadas/archivadas —viven en el historial inferior— y los agrupadores
+  // sin trabajo pendiente. La marca (raíz) siempre permanece visible.
+  function visibleChildren(row) {
+    return childrenOf(row.id).filter(function (c) {
+      return isLeaf(c) ? !isDone(c) : hasPendingLeaf(c);
     });
   }
 
-  // Renderiza un nodo y, recursivamente, sus descendientes PENDIENTES. Es el
-  // mismo componente en cualquier nivel: la marca principal agrupa y sus hojas
-  // son las actividades operativas. Cada nodo puede editarse, completarse,
-  // plegarse, tener subtareas, responsable, etiquetas y fecha.
+  // Renderiza un nodo y sus descendientes PENDIENTES. La marca (raíz) agrupa y
+  // sus hojas son las actividades operativas con ciclo de vida.
   function renderNode(node, level) {
     const leaf = isLeaf(node);
     const kids = visibleChildren(node);
     const hasKids = kids.length > 0;
     const isRoot = level === 1;
+    const act = leaf && canAct(node);
 
     const wrap = document.createElement('div');
     wrap.className = 'tnode lvl-' + Math.min(level, 5) + (isRoot ? ' card' : '');
     wrap.dataset.id = node.id;
 
     const row = document.createElement('div');
-    // La tachadura solo aplica a hojas (actividades). Los agrupadores nunca se
-    // muestran completados: solo agrupan y llevan su conteo de pendientes.
-    row.className = 'tnode-row' + (leaf && node.done ? ' done' : '') + (isRoot ? ' brand-row' : '');
+    row.className = 'tnode-row' + (isRoot ? ' brand-row' : '');
 
-    // Zonas de drop: soltar arriba/abajo (hermano) o al centro (anidar como hijo).
-    row.addEventListener('dragover', function (e) {
-      if (!dragId) return;
-      // Mientras el cursor está sobre un nodo, la columna no debe capturar el drop.
-      e.stopPropagation();
-      if (!canDrop(dragId, node.id)) return; // objetivo inválido: sin indicador ni drop
-      e.preventDefault();
-      clearDropIndicators();
-      row.classList.add('drop-' + zoneFromEvent(row, e));
-    });
-    row.addEventListener('drop', function (e) {
-      if (!dragId) return;
-      e.stopPropagation();
-      if (!canDrop(dragId, node.id)) { clearDropIndicators(); return; }
-      e.preventDefault();
-      const zone = zoneFromEvent(row, e);
-      clearDropIndicators();
-      moveNode(dragId, node.id, zone);
-      dragId = null;
-      save();
-      render();
-    });
+    if (isAdmin) {
+      row.addEventListener('dragover', function (e) {
+        if (!dragId) return;
+        e.stopPropagation();
+        if (!canDrop(dragId, node.id)) return;
+        e.preventDefault();
+        clearDropIndicators();
+        row.classList.add('drop-' + zoneFromEvent(row, e));
+      });
+      row.addEventListener('drop', function (e) {
+        if (!dragId) return;
+        e.stopPropagation();
+        if (!canDrop(dragId, node.id)) { clearDropIndicators(); return; }
+        e.preventDefault();
+        const zone = zoneFromEvent(row, e);
+        clearDropIndicators();
+        moveNode(dragId, node.id, zone);
+        dragId = null;
+      });
+    }
 
-    // Manija de arrastre (aparece en hover). Solo la manija inicia el drag,
-    // así el texto editable no interfiere con la selección.
+    // Manija de arrastre (solo admin).
     const grip = document.createElement('span');
     grip.className = 'tnode-grip';
     grip.textContent = '≡';
     grip.title = 'Arrastra para mover';
-    grip.draggable = true;
-    grip.addEventListener('dragstart', function (e) {
-      dragId = node.id;
-      wrap.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      try { e.dataTransfer.setData('text/plain', node.id); } catch (_) {}
-      try { e.dataTransfer.setDragImage(wrap, 12, 12); } catch (_) {}
-    });
-    grip.addEventListener('dragend', function () { wrap.classList.remove('dragging'); clearDropIndicators(); dragId = null; });
+    if (isAdmin) {
+      grip.draggable = true;
+      grip.addEventListener('dragstart', function (e) {
+        dragId = node.id; wrap.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', node.id); } catch (_) {}
+        try { e.dataTransfer.setDragImage(wrap, 12, 12); } catch (_) {}
+      });
+      grip.addEventListener('dragend', function () { wrap.classList.remove('dragging'); clearDropIndicators(); dragId = null; });
+    } else { grip.style.visibility = 'hidden'; }
 
-    // El plegado se recuerda POR USUARIO (localStorage), no en el board común.
+    // Plegado por usuario.
     const collapsed = isCollapsed(node.id);
     function toggleCollapse() { if (hasKids) { setCollapsed(node.id, !isCollapsed(node.id)); render(); } }
 
-    // Triángulo ▸ / ▾ (solo si tiene hijos visibles). La CSS lo gira al expandir.
     const chevron = document.createElement('span');
     chevron.className = 'tnode-chevron' + (hasKids ? '' : ' hidden-chevron') + (hasKids && !collapsed ? ' expanded' : '');
     chevron.textContent = '▸';
     chevron.title = 'Expandir / contraer';
     chevron.addEventListener('click', toggleCollapse);
 
-    // Casilla ☐ / ✓: marca/desmarca el nodo y toda su rama. Es el único
-    // indicador de estado; no hay icono decorativo por nivel.
+    // Casilla de completar (solo hojas que el usuario puede ejecutar).
     const check = document.createElement('span');
-    check.className = 'tnode-check' + (node.done ? ' checked' : '');
-    check.textContent = node.done ? '✓' : '';
-    check.addEventListener('click', function () {
-      setDoneRecursive(node, !node.done);
-      save(); render();
-    });
+    check.className = 'tnode-check';
+    if (leaf) {
+      if (act) { check.title = 'Completar'; check.addEventListener('click', function () { lifecycle('task_complete', node.id); }); }
+      else { check.classList.add('disabled'); check.title = 'Solo el responsable puede completar'; }
+    } else { check.classList.add('hidden-check'); }
 
-    // Texto. En una hoja se edita directamente (clic = escribir). En un agrupador
-    // (marca/proyecto con actividades) el clic sobre el nombre PLIEGA/DESPLIEGA;
-    // para renombrarlo se hace doble clic. Así el nombre es a la vez control de
-    // navegación y editable, sin perder ninguna de las dos capacidades.
+    // Texto (título). Editable solo por el admin.
     const text = document.createElement('div');
     text.className = 'tnode-text';
     const grouper = !leaf;
-    text.contentEditable = grouper ? 'false' : 'true';
     text.dataset.placeholder = isRoot ? 'Nombre de la marca o proyecto...' : 'Actividad...';
-    text.textContent = node.text;
+    text.textContent = node.title || '';
     if (grouper) {
       text.classList.add('is-grouper');
-      text.title = 'Clic: plegar/desplegar · doble clic: renombrar';
+      text.contentEditable = 'false';
+      text.title = isAdmin ? 'Clic: plegar/desplegar · doble clic: renombrar' : 'Clic: plegar/desplegar';
       text.addEventListener('click', function () { toggleCollapse(); });
-      text.addEventListener('dblclick', function () {
-        text.contentEditable = 'true';
-        text.classList.add('editing');
-        text.focus();
-        const r = document.createRange(); r.selectNodeContents(text);
-        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
-      });
-      text.addEventListener('blur', function () { text.contentEditable = 'false'; text.classList.remove('editing'); });
-    }
-    text.addEventListener('input', function () { node.text = text.textContent; save(); });
-    text.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); text.blur(); }
-      else if (e.key === 'Backspace' && text.textContent === '' && leaf && !isRoot) {
-        e.preventDefault();
-        removeNodeAnimated(node.id);
+      if (isAdmin) {
+        text.addEventListener('dblclick', function () {
+          text.contentEditable = 'true'; text.classList.add('editing'); text.focus();
+          const r = document.createRange(); r.selectNodeContents(text);
+          const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        });
       }
-    });
+    } else {
+      text.contentEditable = isAdmin ? 'true' : 'false';
+    }
+    if (isAdmin) {
+      let orig = node.title || '';
+      text.addEventListener('blur', function () {
+        text.contentEditable = grouper ? 'false' : 'true'; text.classList.remove('editing');
+        const nv = text.textContent.trim();
+        if (nv !== (orig || '').trim()) { node.title = nv; orig = nv; updateItemFields(node.id, { title: nv }, false); }
+      });
+      text.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); text.blur(); }
+        else if (e.key === 'Backspace' && text.textContent === '' && leaf && !isRoot) { e.preventDefault(); removeNodeAnimated(node.id); }
+      });
+    }
 
-    // Botón agregar subtarea (icono ＋, aparece en hover)
+    // Botón agregar subtarea (solo admin).
     const add = document.createElement('button');
     add.className = 'tnode-add';
     add.textContent = '＋';
     add.title = 'Agregar subtarea';
-    add.addEventListener('click', function () {
-      const child = newNode();
-      node.subtasks = node.subtasks || [];
-      node.subtasks.push(child);
-      setCollapsed(node.id, false);
-      save(); render();
-      focusNode(child.id);
-    });
+    if (isAdmin) add.addEventListener('click', function () { insertItem(node.id, '', true); });
+    else add.style.display = 'none';
 
-    // Menú ⋯ (fecha, etiquetas, eliminar)
+    // Menú ⋯ (detalle, responsable, fechas, historial, eliminar).
     const menu = document.createElement('button');
     menu.className = 'tnode-menu';
     menu.textContent = '⋯';
     menu.title = 'Opciones';
     menu.addEventListener('click', function () { openMetaId = openMetaId === node.id ? null : node.id; render(); });
 
-    // Etiquetas, fecha y progreso van EN LA MISMA FILA, a la derecha del texto:
-    // así una tarea sigue ocupando una sola línea aunque tenga metadatos.
+    // Metadatos en la fila: etiquetas, entrega, estado/acciones, responsable.
     const meta = document.createElement('div');
     meta.className = 'tnode-meta';
     (node.tags || []).forEach(function (tag) {
-      const chip = document.createElement('span');
-      chip.className = 'tag-chip';
-      chip.textContent = tag;
-      styleChip(chip, tagColor(tag));
-      meta.appendChild(chip);
+      const chip = document.createElement('span'); chip.className = 'tag-chip'; chip.textContent = tag; styleChip(chip, tagColor(tag)); meta.appendChild(chip);
     });
-    if (node.dueDate) {
-      const badge = document.createElement('span');
-      badge.className = 'due-badge ' + dueClass(node.dueDate);
-      badge.textContent = dueLabel(node.dueDate);
-      meta.appendChild(badge);
+    if (node.due_date) {
+      const badge = document.createElement('span'); badge.className = 'due-badge ' + dueClass(node.due_date); badge.textContent = dueLabel(node.due_date); meta.appendChild(badge);
     }
-    // Responsable de la actividad (solo hojas), a la derecha. Siempre visible
-    // para poder asignarlo con un clic; si no hay, muestra un hueco tenue.
     if (leaf) {
+      // Estado + "Iniciar".
+      if (node.status === 'in_progress') { const pill = document.createElement('span'); pill.className = 'st-chip st-in_progress'; pill.textContent = 'En progreso'; meta.appendChild(pill); }
+      if (node.status === 'pending' && act) { const sb2 = document.createElement('button'); sb2.className = 'start-btn'; sb2.textContent = '▶ Iniciar'; sb2.addEventListener('click', function (e) { e.stopPropagation(); lifecycle('task_start', node.id); }); meta.appendChild(sb2); }
+      // Responsable.
       const who = document.createElement('span');
-      const asg = (node.assignee || '').trim();
-      who.className = 'assignee-chip' + (asg ? '' : ' empty');
-      who.textContent = asg || 'Responsable';
-      who.title = 'Asignar responsable';
-      who.addEventListener('click', function (e) {
-        e.stopPropagation();
-        openMetaId = node.id; render();
-        requestAnimationFrame(function () {
-          const inp = matrixViewEl.querySelector('.tnode[data-id="' + node.id + '"] .meta-panel input[list="assignee-names"]');
-          if (inp) inp.focus();
-        });
-      });
+      const asg = assigneeLabel(node);
+      who.className = 'assignee-chip' + (asg ? '' : ' empty') + (isAdmin ? '' : ' ro');
+      who.textContent = asg || (isAdmin ? 'Responsable' : '—');
+      who.title = isAdmin ? 'Asignar responsable' : 'Responsable';
+      who.addEventListener('click', function (e) { e.stopPropagation(); openMetaId = node.id; render(); });
       meta.appendChild(who);
-    }
-    // Agrupadores: conteo de actividades pendientes ("N pendientes") en lugar de
-    // la fracción. Las tareas agrupadoras no cuentan como productividad.
-    if (!leaf) {
+    } else {
       const pc = pendingLeafCount(node);
-      const count = document.createElement('span');
-      count.className = 'group-count' + (pc === 0 ? ' complete' : '');
+      const count = document.createElement('span'); count.className = 'group-count' + (pc === 0 ? ' complete' : '');
       count.textContent = pc === 0 ? 'al día' : (isRoot ? (pc + (pc === 1 ? ' pendiente' : ' pendientes')) : String(pc));
       meta.appendChild(count);
     }
@@ -1628,43 +1707,28 @@
     row.appendChild(menu);
     wrap.appendChild(row);
 
-    // Panel de opciones (fecha / etiquetas / eliminar)
     wrap.appendChild(renderMetaPanel(node));
 
-    // Hijos VISIBLES (pendientes) con animación de expandir/contraer.
     const childrenWrap = document.createElement('div');
     childrenWrap.className = 'tnode-children' + (hasKids && !collapsed ? ' expanded' : '');
     const childrenInner = document.createElement('div');
     childrenInner.className = 'tnode-children-inner';
-    kids.forEach(function (child) {
-      childrenInner.appendChild(renderNode(child, level + 1));
-    });
+    kids.forEach(function (child) { childrenInner.appendChild(renderNode(child, level + 1)); });
     childrenWrap.appendChild(childrenInner);
     wrap.appendChild(childrenWrap);
 
     return wrap;
   }
 
-  // Mueve un nodo al nivel superior (marca): soltar en zona vacía de la lista.
-  function moveNodeToRoot(dId) {
-    const c = findCtx(dId);
-    if (!c) return;
-    const drag = c.node;
-    c.list.splice(c.index, 1);
-    tasks.push(drag);
+  // Soltar en zona vacía: mover a nivel de marca (raíz). Solo admin.
+  async function moveNodeToRoot(dId) {
+    if (!isAdmin) return;
+    await applyMove(dId, null, childrenOf(null).filter(function (s) { return s.id !== dId; }).length);
   }
+  // Crea una nueva marca / tarea principal (solo admin).
+  function addRootTask() { if (isAdmin) insertItem(null, '', true); }
 
-  // Crea una nueva marca / tarea principal al final de la lista.
-  function addRootTask() {
-    const t = newTask(true, true);
-    tasks.push(t);
-    openMetaId = null;
-    save();
-    render();
-    focusNode(t.id);
-  }
-
-  // ---------------- Historial de completadas ----------------
+  // ---------------- Sección de completadas / archivadas ----------------
 
   function renderCompletedSection(container, doneList) {
     const section = document.createElement('div');
@@ -1673,75 +1737,41 @@
 
     const head = document.createElement('div');
     head.className = 'completed-head';
-    const chev = document.createElement('span');
-    chev.className = 'completed-chev' + (open ? ' open' : '');
-    chev.textContent = '▸';
-    const title = document.createElement('span');
-    title.className = 'completed-title';
-    title.textContent = 'Tareas completadas';
-    const cnt = document.createElement('span');
-    cnt.className = 'completed-count';
-    cnt.textContent = '(' + doneList.length + ')';
-    head.appendChild(chev);
-    head.appendChild(title);
-    head.appendChild(cnt);
+    const chev = document.createElement('span'); chev.className = 'completed-chev' + (open ? ' open' : ''); chev.textContent = '▸';
+    const title = document.createElement('span'); title.className = 'completed-title'; title.textContent = 'Tareas completadas / archivadas';
+    const cnt = document.createElement('span'); cnt.className = 'completed-count'; cnt.textContent = '(' + doneList.length + ')';
+    head.appendChild(chev); head.appendChild(title); head.appendChild(cnt);
     head.addEventListener('click', function () { setCompletedOpen(!completedOpen()); render(); });
     section.appendChild(head);
 
     if (open) {
-      const body = document.createElement('div');
-      body.className = 'completed-body';
-
-      // Resumen "hoy" por responsable (según la fecha REAL de finalización).
-      const hoy = doneList.filter(function (d) { return esHoy(d.node.completedAt); });
-      if (hoy.length) {
-        const byPerson = {};
-        hoy.forEach(function (d) { const p = (d.node.assignee || '').trim() || 'Sin responsable'; byPerson[p] = (byPerson[p] || 0) + 1; });
-        const tally = document.createElement('div');
-        tally.className = 'tally';
-        const th = document.createElement('div'); th.className = 'tally-head'; th.textContent = 'Completadas hoy';
-        tally.appendChild(th);
-        Object.keys(byPerson).sort(function (a, b) { return byPerson[b] - byPerson[a]; }).forEach(function (p) {
-          const r = document.createElement('div'); r.className = 'tally-row';
-          const nm = document.createElement('span'); nm.className = 'tally-name'; nm.textContent = p;
-          const n = document.createElement('span'); n.className = 'tally-num'; n.textContent = byPerson[p] + (byPerson[p] === 1 ? ' tarea' : ' tareas');
-          r.appendChild(nm); r.appendChild(n); tally.appendChild(r);
-        });
-        body.appendChild(tally);
-      }
-
-      if (!doneList.length) {
-        const empty = document.createElement('div');
-        empty.className = 'completed-empty';
-        empty.textContent = 'Aún no hay actividades completadas.';
-        body.appendChild(empty);
-      }
+      const body = document.createElement('div'); body.className = 'completed-body';
+      if (!doneList.length) { const empty = document.createElement('div'); empty.className = 'completed-empty'; empty.textContent = 'Aún no hay actividades completadas.'; body.appendChild(empty); }
       doneList.forEach(function (d) {
-        const item = document.createElement('div');
-        item.className = 'completed-item';
-        const ck = document.createElement('span');
-        ck.className = 'completed-restore';
-        ck.textContent = '✓';
-        ck.title = 'Restaurar a pendientes';
-        ck.addEventListener('click', function () { setDoneRecursive(d.node, false); save(); render(); });
-        const info = document.createElement('div');
-        info.className = 'completed-info';
-        const nm = document.createElement('div');
-        nm.className = 'completed-name';
-        nm.textContent = d.node.text || '(sin título)';
-        const meta = document.createElement('div');
-        meta.className = 'completed-meta';
-        const parts = [];
-        if (d.brand && d.brand !== (d.node.text || '').trim()) parts.push(d.brand);
-        if ((d.node.assignee || '').trim()) parts.push(d.node.assignee.trim());
-        parts.push(fmtFecha(d.node.completedAt));
-        const hora = fmtHora(d.node.completedAt);
-        if (hora) parts.push(hora);
-        meta.textContent = parts.join(' · ');
-        info.appendChild(nm);
-        info.appendChild(meta);
-        item.appendChild(ck);
-        item.appendChild(info);
+        const n = d.node;
+        const item = document.createElement('div'); item.className = 'completed-item';
+        const ck = document.createElement('span'); ck.className = 'completed-restore'; ck.textContent = '✓'; ck.title = n.status === 'archived' ? 'Archivada' : 'Completada';
+        const info = document.createElement('div'); info.className = 'completed-info';
+        const nmRow = document.createElement('div'); nmRow.className = 'completed-name';
+        nmRow.textContent = n.title || '(sin título)';
+        nmRow.appendChild(statusChip(n.status));
+        const sub = document.createElement('div'); sub.className = 'completed-meta';
+        const who = assigneeLabel(n);
+        sub.textContent = [d.brand, who].filter(Boolean).join(' · ');
+        const dates = document.createElement('div'); dates.className = 'completed-dates';
+        function line(lbl, iso) { if (!iso) return; const s = document.createElement('span'); s.className = 'cdate'; s.textContent = lbl + ': ' + fmtFecha(iso) + ' · ' + fmtHora(iso); dates.appendChild(s); }
+        line('Inicio', n.started_at); line('Finalizada', n.completed_at); line('Archivada', n.archived_at);
+        info.appendChild(nmRow); info.appendChild(sub); info.appendChild(dates);
+        // Acciones de admin.
+        if (isAdmin) {
+          const acts = document.createElement('div'); acts.className = 'completed-acts';
+          function ab(t, fn) { const b = document.createElement('button'); b.className = 'life-btn small'; b.textContent = t; b.addEventListener('click', fn); acts.appendChild(b); }
+          ab('Reabrir', function () { lifecycle('task_reopen', n.id); });
+          if (n.status === 'completed') ab('Archivar', function () { lifecycle('task_archive', n.id); });
+          if (n.status === 'archived') ab('Desarchivar', function () { lifecycle('task_unarchive', n.id); });
+          info.appendChild(acts);
+        }
+        item.appendChild(ck); item.appendChild(info);
         body.appendChild(item);
       });
       section.appendChild(body);
@@ -1749,65 +1779,198 @@
     container.appendChild(section);
   }
 
+  // ---------------- Render (dispatcher lista / dashboard) ----------------
   function render() {
-    matrixViewEl.innerHTML = '';
-    tasks.forEach(recomputeDone);
-
-    // Autocompletado de responsables (nombres ya usados).
-    let dl = document.getElementById('assignee-names');
-    if (!dl) { dl = document.createElement('datalist'); dl.id = 'assignee-names'; document.body.appendChild(dl); }
-    dl.innerHTML = '';
-    knownAssignees().forEach(function (n) { const o = document.createElement('option'); o.value = n; dl.appendChild(o); });
-
-    // Lista de pendientes: una sola columna. Las marcas (raíces con subtareas)
-    // siempre se muestran; una raíz-hoja completada pasa al historial.
-    const pend = document.createElement('div');
-    pend.className = 'pending-list';
-    // Soltar en el hueco de la lista mueve el nodo a nivel de marca.
-    pend.addEventListener('dragover', function (e) { if (dragId) { e.preventDefault(); } });
-    pend.addEventListener('drop', function (e) {
-      if (!dragId) return;
-      e.preventDefault();
-      clearDropIndicators();
-      moveNodeToRoot(dragId);
-      dragId = null; save(); render();
-    });
-
-    const roots = tasks.filter(function (r) { return isLeaf(r) ? !r.done : true; });
-    if (!roots.length) {
-      const empty = document.createElement('div');
-      empty.className = 'list-empty';
-      empty.textContent = 'No hay tareas pendientes. Crea una marca o proyecto para empezar.';
-      pend.appendChild(empty);
+    updateToggle();
+    if (view === 'dashboard') {
+      matrixViewEl.style.display = 'none';
+      dashboardViewEl.style.display = 'block';
+      renderDashboard();
     } else {
-      roots.forEach(function (r) { pend.appendChild(renderNode(r, 1)); });
+      dashboardViewEl.style.display = 'none';
+      matrixViewEl.style.display = 'block';
+      renderList();
     }
+  }
+
+  function renderList() {
+    matrixViewEl.innerHTML = '';
+    const pend = document.createElement('div'); pend.className = 'pending-list';
+    if (isAdmin) {
+      pend.addEventListener('dragover', function (e) { if (dragId) e.preventDefault(); });
+      pend.addEventListener('drop', function (e) { if (!dragId) return; e.preventDefault(); clearDropIndicators(); moveNodeToRoot(dragId); dragId = null; });
+    }
+    const roots = rootItems().filter(function (r) { return isLeaf(r) ? !isDone(r) : true; });
+    if (!roots.length) {
+      const empty = document.createElement('div'); empty.className = 'list-empty';
+      empty.textContent = isAdmin ? 'No hay tareas. Crea una marca o proyecto para empezar.' : 'No hay tareas asignadas todavía.';
+      pend.appendChild(empty);
+    } else roots.forEach(function (r) { pend.appendChild(renderNode(r, 1)); });
     matrixViewEl.appendChild(pend);
 
-    // Botón para crear una nueva marca / tarea principal.
-    const addBtn = document.createElement('button');
-    addBtn.className = 'addroot-btn';
-    addBtn.textContent = '＋ Nueva tarea principal';
-    addBtn.addEventListener('click', addRootTask);
-    matrixViewEl.appendChild(addBtn);
-
-    // Historial de completadas (plegable, contraído por defecto).
-    const doneList = completedLeaves().sort(function (a, b) {
-      return (b.node.completedAt || '').localeCompare(a.node.completedAt || '');
-    });
-    if (doneList.length) {
-      const sep = document.createElement('div'); sep.className = 'list-sep';
-      matrixViewEl.appendChild(sep);
-      renderCompletedSection(matrixViewEl, doneList);
+    if (isAdmin) {
+      const addBtn = document.createElement('button'); addBtn.className = 'addroot-btn'; addBtn.textContent = '＋ Nueva tarea principal';
+      addBtn.addEventListener('click', addRootTask); matrixViewEl.appendChild(addBtn);
     }
 
-    // Pie: cuenta ACTIVIDADES operativas (hojas), no agrupadores.
-    const leaves = flattenTasks(tasks).filter(isLeaf);
-    const doneCount = leaves.filter(function (t) { return t.done; }).length;
+    const doneList = completedLeaves().sort(function (a, b) {
+      return (b.node.completed_at || b.node.archived_at || '').localeCompare(a.node.completed_at || a.node.archived_at || '');
+    });
+    if (doneList.length) { const sep = document.createElement('div'); sep.className = 'list-sep'; matrixViewEl.appendChild(sep); renderCompletedSection(matrixViewEl, doneList); }
+
+    const leaves = items.filter(isLeaf);
+    const doneCount = leaves.filter(isDone).length;
     countEl.textContent = leaves.length + ' actividad(es) · ' + doneCount + ' completada(s)';
     if (tagsPanel.classList.contains('open')) renderTagsManager();
     renderNotifyBanner();
   }
+
+  // ---------------- Dashboard operativo ----------------
+  let dash = { range: 'today', from: null, to: null, resp: '', brand: '', status: '' };
+  let dashDrill = null;
+
+  function rootIdOf(row) { let c = row, g = 0; while (c && c.parent_id && g < 50) { c = byId[c.parent_id]; g++; } return c ? c.id : row.id; }
+  function startOfDay(dt) { return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0); }
+  function endOfDay(dt) { return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999); }
+  function rangeDates() {
+    const now = new Date(); const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+    if (dash.range === 'today') return [startOfDay(now), endOfDay(now)];
+    if (dash.range === 'yesterday') { const yd = new Date(y, m, d - 1); return [startOfDay(yd), endOfDay(yd)]; }
+    if (dash.range === 'week') { const dow = (now.getDay() + 6) % 7; const mon = new Date(y, m, d - dow); return [startOfDay(mon), endOfDay(now)]; }
+    if (dash.range === 'month') return [new Date(y, m, 1, 0, 0, 0, 0), endOfDay(now)];
+    if (dash.range === 'custom') { const f = dash.from ? new Date(dash.from + 'T00:00:00') : startOfDay(now); const t = dash.to ? new Date(dash.to + 'T23:59:59') : endOfDay(now); return [f, t]; }
+    return [startOfDay(now), endOfDay(now)];
+  }
+  function inRange(iso, a, b) { if (!iso) return false; const t = new Date(iso).getTime(); return t >= a.getTime() && t <= b.getTime(); }
+  function sameDay(iso, dayISO) { if (!iso) return false; const d = new Date(iso); const s = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); return s === dayISO; }
+  function dayKey(dt) { return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'); }
+  function matchRB(row) { return (!dash.resp || row.assignee_id === dash.resp) && (!dash.brand || rootIdOf(row) === dash.brand); }
+
+  function renderDashboard() {
+    dashboardViewEl.innerHTML = '';
+    const [a, b] = rangeDates();
+    const leaves = items.filter(isLeaf);
+
+    // --- Controles ---
+    const bar = document.createElement('div'); bar.className = 'dash-bar';
+    function sel(label, value, opts, on) {
+      const w = document.createElement('div'); w.className = 'dash-f';
+      const l = document.createElement('label'); l.textContent = label; w.appendChild(l);
+      const s = document.createElement('select'); opts.forEach(function (o) { const op = document.createElement('option'); op.value = o.v; op.textContent = o.t; if (o.v === value) op.selected = true; s.appendChild(op); });
+      s.addEventListener('change', function () { on(s.value); }); w.appendChild(s); return w;
+    }
+    bar.appendChild(sel('Periodo', dash.range, [
+      { v: 'today', t: 'Hoy' }, { v: 'yesterday', t: 'Ayer' }, { v: 'week', t: 'Esta semana' }, { v: 'month', t: 'Este mes' }, { v: 'custom', t: 'Rango personalizado' }
+    ], function (v) { dash.range = v; dashDrill = null; render(); }));
+    if (dash.range === 'custom') {
+      const cw = document.createElement('div'); cw.className = 'dash-f';
+      const l = document.createElement('label'); l.textContent = 'Rango'; cw.appendChild(l);
+      const wrap = document.createElement('div'); wrap.className = 'dash-range';
+      const f = document.createElement('input'); f.type = 'date'; f.value = dash.from || ''; f.addEventListener('change', function () { dash.from = f.value || null; render(); });
+      const t = document.createElement('input'); t.type = 'date'; t.value = dash.to || ''; t.addEventListener('change', function () { dash.to = t.value || null; render(); });
+      wrap.appendChild(f); wrap.appendChild(document.createTextNode('→')); wrap.appendChild(t); cw.appendChild(wrap); bar.appendChild(cw);
+    }
+    const respOpts = [{ v: '', t: 'Todos' }].concat(members.map(function (m) { return { v: m.id, t: memberName(m.id) }; }));
+    bar.appendChild(sel('Responsable', dash.resp, respOpts, function (v) { dash.resp = v; dashDrill = null; render(); }));
+    const brandOpts = [{ v: '', t: 'Todas' }].concat(rootItems().map(function (r) { return { v: r.id, t: r.title || '(sin nombre)' }; }));
+    bar.appendChild(sel('Marca', dash.brand, brandOpts, function (v) { dash.brand = v; dashDrill = null; render(); }));
+    bar.appendChild(sel('Estado', dash.status, [
+      { v: '', t: 'Todos' }, { v: 'pending', t: 'Pendiente' }, { v: 'in_progress', t: 'En progreso' }, { v: 'completed', t: 'Completada' }, { v: 'archived', t: 'Archivada' }
+    ], function (v) { dash.status = v; render(); }));
+    dashboardViewEl.appendChild(bar);
+
+    const rangeNote = document.createElement('div'); rangeNote.className = 'dash-note';
+    rangeNote.textContent = 'Periodo: ' + fmtFecha(a.toISOString()) + ' – ' + fmtFecha(b.toISOString());
+    dashboardViewEl.appendChild(rangeNote);
+
+    // --- KPIs (solo hojas; resp/marca aplican; iniciadas/completadas/archivadas por fecha real) ---
+    const base = leaves.filter(matchRB);
+    const kIni = base.filter(function (r) { return inRange(r.started_at, a, b); }).length;
+    const kCom = base.filter(function (r) { return inRange(r.completed_at, a, b); }).length;
+    const kArc = base.filter(function (r) { return inRange(r.archived_at, a, b); }).length;
+    const kPen = base.filter(function (r) { return r.status === 'pending'; }).length;
+    const kProg = base.filter(function (r) { return r.status === 'in_progress'; }).length;
+    const kpis = document.createElement('div'); kpis.className = 'kpi-grid';
+    [['Iniciadas', kIni, 'ini'], ['Pendientes', kPen, 'pen'], ['En progreso', kProg, 'prog'], ['Completadas', kCom, 'com'], ['Archivadas', kArc, 'arc']].forEach(function (k) {
+      const c = document.createElement('div'); c.className = 'kpi kpi-' + k[2];
+      const n = document.createElement('div'); n.className = 'kpi-n'; n.textContent = k[1];
+      const t = document.createElement('div'); t.className = 'kpi-t'; t.textContent = k[0];
+      c.appendChild(n); c.appendChild(t); kpis.appendChild(c);
+    });
+    dashboardViewEl.appendChild(kpis);
+
+    // --- Rendimiento por responsable ---
+    const perf = document.createElement('div'); perf.className = 'dash-block';
+    const perfH = document.createElement('h3'); perfH.textContent = 'Rendimiento por responsable'; perf.appendChild(perfH);
+    const rows = members.map(function (m) {
+      const set = leaves.filter(function (r) { return r.assignee_id === m.id && (!dash.brand || rootIdOf(r) === dash.brand); });
+      return {
+        id: m.id, name: memberName(m.id),
+        ini: set.filter(function (r) { return inRange(r.started_at, a, b); }).length,
+        com: set.filter(function (r) { return inRange(r.completed_at, a, b); }).length,
+        pen: set.filter(function (r) { return r.status === 'pending'; }).length
+      };
+    }).filter(function (r) { return r.ini || r.com || r.pen; });
+    if (!rows.length) { const e = document.createElement('div'); e.className = 'dash-empty'; e.textContent = 'Sin actividad registrada en el periodo.'; perf.appendChild(e); }
+    rows.sort(function (x, y) { return y.com - x.com; }).forEach(function (r) {
+      const row = document.createElement('div'); row.className = 'perf-row';
+      const nm = document.createElement('div'); nm.className = 'perf-name'; nm.textContent = r.name;
+      const st = document.createElement('div'); st.className = 'perf-stats';
+      st.innerHTML = '<span class="ps ini">' + r.ini + ' iniciadas</span><span class="ps com">' + r.com + ' completadas</span><span class="ps pen">' + r.pen + ' pendientes</span>';
+      row.appendChild(nm); row.appendChild(st); perf.appendChild(row);
+    });
+    dashboardViewEl.appendChild(perf);
+
+    // --- Secuencia histórica por día (completadas) ---
+    const days = []; { let cur = startOfDay(a); const end = endOfDay(b); let guard = 0; while (cur.getTime() <= end.getTime() && guard < 366) { days.push(dayKey(cur)); cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1); guard++; } }
+    const seq = document.createElement('div'); seq.className = 'dash-block';
+    const seqH = document.createElement('h3'); seqH.textContent = 'Secuencia diaria · completadas'; seq.appendChild(seqH);
+    const scroll = document.createElement('div'); scroll.className = 'matrix-scroll';
+    const tbl = document.createElement('table'); tbl.className = 'day-matrix';
+    const thead = document.createElement('tr'); thead.appendChild(document.createElement('th'));
+    days.forEach(function (d) { const th = document.createElement('th'); const dt = new Date(d + 'T00:00:00'); th.textContent = dt.getDate() + '/' + (dt.getMonth() + 1); thead.appendChild(th); });
+    tbl.appendChild(thead);
+    const perfMembers = members.filter(function (m) { return !dash.resp || m.id === dash.resp; });
+    perfMembers.forEach(function (m) {
+      const tr = document.createElement('tr');
+      const nameTd = document.createElement('td'); nameTd.className = 'dm-name'; nameTd.textContent = memberName(m.id); tr.appendChild(nameTd);
+      days.forEach(function (d) {
+        const c = leaves.filter(function (r) { return r.assignee_id === m.id && (!dash.brand || rootIdOf(r) === dash.brand) && sameDay(r.completed_at, d); }).length;
+        const td = document.createElement('td'); td.className = 'dm-cell' + (c ? ' has' : '');
+        td.textContent = c || '·';
+        if (c) { td.style.cursor = 'pointer'; td.title = 'Ver detalle'; td.addEventListener('click', function () { dashDrill = { person: m.id, day: d }; render(); }); }
+        tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+    scroll.appendChild(tbl); seq.appendChild(scroll); dashboardViewEl.appendChild(seq);
+
+    // --- Drill-down ---
+    if (dashDrill) {
+      const dd = document.createElement('div'); dd.className = 'dash-block drill';
+      const h = document.createElement('h3'); h.textContent = memberName(dashDrill.person) + ' · ' + fmtFecha(dashDrill.day + 'T00:00:00');
+      dd.appendChild(h);
+      const list = leaves.filter(function (r) { return r.assignee_id === dashDrill.person && sameDay(r.completed_at, dashDrill.day); });
+      if (!list.length) { const e = document.createElement('div'); e.className = 'dash-empty'; e.textContent = 'Sin actividades completadas ese día.'; dd.appendChild(e); }
+      list.forEach(function (r) {
+        const it = document.createElement('div'); it.className = 'drill-item';
+        it.innerHTML = '<span class="di-check">✓</span> <span class="di-name">' + escapeHtml(r.title || '') + '</span> <span class="di-brand">' + escapeHtml(rootBrand(r)) + '</span>';
+        dd.appendChild(it);
+      });
+      const close = document.createElement('button'); close.className = 'life-btn small'; close.textContent = 'Cerrar detalle'; close.addEventListener('click', function () { dashDrill = null; render(); });
+      dd.appendChild(close);
+      dashboardViewEl.appendChild(dd);
+    }
+  }
+  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // ---------------- Toggle Lista / Dashboard ----------------
+  function updateToggle() {
+    const tl = document.getElementById('toggleList'), td = document.getElementById('toggleDash');
+    if (tl && td) { tl.classList.toggle('active', view === 'list'); td.classList.toggle('active', view === 'dashboard'); }
+  }
+  document.getElementById('toggleList').addEventListener('click', function () { view = 'list'; render(); });
+  document.getElementById('toggleDash').addEventListener('click', function () { view = 'dashboard'; dashDrill = null; render(); });
 
   setAuthMode('signin');
 })();
