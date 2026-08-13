@@ -92,7 +92,36 @@
   .pill { font-size: 10.5px; border-radius: 8px; padding: 2px 8px; font-weight: 600; white-space: nowrap; }
   .pill.on { background: rgba(46,230,166,0.15); color: #8ff5d2; border: 1px solid rgba(46,230,166,0.35); }
   .pill.off { background: rgba(255,77,109,0.15); color: #ff8fa3; border: 1px solid rgba(255,77,109,0.35); }
+  .pill.active { background: rgba(46,230,166,0.15); color: #8ff5d2; border: 1px solid rgba(46,230,166,0.35); }
+  .pill.pending { background: rgba(255,159,67,0.16); color: #ffc48a; border: 1px solid rgba(255,159,67,0.4); }
+  .pill.suspended { background: rgba(255,77,109,0.15); color: #ff8fa3; border: 1px solid rgba(255,77,109,0.35); }
+  .pill.deleted { background: rgba(148,139,196,0.16); color: var(--muted); border: 1px solid var(--line); }
+  .rolechip { font-size: 10px; border-radius: 6px; padding: 1px 6px; background: rgba(176,107,255,0.15); color: #d9bcff; border: 1px solid rgba(176,107,255,0.3); }
   .empty { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+  .row-acts { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+  .proj-chip { font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin: 1px; display: inline-block; }
+
+  /* Toasts */
+  .toast-host { position: fixed; bottom: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
+  .toast { padding: 10px 14px; border-radius: 10px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); max-width: 320px; }
+  .toast.ok { background: rgba(46,230,166,0.18); color: #baf6df; border: 1px solid rgba(46,230,166,0.45); }
+  .toast.err { background: rgba(255,77,109,0.2); color: #ffb3c6; border: 1px solid rgba(255,77,109,0.5); }
+  .toast.out { opacity: 0; transition: opacity 0.25s ease; }
+  /* Modales */
+  .uxo { position: fixed; inset: 0; z-index: 2500; background: rgba(4,2,12,0.66); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .uxm { width: 100%; max-width: 460px; background: #120c22; border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .uxm-title { margin: 0 0 12px; font-size: 16px; }
+  .uxm-msg { font-size: 13.5px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
+  .uxm-msg b { color: var(--text); }
+  .uxm-acts { display: flex; justify-content: flex-end; gap: 10px; }
+  .uxbtn { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 9px; padding: 9px 16px; font-size: 13px; font-family: inherit; cursor: pointer; }
+  .uxbtn.primary { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #07050f; font-weight: 700; border: none; }
+  .uxbtn.danger { background: rgba(255,77,109,0.16); color: #ff8fa3; border-color: rgba(255,77,109,0.5); font-weight: 600; }
+  .uxbtn:disabled { opacity: 0.5; cursor: default; }
+  .uxf { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .uxf label { font-size: 11.5px; color: var(--muted); }
+  .uxf input, .uxf select { border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; background: var(--panel-strong); color: var(--text); }
+  .uxf select option { background: #12102a; }
 
   /* Bloque por empresa (cuenta / tenant) */
   .account-block { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
@@ -160,18 +189,30 @@
         <label for="newName">Contacto</label>
         <input type="text" id="newName" placeholder="Nombre de la persona">
       </div>
+      <div>
+        <label for="newStatus">Estado inicial</label>
+        <select id="newStatus" style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:14px; background:var(--panel); color:var(--text);">
+          <option value="active">Activo (puede entrar ya)</option>
+          <option value="pending">Pendiente (requiere aprobación)</option>
+        </select>
+      </div>
     </div>
     <div class="form-actions">
-      <button class="primary-btn" id="createBtn">Crear cuenta</button>
+      <button class="primary-btn" id="createBtn">Crear usuario</button>
       <button class="btn" id="genPassBtn" type="button">Generar contraseña</button>
-      <span class="hint">La cuenta queda activa al instante: entrégale el correo y la contraseña.</span>
+      <span class="hint">Si el estado es Activo, entrégale el correo y la contraseña. Si el correo ya existe, se te ofrecerán opciones.</span>
     </div>
     <div id="createMsg"></div>
   </div>
 
   <div class="card">
-    <h2>Clientes <span id="clientCount" class="hint"></span></h2>
-    <div id="clientsBox"><div class="empty">Cargando…</div></div>
+    <h2>Usuarios <span id="clientCount" class="hint"></span></h2>
+    <div id="usersBox"><div class="empty">Cargando…</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Auditoría <span class="hint">· acciones administrativas recientes</span></h2>
+    <div id="auditBox"><div class="empty">Cargando…</div></div>
   </div>
 </div>
 
@@ -188,6 +229,31 @@
   function show(el, text, type) {
     el.innerHTML = text ? '<div class="msg ' + type + '">' + text + '</div>' : '';
   }
+
+  // ---------------- Helpers UI ----------------
+  function elem(tag, cls, txt) { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function toast(msg, type) {
+    let host = document.getElementById('toastHost');
+    if (!host) { host = elem('div'); host.id = 'toastHost'; host.className = 'toast-host'; document.body.appendChild(host); }
+    const t = elem('div', 'toast ' + (type || 'ok'), msg); host.appendChild(t);
+    setTimeout(function () { t.classList.add('out'); setTimeout(function () { t.remove(); }, 250); }, 2800);
+  }
+  function confirmDialog(opts) {
+    const ov = elem('div', 'uxo'); const m = elem('div', 'uxm');
+    m.appendChild(elem('h3', 'uxm-title', opts.title || '¿Confirmar?'));
+    if (opts.message) { const p = elem('div', 'uxm-msg'); p.innerHTML = opts.message; m.appendChild(p); }
+    const acts = elem('div', 'uxm-acts');
+    const cancel = elem('button', 'uxbtn', 'Cancelar'); cancel.addEventListener('click', function () { ov.remove(); });
+    const ok = elem('button', 'uxbtn ' + (opts.danger ? 'danger' : 'primary'), opts.okText || 'Confirmar');
+    ok.addEventListener('click', async function () { ok.disabled = true; try { await opts.onOk(); } finally { ov.remove(); } });
+    acts.appendChild(cancel); acts.appendChild(ok); m.appendChild(acts); ov.appendChild(m);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov); setTimeout(function () { ok.focus(); }, 0);
+  }
+  const STATUS_LABEL = { pending: 'Pendiente', active: 'Activo', suspended: 'Suspendido', deleted: 'Eliminado' };
+  function fmtDate(iso) { return iso ? String(iso).slice(0, 10) : '—'; }
+  function fmtDateTime(iso) { if (!iso) return '—'; const d = new Date(iso); return isNaN(d) ? '—' : (String(iso).slice(0, 10) + ' ' + String(iso).slice(11, 16)); }
 
   // ---------------- Acceso ----------------
 
@@ -228,7 +294,8 @@
     $('whoami').textContent = profile.email;
     loginView.style.display = 'none';
     adminView.style.display = 'block';
-    loadClients();
+    loadUsers();
+    loadAudit();
   });
 
   // ---------------- Crear cuenta ----------------
@@ -243,56 +310,77 @@
   });
 
   $('createBtn').addEventListener('click', async function () {
-    const email = $('newEmail').value.trim();
+    // Normalización del correo (§11): sin espacios y en minúsculas.
+    const email = $('newEmail').value.trim().toLowerCase();
     const password = $('newPassword').value;
     const company = $('newCompany').value.trim();
     const full_name = $('newName').value.trim();
+    const status = $('newStatus').value;
     const msg = $('createMsg');
 
     if (!email || !password) { show(msg, 'El correo y la contraseña son obligatorios.', 'error'); return; }
+    if (!email.includes('@')) { show(msg, 'El correo no es válido.', 'error'); return; }
     if (password.length < 8) { show(msg, 'La contraseña debe tener al menos 8 caracteres.', 'error'); return; }
 
-    $('createBtn').disabled = true;
-    show(msg, 'Creando cuenta…', 'ok');
+    // Idempotencia (§11): comprobar duplicado ANTES de crear.
+    const { data: existing } = await sb.rpc('admin_find_user_by_email', { p_email: email });
+    if (existing) {
+      show(msg, '', '');
+      offerExistingUser(existing);
+      return;
+    }
 
-    // La creación ocurre en el servidor (Edge Function): la llave con permisos
-    // de administrador nunca viaja al navegador.
+    $('createBtn').disabled = true;
+    show(msg, 'Creando usuario…', 'ok');
     const { data: { session } } = await sb.auth.getSession();
     let res, payload;
     try {
       res = await fetch(SUPABASE_URL + '/functions/v1/admin-create-user', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + (session ? session.access_token : '')
-        },
-        body: JSON.stringify({ email: email, password: password, company: company, full_name: full_name })
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (session ? session.access_token : '') },
+        body: JSON.stringify({ email: email, password: password, company: company, full_name: full_name, status: status })
       });
       payload = await res.json();
     } catch (err) {
       $('createBtn').disabled = false;
-      show(msg, 'No se pudo contactar al servidor: ' + err.message, 'error');
+      show(msg, 'No se pudo contactar al servidor.', 'error');
       return;
     }
-
     $('createBtn').disabled = false;
-    if (!res.ok || payload.error) { show(msg, payload.error || 'No se pudo crear la cuenta.', 'error'); return; }
+    if (payload.existing) { show(msg, '', ''); offerExistingUser(payload); return; }
+    if (!res.ok || payload.error) { show(msg, payload.error || 'No se pudo crear el usuario.', 'error'); return; }
 
-    // La cuenta (tenant) nace con el correo por nombre. Si nos dieron la
-    // empresa, se renombra aquí: el propietario tiene permiso sobre accounts,
-    // así que no hace falta tocar la función del servidor.
+    // Renombrar la empresa (tenant) si se indicó.
     if (company && payload.id) {
       const { data: prof } = await sb.from('profiles').select('account_id').eq('id', payload.id).maybeSingle();
-      if (prof && prof.account_id) {
-        await sb.from('accounts').update({ name: company }).eq('id', prof.account_id);
-      }
+      if (prof && prof.account_id) await sb.from('accounts').update({ name: company }).eq('id', prof.account_id);
     }
+    // Forzar el estado inicial en el servidor (por si la Edge Function no lo aplicó).
+    if (payload.id) await sb.rpc('admin_set_user_status', { p_user: payload.id, p_status: status });
 
-    show(msg, 'Cuenta creada para ' + email + '. Ya puede entrar con esa contraseña.', 'ok');
+    show(msg, '', '');
+    toast('Usuario creado' + (status === 'pending' ? ' (pendiente de activación)' : ''), 'ok');
     $('newEmail').value = ''; $('newPassword').value = ''; $('newCompany').value = ''; $('newName').value = '';
-    loadClients();
+    loadUsers(); loadAudit();
   });
+
+  // Si el correo ya existe, ofrecer opciones en lugar de duplicar (§11).
+  function offerExistingUser(u) {
+    let opts = 'Ya existe un usuario registrado con <b>' + escapeHtml(u.email) + '</b> (estado: ' + (STATUS_LABEL[u.status] || u.status) + ').';
+    const st = u.status;
+    const canActivate = (st === 'pending' || st === 'suspended' || st === 'deleted');
+    confirmDialog({
+      title: 'Este correo ya existe',
+      message: opts + (canActivate ? '<br><br>¿Deseas activarlo ahora?' : '<br><br>Ya está activo; no se crea otra cuenta.'),
+      okText: canActivate ? 'Activar usuario' : 'Entendido',
+      onOk: async function () {
+        if (!canActivate) return;
+        const { error } = await sb.rpc('admin_set_user_status', { p_user: u.id, p_status: 'active' });
+        if (error) { toast(error.message || 'No se pudo activar.', 'err'); return; }
+        toast('Usuario activado correctamente', 'ok'); loadUsers(); loadAudit();
+      }
+    });
+  }
 
   // ---------------- Listado ----------------
 
@@ -416,6 +504,99 @@
     btn.disabled = false;
     if (error) { alert('No se pudo actualizar: ' + error.message); return; }
     loadClients();
+  }
+
+  // ---------------- USUARIOS (§7–10) ----------------
+  function roleShort(r) { return { owner: 'dueño', admin: 'admin', member: 'miembro', viewer: 'lectura' }[r] || r; }
+  function actBtn(txt, danger, fn) { const b = elem('button', 'btn' + (danger ? ' danger' : ''), txt); b.addEventListener('click', fn); return b; }
+
+  async function loadUsers() {
+    const box = $('usersBox');
+    const { data, error } = await sb.rpc('admin_list_users');
+    if (error) { box.innerHTML = '<div class="msg error">No se pudieron cargar los usuarios.</div>'; return; }
+    const rows = (data || []).slice();
+    const visibles = rows.filter(function (u) { return (u.status || 'active') !== 'deleted'; });
+    $('clientCount').textContent = rows.length ? '· ' + visibles.length + ' visible(s), ' + rows.length + ' en total' : '';
+    if (!rows.length) { box.innerHTML = '<div class="empty">Todavía no hay usuarios. Crea el primero arriba.</div>'; return; }
+
+    rows.sort(function (a, b) { return ((a.status === 'deleted' ? 1 : 0) - (b.status === 'deleted' ? 1 : 0)) || ((a.email || '') > (b.email || '') ? 1 : -1); });
+    const table = elem('table');
+    const thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Usuario</th><th>Estado</th><th class="hide-sm">Rol</th><th class="hide-sm">Registro</th><th class="hide-sm">Último acceso</th><th>Proyectos</th><th></th></tr>';
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    rows.forEach(function (u) {
+      const st = u.status || 'active';
+      const tr = document.createElement('tr');
+      const tdU = document.createElement('td');
+      tdU.innerHTML = '<div>' + escapeHtml(u.email) + '</div>' + (u.full_name ? '<div class="hint">' + escapeHtml(u.full_name) + '</div>' : '') + (u.account_name ? '<div class="hint">' + escapeHtml(u.account_name) + '</div>' : '');
+      const tdS = document.createElement('td'); tdS.appendChild(elem('span', 'pill ' + st, STATUS_LABEL[st] || st));
+      const tdR = document.createElement('td'); tdR.className = 'hide-sm'; tdR.innerHTML = '<span class="rolechip">' + (u.role === 'owner' ? 'Administrador' : 'Cliente') + '</span>';
+      const tdD = document.createElement('td'); tdD.className = 'hide-sm muted-cell'; tdD.textContent = fmtDate(u.created_at);
+      const tdL = document.createElement('td'); tdL.className = 'hide-sm muted-cell'; tdL.textContent = fmtDateTime(u.last_sign_in_at);
+      const tdP = document.createElement('td');
+      (u.projects || []).forEach(function (pr) { tdP.appendChild(elem('span', 'proj-chip', pr.name + ' · ' + roleShort(pr.role))); });
+      if (!(u.projects || []).length) tdP.innerHTML = '<span class="hint">—</span>';
+      const tdA = document.createElement('td'); const acts = elem('div', 'row-acts');
+      if (st === 'pending') acts.appendChild(actBtn('Activar', false, function () { setStatus(u, 'active', 'Usuario activado correctamente', '¿Deseas activar a este usuario y permitirle utilizar la plataforma?', 'Activar usuario'); }));
+      if (st === 'active') acts.appendChild(actBtn('Suspender', true, function () { setStatus(u, 'suspended', 'Usuario suspendido correctamente', 'Este usuario no podrá acceder a la plataforma hasta que vuelva a ser activado. ¿Deseas continuar?', 'Suspender acceso'); }));
+      if (st === 'suspended') acts.appendChild(actBtn('Reactivar', false, function () { setStatus(u, 'active', 'Usuario reactivado correctamente', '¿Reactivar el acceso de este usuario?', 'Reactivar usuario'); }));
+      if (st !== 'deleted') acts.appendChild(actBtn('Eliminar', true, function () { deleteUser(u); }));
+      if (st === 'deleted') acts.appendChild(actBtn('Restaurar', false, function () { setStatus(u, 'suspended', 'Usuario restaurado (queda suspendido)', '¿Restaurar a este usuario? Quedará suspendido hasta que lo actives.', 'Restaurar'); }));
+      tdA.appendChild(acts);
+      [tdU, tdS, tdR, tdD, tdL, tdP, tdA].forEach(function (td) { tr.appendChild(td); });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody); box.innerHTML = ''; box.appendChild(table);
+  }
+
+  function setStatus(u, status, okMsg, confirmMsg, okText) {
+    confirmDialog({
+      title: okText || 'Confirmar', message: confirmMsg + '<br><br><b>' + escapeHtml(u.email) + '</b>',
+      okText: okText || 'Confirmar', danger: (status === 'suspended'),
+      onOk: async function () {
+        const { error } = await sb.rpc('admin_set_user_status', { p_user: u.id, p_status: status });
+        if (error) { toast(error.message || 'No se pudo actualizar.', 'err'); return; }
+        toast(okMsg, 'ok'); loadUsers(); loadAudit();
+      }
+    });
+  }
+  function deleteUser(u) {
+    const projs = (u.projects || []).map(function (p) { return p.name + ' (' + roleShort(p.role) + ')'; }).join(', ') || 'ninguno';
+    confirmDialog({
+      title: '¿Seguro que deseas eliminar a este usuario?', danger: true, okText: 'Eliminar usuario',
+      message: '<b>' + escapeHtml(u.full_name || u.email) + '</b><br>' + escapeHtml(u.email) + '<br><br>Proyectos: ' + escapeHtml(projs) + '<br><br>Se marcará como <b>eliminado</b> (borrado lógico): pierde el acceso y se oculta de las listas, pero se conserva la autoría de sus tareas e historial. Si es dueño de un proyecto, primero transfiere la propiedad.',
+      onOk: async function () {
+        const { error } = await sb.rpc('admin_set_user_status', { p_user: u.id, p_status: 'deleted' });
+        if (error) { toast(error.message || 'No se pudo eliminar.', 'err'); return; }
+        toast('Usuario eliminado correctamente', 'ok'); loadUsers(); loadAudit();
+      }
+    });
+  }
+
+  // ---------------- Auditoría (§20) ----------------
+  function auditText(ev) {
+    const d = ev.detail || {};
+    switch (ev.action) {
+      case 'user_status': return 'Cambió estado de un usuario: ' + (STATUS_LABEL[d.from] || d.from || '?') + ' → ' + (STATUS_LABEL[d.to] || d.to || '?');
+      case 'member_add': return 'Agregó un miembro a un proyecto (' + roleShort(d.role) + ')';
+      case 'member_remove': return 'Quitó un miembro de un proyecto';
+      case 'member_role': return 'Cambió el rol de un miembro (' + roleShort(d.role) + ')';
+      case 'owner_transfer': return 'Transfirió la propiedad de un proyecto';
+      default: return ev.action;
+    }
+  }
+  async function loadAudit() {
+    const box = $('auditBox');
+    const { data, error } = await sb.from('audit_log').select('*').order('created_at', { ascending: false }).limit(40);
+    if (error) { box.innerHTML = '<div class="hint">No se pudo cargar la auditoría.</div>'; return; }
+    if (!data || !data.length) { box.innerHTML = '<div class="empty">Sin acciones registradas todavía.</div>'; return; }
+    box.innerHTML = '';
+    data.forEach(function (ev) {
+      const line = elem('div'); line.style.cssText = 'padding:7px 0; border-bottom:1px solid var(--line); font-size:12.5px;';
+      line.innerHTML = '<span class="muted-cell">' + fmtDateTime(ev.created_at) + '</span> · ' + escapeHtml(auditText(ev));
+      box.appendChild(line);
+    });
   }
 })();
 </script>

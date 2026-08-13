@@ -579,6 +579,35 @@
   .di-check { color: var(--ok, #2ee6a6); }
   .di-brand { color: var(--muted); font-size: 11.5px; margin-left: auto; }
 
+  /* ---------- Toasts ---------- */
+  .toast-host { position: fixed; bottom: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
+  .toast { padding: 10px 14px; border-radius: 10px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: fadeInUp 0.2s ease; max-width: 320px; }
+  .toast.ok { background: rgba(46,230,166,0.18); color: #baf6df; border: 1px solid rgba(46,230,166,0.45); }
+  .toast.err { background: rgba(255,77,109,0.2); color: #ffb3c6; border: 1px solid rgba(255,77,109,0.5); }
+  .toast.out { opacity: 0; transform: translateY(6px); transition: opacity 0.25s ease, transform 0.25s ease; }
+
+  /* ---------- Modales reutilizables ---------- */
+  .uxo { position: fixed; inset: 0; z-index: 2500; background: rgba(4,2,12,0.66); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeInUp 0.15s ease; }
+  .uxm { width: 100%; max-width: 440px; background: #120c22; border: 1px solid var(--line); border-radius: 14px; padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+  .uxm-title { margin: 0 0 12px; font-size: 16px; color: var(--text); }
+  .uxm-msg { font-size: 13.5px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
+  .uxm-msg b { color: var(--text); }
+  .uxm-acts { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+  .uxbtn { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 9px; padding: 9px 16px; font-size: 13px; font-family: inherit; cursor: pointer; }
+  .uxbtn:hover { border-color: var(--accent2); }
+  .uxbtn.primary { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #07050f; font-weight: 700; border: none; }
+  .uxbtn.danger { background: rgba(255,77,109,0.16); color: #ff8fa3; border-color: rgba(255,77,109,0.5); font-weight: 600; }
+  .uxbtn.danger:hover { background: rgba(255,77,109,0.28); }
+  .uxbtn:disabled { opacity: 0.5; cursor: default; }
+  .uxf { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .uxf label { font-size: 11.5px; color: var(--muted); }
+  .uxf input, .uxf textarea, .uxf select { border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; background: var(--panel-strong); color: var(--text); }
+  .uxf textarea { resize: vertical; }
+  .uxf select option { background: #12102a; }
+
+  .role-sel { border: 1px solid var(--line); border-radius: 7px; padding: 4px 7px; font-size: 12px; background: var(--panel); color: var(--text); font-family: inherit; margin-left: 6px; }
+  .role-sel option { background: #12102a; }
+
   footer#count { margin-top: 26px; color: var(--muted); font-size: 12px; }
 
   /* Auth screen */
@@ -726,9 +755,83 @@
   let items = [];        // filas de task_items del board actual
   let byId = {};         // id -> fila
   let kidsOf = {};       // parent_id ('__root' si raíz) -> [filas ordenadas]
-  let isAdmin = false;   // admin = dueño del board; operativos = miembros
+  let isAdmin = false;   // puede administrar el board (dueño o admin de proyecto)
+  let myRole = 'viewer'; // 'owner' | 'admin' | 'member' | 'viewer'
   let view = 'list';     // 'list' | 'dashboard'
   let openHistoryId = null;
+
+  // ---------------- UI: toasts y modales reutilizables ----------------
+  function el(tag, cls, txt) { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  function toast(msg, type) {
+    let host = document.getElementById('toastHost');
+    if (!host) { host = el('div'); host.id = 'toastHost'; host.className = 'toast-host'; document.body.appendChild(host); }
+    const t = el('div', 'toast ' + (type || 'ok'), msg);
+    host.appendChild(t);
+    setTimeout(function () { t.classList.add('out'); setTimeout(function () { t.remove(); }, 250); }, 2600);
+  }
+  // Modal de confirmación. opts: {title, message, okText, danger, onOk}
+  function confirmDialog(opts) {
+    const ov = el('div', 'uxo');
+    const m = el('div', 'uxm');
+    m.appendChild(el('h3', 'uxm-title', opts.title || '¿Confirmar?'));
+    if (opts.message) { const p = el('div', 'uxm-msg'); p.innerHTML = opts.message; m.appendChild(p); }
+    const acts = el('div', 'uxm-acts');
+    const cancel = el('button', 'uxbtn', 'Cancelar');
+    cancel.addEventListener('click', function () { ov.remove(); });
+    const ok = el('button', 'uxbtn ' + (opts.danger ? 'danger' : 'primary'), opts.okText || 'Confirmar');
+    ok.addEventListener('click', async function () { ok.disabled = true; try { await opts.onOk(); } finally { ov.remove(); } });
+    acts.appendChild(cancel); acts.appendChild(ok);
+    m.appendChild(acts); ov.appendChild(m);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
+    setTimeout(function () { ok.focus(); }, 0);
+    return ov;
+  }
+  // Modal de formulario. opts: {title, fields:[{key,label,type,value,options,placeholder}], okText, onSave}
+  // Los cambios NO se aplican al escribir; solo al pulsar "Guardar cambios".
+  function formModal(opts) {
+    const ov = el('div', 'uxo');
+    const m = el('div', 'uxm uxm-form');
+    m.appendChild(el('h3', 'uxm-title', opts.title || 'Editar'));
+    const inputs = {};
+    (opts.fields || []).forEach(function (f) {
+      const row = el('div', 'uxf');
+      row.appendChild(el('label', null, f.label));
+      let inp;
+      if (f.type === 'select') {
+        inp = el('select');
+        (f.options || []).forEach(function (o) { const op = el('option', null, o.label); op.value = o.value; if (String(o.value) === String(f.value == null ? '' : f.value)) op.selected = true; inp.appendChild(op); });
+      } else if (f.type === 'textarea') {
+        inp = el('textarea'); inp.rows = 3; inp.value = f.value || '';
+      } else {
+        inp = el('input'); inp.type = f.type || 'text'; inp.value = f.value == null ? '' : f.value;
+      }
+      if (f.placeholder) inp.placeholder = f.placeholder;
+      row.appendChild(inp); m.appendChild(row); inputs[f.key] = inp;
+    });
+    const acts = el('div', 'uxm-acts');
+    const cancel = el('button', 'uxbtn', 'Cancelar');
+    cancel.addEventListener('click', function () { ov.remove(); });
+    const save = el('button', 'uxbtn primary', opts.okText || 'Guardar cambios');
+    save.addEventListener('click', async function () {
+      const vals = {}; Object.keys(inputs).forEach(function (k) { vals[k] = inputs[k].value; });
+      save.disabled = true;
+      try { const ok = await opts.onSave(vals); if (ok !== false) ov.remove(); else save.disabled = false; }
+      catch (e) { save.disabled = false; toast('No se pudo guardar.', 'err'); }
+    });
+    acts.appendChild(cancel); acts.appendChild(save);
+    m.appendChild(acts); ov.appendChild(m);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
+    setTimeout(function () { const first = m.querySelector('input,textarea,select'); if (first) first.focus(); }, 0);
+    return ov;
+  }
+  // Opciones de responsable para los selectores (miembros del board).
+  function assigneeOptions(current) {
+    const opts = [{ value: '', label: '— Sin asignar —' }];
+    members.forEach(function (mm) { opts.push({ value: mm.id, label: memberName(mm.id) + (mm.isOwner ? ' (dueño)' : '') }); });
+    return opts;
+  }
 
   // ---------------- Auth ----------------
 
@@ -908,15 +1011,28 @@
   async function loadMembers() {
     members = [];
     if (!currentBoard) return;
-    const { data: ownerProfile } = await sb.from('profiles').select('id, email, full_name').eq('id', currentBoard.owner_id).maybeSingle();
-    if (ownerProfile) members.push({ id: ownerProfile.id, email: ownerProfile.email, full_name: ownerProfile.full_name, isOwner: true });
-    const { data: memberRows } = await sb.from('board_members').select('user_id').eq('board_id', currentBoard.id);
-    const ids = (memberRows || []).map(function (r) { return r.user_id; });
+    const ownerId = currentBoard.owner_id;
+    const { data: ownerProfile } = await sb.from('profiles').select('id, email, full_name').eq('id', ownerId).maybeSingle();
+    if (ownerProfile) members.push({ id: ownerProfile.id, email: ownerProfile.email, full_name: ownerProfile.full_name, isOwner: true, role: 'owner' });
+    const { data: memberRows } = await sb.from('board_members').select('user_id, role').eq('board_id', currentBoard.id);
+    // Dedup: el dueño nunca se lista como miembro (evita el correo repetido), y
+    // no se repite un mismo usuario aunque hubiera filas duplicadas.
+    const seen = {}; members.forEach(function (m) { seen[m.id] = 1; });
+    const rows = (memberRows || []).filter(function (r) { if (r.user_id === ownerId || seen[r.user_id]) return false; seen[r.user_id] = 1; return true; });
+    const ids = rows.map(function (r) { return r.user_id; });
     if (ids.length) {
       const { data: profs } = await sb.from('profiles').select('id, email, full_name').in('id', ids);
-      (profs || []).forEach(function (p) { members.push({ id: p.id, email: p.email, full_name: p.full_name, isOwner: false }); });
+      rows.forEach(function (r) {
+        const p = (profs || []).find(function (x) { return x.id === r.user_id; }) || { id: r.user_id, email: '(desconocido)' };
+        members.push({ id: p.id, email: p.email, full_name: p.full_name, isOwner: false, role: r.role || 'member' });
+      });
     }
+    // Rol del usuario actual en este board.
+    const meM = members.find(function (m) { return m.id === currentUser.id; });
+    myRole = (ownerId === currentUser.id) ? 'owner' : (meM ? meM.role : 'viewer');
+    isAdmin = (myRole === 'owner' || myRole === 'admin');
   }
+  function roleLabel(r) { return { owner: 'Dueño', admin: 'Admin proyecto', member: 'Miembro', viewer: 'Solo lectura' }[r] || r; }
   // Nombre legible de un responsable (usuario real) o el nombre heredado (legacy).
   function memberName(id) {
     const m = members.find(function (x) { return x.id === id; });
@@ -929,35 +1045,43 @@
     return null;
   }
 
+  function ensureAddRoleSelect() {
+    if (document.getElementById('newMemberRole')) return;
+    const sel = el('select', 'role-sel'); sel.id = 'newMemberRole';
+    [['member', 'Miembro'], ['admin', 'Admin proyecto'], ['viewer', 'Solo lectura']].forEach(function (o) { const op = el('option', null, o[1]); op.value = o[0]; sel.appendChild(op); });
+    addMemberBtn.parentElement.insertBefore(sel, addMemberBtn);
+  }
   function renderSharePanel() {
     memberListEl.innerHTML = '';
-    const isOwner = currentBoard && currentBoard.owner_id === currentUser.id;
+    const canManage = isAdmin; // dueño o admin de proyecto
     members.forEach(function (m) {
-      const row = document.createElement('div');
-      row.className = 'member-row';
-      const label = document.createElement('span');
-      label.textContent = m.email;
-      if (m.isOwner) {
-        const tag = document.createElement('span');
-        tag.className = 'member-tag';
-        tag.textContent = '(dueño)';
-        label.appendChild(tag);
-      }
+      const row = el('div', 'member-row');
+      const label = el('span'); label.textContent = m.email;
+      label.appendChild(el('span', 'member-tag', '(' + roleLabel(m.role) + ')'));
       row.appendChild(label);
-      if (isOwner && !m.isOwner) {
-        const rm = document.createElement('button');
-        rm.className = 'member-rm';
-        rm.textContent = 'Quitar';
-        rm.addEventListener('click', async function () {
-          await sb.from('board_members').delete().eq('board_id', currentBoard.id).eq('user_id', m.id);
-          await loadMembers();
-          renderSharePanel();
+      if (canManage && !m.isOwner) {
+        const sel = el('select', 'role-sel');
+        [['admin', 'Admin proyecto'], ['member', 'Miembro'], ['viewer', 'Solo lectura']].forEach(function (o) { const op = el('option', null, o[1]); op.value = o[0]; if (m.role === o[0]) op.selected = true; sel.appendChild(op); });
+        sel.addEventListener('change', async function () {
+          const { error } = await sb.rpc('board_set_member_role', { p_board: currentBoard.id, p_user: m.id, p_role: sel.value });
+          if (error) { toast('No se pudo cambiar el rol.', 'err'); sel.value = m.role; return; }
+          m.role = sel.value; toast('Permisos actualizados correctamente', 'ok');
+        });
+        row.appendChild(sel);
+        const rm = el('button', 'member-rm', 'Quitar del proyecto');
+        rm.addEventListener('click', function () {
+          confirmDialog({ title: '¿Quitar del proyecto?', message: '¿Deseas quitar a <b>' + escapeHtml(m.email) + '</b> del proyecto? Su cuenta seguirá existiendo en la plataforma.', okText: 'Quitar del proyecto', danger: true, onOk: async function () {
+            const { error } = await sb.rpc('board_remove_member', { p_board: currentBoard.id, p_user: m.id });
+            if (error) { toast(error.message || 'No se pudo quitar.', 'err'); return; }
+            await loadMembers(); renderSharePanel(); toast('Usuario retirado del proyecto correctamente', 'ok');
+          } });
         });
         row.appendChild(rm);
       }
       memberListEl.appendChild(row);
     });
-    addMemberBtn.parentElement.style.display = isOwner ? 'flex' : 'none';
+    addMemberBtn.parentElement.style.display = canManage ? 'flex' : 'none';
+    ensureAddRoleSelect();
   }
 
   shareBtn.addEventListener('click', function () { sharePanel.classList.toggle('open'); });
@@ -1027,21 +1151,28 @@
     if (tagsPanel.classList.contains('open')) renderTagsManager();
   });
 
-  addMemberBtn.addEventListener('click', async function () {
-    const email = memberEmailInput.value.trim();
+  addMemberBtn.addEventListener('click', function () {
+    const email = memberEmailInput.value.trim().toLowerCase();
     if (!email) return;
-    // Se resuelve el correo con una función security definer: evita exponer el
-    // listado completo de perfiles (enumeración de correos entre clientes).
-    const { data: foundId, error: findErr } = await sb.rpc('find_profile_id_by_email', { p_email: email });
-    if (findErr) { alert('No se pudo buscar ese correo: ' + findErr.message); return; }
-    if (!foundId) { alert('Ese correo no tiene una cuenta activa en la app todavía.'); return; }
-    if (foundId === currentBoard.owner_id) { alert('Esa persona ya es el dueño del proyecto.'); return; }
-    if (members.some(function (m) { return m.id === foundId; })) { alert('Ya es miembro de este proyecto.'); return; }
-    const { error } = await sb.from('board_members').insert({ board_id: currentBoard.id, user_id: foundId });
-    if (error) { alert('No se pudo agregar: ' + error.message); return; }
-    memberEmailInput.value = '';
-    await loadMembers();
-    renderSharePanel();
+    const roleSel = document.getElementById('newMemberRole');
+    const role = roleSel ? roleSel.value : 'member';
+    // Confirmación previa (§12). El alta es idempotente en el backend (RPC con
+    // UNIQUE(board_id,user_id)); el botón se deshabilita para evitar dobles envíos.
+    confirmDialog({
+      title: 'Agregar al proyecto',
+      message: 'Vas a agregar a <b>' + escapeHtml(email) + '</b> como <b>' + roleLabel(role) + '</b> de este proyecto.',
+      okText: 'Confirmar',
+      onOk: async function () {
+        const { data, error } = await sb.rpc('board_add_member', { p_board: currentBoard.id, p_email: email, p_role: role });
+        if (error) { toast('No se pudo agregar: ' + (error.message || ''), 'err'); return; }
+        if (data && data.found === false) { toast('Ese correo no tiene una cuenta en esta empresa todavía.', 'err'); return; }
+        if (data && data.ownerAlready) { toast('Esa persona ya es el dueño del proyecto.', 'err'); return; }
+        if (data && data.already) { toast('Ese usuario ya es miembro de este proyecto.', 'err'); return; }
+        memberEmailInput.value = '';
+        await loadMembers(); renderSharePanel();
+        toast('Usuario agregado correctamente al proyecto', 'ok');
+      }
+    });
   });
 
   // ---------------- Save ----------------
@@ -1073,6 +1204,7 @@
     const { error } = await sb.from('task_items').update(patch).eq('id', id);
     statusOfChangeMsg(error);
     if (error) { await loadItems(); render(); }
+    return error;
   }
   // Inserta una nueva tarea/subtarea (solo admin).
   async function insertItem(parentId, title, focusIt) {
@@ -1163,7 +1295,7 @@
   }
 
   // ¿El usuario actual puede ejecutar (iniciar/completar) esta actividad?
-  function canAct(row) { return isAdmin || row.assignee_id === currentUser.id; }
+  function canAct(row) { return isAdmin || (myRole !== 'viewer' && row.assignee_id === currentUser.id); }
 
   // ---------------- Meta panel ----------------
 
@@ -1213,6 +1345,14 @@
     const panel = document.createElement('div');
     panel.className = 'meta-panel' + (openMetaId === task.id ? ' open' : '');
     const leaf = isLeaf(task);
+
+    // --- Editar (modal; solo dueño/admin de proyecto) ---
+    if (isAdmin) {
+      const edRow = document.createElement('div'); edRow.className = 'meta-row';
+      const edBtn = document.createElement('button'); edBtn.className = 'life-btn'; edBtn.textContent = '✎ Editar';
+      edBtn.addEventListener('click', function () { openEditModal(task); });
+      edRow.appendChild(edBtn); panel.appendChild(edRow);
+    }
 
     // --- Estado + acciones de ciclo de vida (solo hojas) ---
     if (leaf) {
@@ -1327,20 +1467,56 @@
       panel.appendChild(hist);
     }
 
-    // --- Eliminar (solo admin; nunca completadas/archivadas) ---
+    // --- Eliminar (solo admin/dueño; nunca completadas/archivadas) ---
     if (isAdmin && task.status !== 'completed' && task.status !== 'archived') {
       const delRow = document.createElement('div'); delRow.className = 'meta-row';
       const delBtn = document.createElement('button'); delBtn.className = 'meta-delete';
-      delBtn.textContent = leaf ? 'Eliminar actividad' : 'Eliminar (y sus subtareas)';
-      delBtn.addEventListener('click', function () {
-        const kids = childrenOf(task.id).length;
-        const msg = '¿Eliminar "' + (task.title || 'esta tarea') + '"?' + (kids ? ' Se eliminarán también sus ' + kids + ' subtarea(s).' : '') + '\n\nEsta acción quedará registrada en el historial y no se puede deshacer.';
-        if (confirm(msg)) lifecycle('task_delete', task.id);
-      });
+      delBtn.textContent = leaf ? 'Eliminar' : 'Eliminar (y sus subtareas)';
+      delBtn.addEventListener('click', function () { openDeleteModal(task); });
       delRow.appendChild(delBtn); panel.appendChild(delRow);
     }
 
     return panel;
+  }
+
+  // Modal de edición (§1,2): NO guarda al escribir, solo con "Guardar cambios".
+  function openEditModal(task) {
+    const leaf = isLeaf(task);
+    const isSub = !!task.parent_id;
+    const fields = [
+      { key: 'title', label: isSub ? 'Nombre de la subtarea' : 'Nombre de la tarea', type: 'text', value: task.title || '' },
+      { key: 'description', label: 'Descripción', type: 'textarea', value: task.description || '' }
+    ];
+    if (leaf) fields.push({ key: 'assignee_id', label: 'Responsable', type: 'select', value: task.assignee_id || '', options: assigneeOptions() });
+    fields.push({ key: 'due_date', label: 'Fecha de entrega', type: 'date', value: task.due_date || '' });
+    formModal({
+      title: isSub ? 'Editar subtarea' : 'Editar tarea', okText: 'Guardar cambios', fields: fields,
+      onSave: async function (vals) {
+        const patch = { title: (vals.title || '').trim(), description: (vals.description || '').trim() || null, due_date: vals.due_date || null };
+        if (leaf) { patch.assignee_id = vals.assignee_id || null; patch.assignee_legacy = null; }
+        const err = await updateItemFields(task.id, patch);
+        if (err) { toast('No se pudo guardar.', 'err'); return false; }
+        toast((isSub ? 'Subtarea' : 'Tarea') + ' actualizada correctamente', 'ok');
+      }
+    });
+  }
+  // Modal de eliminación (§3,4): confirmación con estilo de advertencia + toast.
+  function openDeleteModal(task) {
+    const isSub = !!task.parent_id;
+    const kids = childrenOf(task.id).length;
+    let msg = '¿Seguro que deseas eliminar esta ' + (isSub ? 'subtarea' : 'tarea') + '?<br><b>' + escapeHtml(task.title || '(sin título)') + '</b>';
+    if (kids) msg += '<br><br>Esta tarea contiene ' + kids + ' subtarea(s). Si continúas, también se eliminarán.';
+    msg += '<br><span style="opacity:.75">Queda registrada en el historial y no se puede deshacer.</span>';
+    confirmDialog({
+      title: isSub ? 'Eliminar subtarea' : 'Eliminar tarea',
+      message: msg, danger: true, okText: isSub ? 'Eliminar subtarea' : 'Eliminar tarea',
+      onOk: async function () {
+        const { error } = await sb.rpc('task_delete', { p_id: task.id });
+        if (error) { toast(error.message || 'No se pudo eliminar.', 'err'); return; }
+        await loadItems(); render();
+        toast((isSub ? 'Subtarea' : 'Tarea') + ' eliminada correctamente', 'ok');
+      }
+    });
   }
 
   // ---------------- Render de la lista ----------------

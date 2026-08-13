@@ -60,14 +60,26 @@ Deno.serve(async (req: Request) => {
   const password = String(body.password ?? "");
   const company = body.company ? String(body.company).trim() : null;
   const fullName = body.full_name ? String(body.full_name).trim() : null;
+  // Estado inicial (§8): por defecto 'pending'; el dueño puede crear ya activo.
+  let status = String(body.status ?? "pending").trim().toLowerCase();
+  if (!["pending", "active", "suspended"].includes(status)) status = "pending";
 
   if (!email.includes("@")) return json({ error: "El correo no es válido." }, 400);
   if (password.length < 8) {
     return json({ error: "La contraseña debe tener al menos 8 caracteres." }, 400);
   }
 
-  // 4) Crear el usuario ya confirmado: el cliente entra directo con las
-  //    credenciales que le entregas, sin depender de correos de validación.
+  // 4) Idempotencia (§11/§16): si ya existe un perfil con ese correo, no crear
+  //    otra cuenta; devolver el existente para que el panel ofrezca opciones.
+  const { data: dup } = await admin
+    .from("profiles").select("id, account_id, status, role")
+    .ilike("email", email).maybeSingle();
+  if (dup) {
+    return json({ existing: true, id: dup.id, email, status: dup.status, role: dup.role, account_id: dup.account_id });
+  }
+
+  // Crear el usuario ya confirmado: entra directo con las credenciales, sin
+  // depender de correos de validación (no se envía correo alguno).
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email,
     password,
@@ -75,17 +87,19 @@ Deno.serve(async (req: Request) => {
   });
 
   if (createErr) {
-    const msg = /already/i.test(createErr.message)
-      ? "Ya existe una cuenta con ese correo."
-      : createErr.message;
-    return json({ error: msg }, 400);
+    if (/already/i.test(createErr.message)) {
+      const { data: ex } = await admin.from("profiles").select("id, account_id, status, role").ilike("email", email).maybeSingle();
+      if (ex) return json({ existing: true, id: ex.id, email, status: ex.status, role: ex.role, account_id: ex.account_id });
+      return json({ error: "Ya existe una cuenta con ese correo." }, 400);
+    }
+    return json({ error: createErr.message }, 400);
   }
 
   // 5) Completar el perfil. El trigger on_auth_user_created ya creó la fila y,
   //    con ella, la cuenta (tenant) propia de este cliente.
   const { data: profile, error: updErr } = await admin
     .from("profiles")
-    .update({ role: "client", active: true, company, full_name: fullName })
+    .update({ role: "client", status, active: status === "active", company, full_name: fullName })
     .eq("id", created.user!.id)
     .select("account_id")
     .single();
