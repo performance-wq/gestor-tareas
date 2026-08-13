@@ -502,6 +502,22 @@
   .tnode-check.hidden-check { visibility: hidden; }
   .assignee-chip.ro { cursor: default; background: rgba(148,139,196,0.1); color: var(--muted); border-color: var(--line); }
 
+  /* ---------- Responsables múltiples (chips + modal) ---------- */
+  .asg-row { flex-wrap: wrap; gap: 6px; align-items: center; }
+  .asg-chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+  .asg-none { font-size: 12px; color: var(--muted); }
+  .asg-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 8px; border-radius: 999px; background: rgba(120,116,220,0.18); border: 1px solid var(--line); color: var(--text); }
+  .asg-chip.ro { background: rgba(148,139,196,0.1); color: var(--muted); }
+  .asg-chip .asg-x { border: none; background: transparent; color: inherit; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: 0.7; }
+  .asg-chip .asg-x:hover { opacity: 1; color: #ff8a8a; }
+  .asg-add { font-size: 12px; border-radius: 999px; padding: 3px 10px; cursor: pointer; border: 1px dashed var(--line); background: transparent; color: var(--accent2); font-family: inherit; }
+  .asg-add:hover { border-color: var(--accent2); }
+  .asg-lock { font-size: 12px; color: var(--muted); }
+  .asg-list { display: flex; flex-direction: column; gap: 2px; margin: 6px 0 4px; max-height: 320px; overflow-y: auto; }
+  .asg-opt { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .asg-opt:hover { background: rgba(120,116,220,0.12); }
+  .asg-opt input { width: 16px; height: 16px; accent-color: var(--accent2); }
+
   .life-btn { font-size: 12px; border-radius: 8px; padding: 5px 11px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-family: inherit; }
   .life-btn:hover { border-color: var(--accent2); }
   .life-btn.start { background: rgba(255,159,67,0.14); color: #ffc48a; border-color: rgba(255,159,67,0.4); }
@@ -990,10 +1006,22 @@
   async function loadItems() {
     items = []; byId = {}; kidsOf = {};
     if (!currentBoard) return;
-    const { data, error } = await sb.from('task_items').select('*').eq('board_id', currentBoard.id).order('position');
+    // Carga por rol (backend): admin recibe todo el tablero; operativo/viewer solo
+    // sus tareas asignadas + sus ancestros (para que el árbol se renderice).
+    const { data, error } = await sb.rpc('list_task_items', { p_board: currentBoard.id });
     if (error) { saveStatusEl.textContent = 'Error al cargar tareas: ' + error.message; return; }
     items = data || [];
+    await loadAssignees();
     indexItems();
+  }
+  // Responsables (varios por tarea): adjunta row.assignees = [user_id, ...].
+  async function loadAssignees() {
+    items.forEach(function (r) { r.assignees = []; });
+    if (!items.length) return;
+    const map = {}; items.forEach(function (r) { map[r.id] = r; });
+    const ids = items.map(function (r) { return r.id; });
+    const { data } = await sb.from('task_assignees').select('task_id, user_id').in('task_id', ids);
+    (data || []).forEach(function (a) { const t = map[a.task_id]; if (t) t.assignees.push(a.user_id); });
   }
   function indexItems() {
     byId = {}; kidsOf = {};
@@ -1042,10 +1070,28 @@
     if (!m) return null;
     return (m.full_name && m.full_name.trim()) ? m.full_name.trim() : (m.email || '').split('@')[0];
   }
+  // IDs de responsables de una tarea (varios). Fallback al modelo viejo por si
+  // aún no cargaron los assignees.
+  function assigneeIds(row) {
+    if (row.assignees && row.assignees.length) return row.assignees;
+    if (row.assignee_id) return [row.assignee_id];
+    return [];
+  }
+  function hasAssignee(row, uid) { return assigneeIds(row).indexOf(uid) >= 0; }
+  function assigneeNames(row) { return assigneeIds(row).map(function (id) { return memberName(id) || 'Usuario'; }); }
+  // Etiqueta completa (todos los nombres) para el meta panel / completadas.
   function assigneeLabel(row) {
-    if (row.assignee_id) { return memberName(row.assignee_id) || 'Usuario'; }
+    const names = assigneeNames(row);
+    if (names.length) return names.join(', ');
     if (row.assignee_legacy) { return row.assignee_legacy; }
     return null;
+  }
+  // Etiqueta compacta para el chip en línea: "Desh" o "Desh +2".
+  function assigneeChipLabel(row) {
+    const names = assigneeNames(row);
+    if (!names.length) return row.assignee_legacy || null;
+    if (names.length === 1) return names[0];
+    return names[0] + ' +' + (names.length - 1);
   }
 
   function ensureAddRoleSelect() {
@@ -1298,7 +1344,7 @@
   }
 
   // ¿El usuario actual puede ejecutar (iniciar/completar) esta actividad?
-  function canAct(row) { return isAdmin || (myRole !== 'viewer' && row.assignee_id === currentUser.id); }
+  function canAct(row) { return isAdmin || (myRole !== 'viewer' && hasAssignee(row, currentUser.id)); }
 
   // ---------------- Meta panel ----------------
 
@@ -1318,6 +1364,8 @@
       case 'assigned':     return who + ' asignó a ' + nm(d.to) + '.';
       case 'unassigned':   return who + ' quitó el responsable.';
       case 'reassigned':   return who + ' reasignó: ' + nm(d.from) + ' → ' + nm(d.to) + '.';
+      case 'assignee_added':   return who + ' agregó a ' + nm(d.user) + ' como responsable.';
+      case 'assignee_removed': return who + ' quitó a ' + nm(d.user) + ' de la tarea.';
       case 'due_changed':  return who + ' cambió la fecha de entrega: ' + (d.from || '—') + ' → ' + (d.to || '—') + '.';
       case 'started':      return who + ' inició la tarea.';
       case 'completed':    return who + ' completó la tarea.';
@@ -1373,20 +1421,37 @@
       if (actRow.childNodes.length) panel.appendChild(actRow);
     }
 
-    // --- Responsable (usuario real). Editable solo por admin. ---
+    // --- Responsables (varios). Editable solo por admin. ---
     if (leaf) {
+      const aRow = el('div', 'meta-row asg-row');
+      aRow.appendChild(el('label', null, 'Responsables:'));
+      const chips = el('div', 'asg-chips');
+      const ids = assigneeIds(task);
+      if (!ids.length) chips.appendChild(el('span', 'asg-none', '— Sin asignar —'));
+      ids.forEach(function (uid) {
+        const chip = el('span', 'asg-chip' + (isAdmin ? '' : ' ro'), memberName(uid) || 'Usuario');
+        if (isAdmin) {
+          const x = el('button', 'asg-x', '×'); x.title = 'Quitar';
+          x.addEventListener('click', function () { setAssignees(task, ids.filter(function (i) { return i !== uid; })); });
+          chip.appendChild(x);
+        }
+        chips.appendChild(chip);
+      });
+      aRow.appendChild(chips);
       if (isAdmin) {
-        const aRow = document.createElement('div'); aRow.className = 'meta-row';
-        const aL = document.createElement('label'); aL.textContent = 'Responsable:';
-        const sel = document.createElement('select'); sel.className = 'meta-select';
-        const o0 = document.createElement('option'); o0.value = ''; o0.textContent = '— Sin asignar —'; sel.appendChild(o0);
-        members.forEach(function (m) { const o = document.createElement('option'); o.value = m.id; o.textContent = memberName(m.id) + (m.isOwner ? ' (admin)' : ''); if (task.assignee_id === m.id) o.selected = true; sel.appendChild(o); });
-        sel.addEventListener('change', function () { updateItemFields(task.id, { assignee_id: sel.value || null, assignee_legacy: null }); });
-        aRow.appendChild(aL); aRow.appendChild(sel);
-        if (task.assignee_legacy && !task.assignee_id) { const hint = document.createElement('span'); hint.className = 'meta-hint'; hint.textContent = '(antes: ' + task.assignee_legacy + ')'; aRow.appendChild(hint); }
-        panel.appendChild(aRow);
+        const add = el('button', 'asg-add', '＋ Agregar');
+        add.addEventListener('click', function () { openAssigneesModal(task); });
+        aRow.appendChild(add);
       } else {
-        panel.appendChild(lockedField('Responsable:', assigneeLabel(task)));
+        aRow.appendChild(el('span', 'asg-lock', '🔒'));
+      }
+      panel.appendChild(aRow);
+      // Completada por (§15): quién pulsó Completar (distinto de los responsables).
+      if (task.completed_by) {
+        const cb = el('div', 'meta-row');
+        cb.appendChild(el('label', null, 'Completada por:'));
+        cb.appendChild(el('span', 'meta-locked', memberName(task.completed_by) || 'Usuario'));
+        panel.appendChild(cb);
       }
     }
 
@@ -1482,6 +1547,49 @@
     return panel;
   }
 
+  // Fija los responsables de una tarea vía RPC (backend valida permisos y
+  // registra el historial). Reemplaza la escritura directa que causaba el bug.
+  async function setAssignees(task, userIds) {
+    saveStatusEl.textContent = 'Guardando...';
+    const { error } = await sb.rpc('task_set_assignees', { p_task: task.id, p_users: userIds });
+    if (error) { statusOfChangeMsg(error); toast('No se pudo guardar los responsables.', 'err'); return; }
+    statusOfChangeMsg(null);
+    await loadItems();
+    if (openHistoryId === task.id) await loadEvents(task.id); else render();
+    toast('Responsables actualizados', 'ok');
+  }
+  // Modal con checkboxes de los miembros del proyecto (§4,17).
+  function openAssigneesModal(task) {
+    const current = assigneeIds(task);
+    const ov = el('div', 'uxo');
+    const m = el('div', 'uxm');
+    m.appendChild(el('h3', 'uxm-title', 'Responsables de la tarea'));
+    const list = el('div', 'asg-list');
+    if (!members.length) list.appendChild(el('div', 'asg-none', 'Agrega personas al proyecto en "Compartir" para poder asignarlas.'));
+    const picks = {};
+    members.forEach(function (mm) {
+      const row = el('label', 'asg-opt');
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = current.indexOf(mm.id) >= 0; picks[mm.id] = cb;
+      row.appendChild(cb);
+      row.appendChild(el('span', 'asg-opt-name', memberName(mm.id) + (mm.isOwner ? ' (admin)' : '')));
+      list.appendChild(row);
+    });
+    m.appendChild(list);
+    const acts = el('div', 'uxm-acts');
+    const cancel = el('button', 'uxbtn', 'Cancelar');
+    cancel.addEventListener('click', function () { ov.remove(); });
+    const ok = el('button', 'uxbtn primary', 'Guardar');
+    ok.addEventListener('click', async function () {
+      ok.disabled = true;
+      const chosen = members.map(function (mm) { return mm.id; }).filter(function (id) { return picks[id].checked; });
+      try { await setAssignees(task, chosen); } finally { ov.remove(); }
+    });
+    acts.appendChild(cancel); acts.appendChild(ok);
+    m.appendChild(acts); ov.appendChild(m);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
+  }
+
   // Modal de edición (§1,2): NO guarda al escribir, solo con "Guardar cambios".
   function openEditModal(task) {
     const leaf = isLeaf(task);
@@ -1490,13 +1598,11 @@
       { key: 'title', label: isSub ? 'Nombre de la subtarea' : 'Nombre de la tarea', type: 'text', value: task.title || '' },
       { key: 'description', label: 'Descripción', type: 'textarea', value: task.description || '' }
     ];
-    if (leaf) fields.push({ key: 'assignee_id', label: 'Responsable', type: 'select', value: task.assignee_id || '', options: assigneeOptions() });
     fields.push({ key: 'due_date', label: 'Fecha de entrega', type: 'date', value: task.due_date || '' });
     formModal({
       title: isSub ? 'Editar subtarea' : 'Editar tarea', okText: 'Guardar cambios', fields: fields,
       onSave: async function (vals) {
         const patch = { title: (vals.title || '').trim(), description: (vals.description || '').trim() || null, due_date: vals.due_date || null };
-        if (leaf) { patch.assignee_id = vals.assignee_id || null; patch.assignee_legacy = null; }
         const err = await updateItemFields(task.id, patch);
         if (err) { toast('No se pudo guardar.', 'err'); return false; }
         toast((isSub ? 'Subtarea' : 'Tarea') + ' actualizada correctamente', 'ok');
@@ -1862,12 +1968,12 @@
       // Estado + "Iniciar".
       if (node.status === 'in_progress') { const pill = document.createElement('span'); pill.className = 'st-chip st-in_progress'; pill.textContent = 'En progreso'; meta.appendChild(pill); }
       if (node.status === 'pending' && act) { const sb2 = document.createElement('button'); sb2.className = 'start-btn'; sb2.textContent = '▶ Iniciar'; sb2.addEventListener('click', function (e) { e.stopPropagation(); lifecycle('task_start', node.id); }); meta.appendChild(sb2); }
-      // Responsable.
+      // Responsable(s).
       const who = document.createElement('span');
-      const asg = assigneeLabel(node);
+      const asg = assigneeChipLabel(node);
       who.className = 'assignee-chip' + (asg ? '' : ' empty') + (isAdmin ? '' : ' ro');
-      who.textContent = asg || (isAdmin ? 'Responsable' : '—');
-      who.title = isAdmin ? 'Asignar responsable' : 'Responsable';
+      who.textContent = asg || (isAdmin ? 'Responsables' : '—');
+      who.title = isAdmin ? 'Asignar responsables' : (assigneeNames(node).join(', ') || 'Responsables');
       who.addEventListener('click', function (e) { e.stopPropagation(); openMetaId = node.id; render(); });
       meta.appendChild(who);
     } else {
@@ -2023,7 +2129,7 @@
   function inRange(iso, a, b) { if (!iso) return false; const t = new Date(iso).getTime(); return t >= a.getTime() && t <= b.getTime(); }
   function sameDay(iso, dayISO) { if (!iso) return false; const d = new Date(iso); const s = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); return s === dayISO; }
   function dayKey(dt) { return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'); }
-  function matchRB(row) { return (!dash.resp || row.assignee_id === dash.resp) && (!dash.brand || rootIdOf(row) === dash.brand); }
+  function matchRB(row) { return (!dash.resp || hasAssignee(row, dash.resp)) && (!dash.brand || rootIdOf(row) === dash.brand); }
 
   function renderDashboard() {
     dashboardViewEl.innerHTML = '';
@@ -2082,7 +2188,7 @@
     const perf = document.createElement('div'); perf.className = 'dash-block';
     const perfH = document.createElement('h3'); perfH.textContent = 'Rendimiento por responsable'; perf.appendChild(perfH);
     const rows = members.map(function (m) {
-      const set = leaves.filter(function (r) { return r.assignee_id === m.id && (!dash.brand || rootIdOf(r) === dash.brand); });
+      const set = leaves.filter(function (r) { return hasAssignee(r, m.id) && (!dash.brand || rootIdOf(r) === dash.brand); });
       return {
         id: m.id, name: memberName(m.id),
         ini: set.filter(function (r) { return inRange(r.started_at, a, b); }).length,
@@ -2114,7 +2220,7 @@
       const tr = document.createElement('tr');
       const nameTd = document.createElement('td'); nameTd.className = 'dm-name'; nameTd.textContent = memberName(m.id); tr.appendChild(nameTd);
       days.forEach(function (d) {
-        const c = leaves.filter(function (r) { return r.assignee_id === m.id && (!dash.brand || rootIdOf(r) === dash.brand) && sameDay(r.completed_at, d); }).length;
+        const c = leaves.filter(function (r) { return hasAssignee(r, m.id) && (!dash.brand || rootIdOf(r) === dash.brand) && sameDay(r.completed_at, d); }).length;
         const td = document.createElement('td'); td.className = 'dm-cell' + (c ? ' has' : '');
         td.textContent = c || '·';
         if (c) { td.style.cursor = 'pointer'; td.title = 'Ver detalle'; td.addEventListener('click', function () { dashDrill = { person: m.id, day: d }; render(); }); }
@@ -2129,7 +2235,7 @@
       const dd = document.createElement('div'); dd.className = 'dash-block drill';
       const h = document.createElement('h3'); h.textContent = memberName(dashDrill.person) + ' · ' + fmtFecha(dashDrill.day + 'T00:00:00');
       dd.appendChild(h);
-      const list = leaves.filter(function (r) { return r.assignee_id === dashDrill.person && sameDay(r.completed_at, dashDrill.day); });
+      const list = leaves.filter(function (r) { return hasAssignee(r, dashDrill.person) && sameDay(r.completed_at, dashDrill.day); });
       if (!list.length) { const e = document.createElement('div'); e.className = 'dash-empty'; e.textContent = 'Sin actividades completadas ese día.'; dd.appendChild(e); }
       list.forEach(function (r) {
         const it = document.createElement('div'); it.className = 'drill-item';
