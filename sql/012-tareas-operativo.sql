@@ -332,18 +332,25 @@ end $$;
 
 create or replace function public.migrate_boards_to_task_items()
 returns int language plpgsql security definer set search_path = public as $$
-declare b record; node jsonb; i int; n int := 0;
+declare b record; node jsonb; i int; n int := 0; is_arr boolean; tasks_arr jsonb;
 begin
   for b in select id, account_id, data from public.boards loop
-    if coalesce((b.data->>'migratedToTaskItems')::boolean, false) then continue; end if;
+    -- boards.data puede ser un ARRAY (formato viejo: las tareas SON el array) o un
+    -- OBJETO { tasks, tags, ... } (formato nuevo). Hay que tratarlos distinto.
+    is_arr := jsonb_typeof(b.data) = 'array';
+    if (not is_arr) and coalesce((b.data->>'migratedToTaskItems')::boolean, false) then continue; end if;
+    tasks_arr := case when is_arr then b.data else coalesce(b.data->'tasks', '[]'::jsonb) end;
     i := 0;
-    for node in select * from jsonb_array_elements(coalesce(b.data->'tasks', '[]'::jsonb)) loop
+    for node in select * from jsonb_array_elements(tasks_arr) loop
       perform public._migrate_task_node(node, null, b.id, b.account_id, i);
       i := i + 1;  n := n + 1;
     end loop;
-    update public.boards
-      set data = jsonb_set(coalesce(data,'{}'::jsonb), '{migratedToTaskItems}', 'true'::jsonb)
-      where id = b.id;
+    -- Marca migrado: sobre objeto con jsonb_set; sobre array hay que envolver en objeto.
+    if is_arr then
+      update public.boards set data = jsonb_build_object('tasks', b.data, 'migratedToTaskItems', true) where id = b.id;
+    else
+      update public.boards set data = jsonb_set(coalesce(b.data,'{}'::jsonb), '{migratedToTaskItems}', 'true'::jsonb) where id = b.id;
+    end if;
   end loop;
   return n;  -- nº de tareas raíz migradas
 end $$;
