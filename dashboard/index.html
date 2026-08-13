@@ -1048,8 +1048,8 @@
     members = [];
     if (!currentBoard) return;
     const ownerId = currentBoard.owner_id;
-    const { data: ownerProfile } = await sb.from('profiles').select('id, email, full_name').eq('id', ownerId).maybeSingle();
-    if (ownerProfile) members.push({ id: ownerProfile.id, email: ownerProfile.email, full_name: ownerProfile.full_name, isOwner: true, role: 'owner' });
+    const { data: ownerProfile } = await sb.from('profiles').select('id, email, full_name, status').eq('id', ownerId).maybeSingle();
+    if (ownerProfile) members.push({ id: ownerProfile.id, email: ownerProfile.email, full_name: ownerProfile.full_name, status: ownerProfile.status || 'active', isOwner: true, role: 'owner' });
     const { data: memberRows } = await sb.from('board_members').select('user_id, role').eq('board_id', currentBoard.id);
     // Dedup: el dueño nunca se lista como miembro (evita el correo repetido), y
     // no se repite un mismo usuario aunque hubiera filas duplicadas.
@@ -1057,10 +1057,10 @@
     const rows = (memberRows || []).filter(function (r) { if (r.user_id === ownerId || seen[r.user_id]) return false; seen[r.user_id] = 1; return true; });
     const ids = rows.map(function (r) { return r.user_id; });
     if (ids.length) {
-      const { data: profs } = await sb.from('profiles').select('id, email, full_name').in('id', ids);
+      const { data: profs } = await sb.from('profiles').select('id, email, full_name, status').in('id', ids);
       rows.forEach(function (r) {
         const p = (profs || []).find(function (x) { return x.id === r.user_id; }) || { id: r.user_id, email: '(desconocido)' };
-        members.push({ id: p.id, email: p.email, full_name: p.full_name, isOwner: false, role: r.role || 'member' });
+        members.push({ id: p.id, email: p.email, full_name: p.full_name, status: p.status || 'active', isOwner: false, role: r.role || 'member' });
       });
     }
     // Dedup final por id (a prueba de carreras: onAuthStateChange puede disparar
@@ -1576,10 +1576,15 @@
     if (!members.length) list.appendChild(el('div', 'asg-none', 'Agrega personas al proyecto en "Compartir" para poder asignarlas.'));
     const picks = {};
     members.forEach(function (mm) {
+      const already = current.indexOf(mm.id) >= 0;
+      const inactivo = mm.status && mm.status !== 'active';
+      // Un usuario inactivo no se ofrece para asignaciones nuevas (§14); si ya era
+      // responsable, se muestra para poder quitarlo.
+      if (inactivo && !already) return;
       const row = el('label', 'asg-opt');
-      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = current.indexOf(mm.id) >= 0; picks[mm.id] = cb;
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = already; picks[mm.id] = cb;
       row.appendChild(cb);
-      row.appendChild(el('span', 'asg-opt-name', memberName(mm.id) + (mm.isOwner ? ' (admin)' : '')));
+      row.appendChild(el('span', 'asg-opt-name', memberName(mm.id) + (mm.isOwner ? ' (admin)' : '') + (inactivo ? ' (inactivo)' : '')));
       list.appendChild(row);
     });
     m.appendChild(list);

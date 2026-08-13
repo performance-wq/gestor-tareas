@@ -510,11 +510,13 @@
   function roleShort(r) { return { owner: 'dueño', admin: 'admin', member: 'miembro', viewer: 'lectura' }[r] || r; }
   function actBtn(txt, danger, fn) { const b = elem('button', 'btn' + (danger ? ' danger' : ''), txt); b.addEventListener('click', fn); return b; }
 
+  let USERS = [];
   async function loadUsers() {
     const box = $('usersBox');
     const { data, error } = await sb.rpc('admin_list_users');
     if (error) { box.innerHTML = '<div class="msg error">No se pudieron cargar los usuarios.</div>'; return; }
     const rows = (data || []).slice();
+    USERS = rows;
     const visibles = rows.filter(function (u) { return (u.status || 'active') !== 'deleted'; });
     $('clientCount').textContent = rows.length ? '· ' + visibles.length + ' visible(s), ' + rows.length + ' en total' : '';
     if (!rows.length) { box.innerHTML = '<div class="empty">Todavía no hay usuarios. Crea el primero arriba.</div>'; return; }
@@ -539,9 +541,9 @@
       if (!(u.projects || []).length) tdP.innerHTML = '<span class="hint">—</span>';
       const tdA = document.createElement('td'); const acts = elem('div', 'row-acts');
       if (st === 'pending') acts.appendChild(actBtn('Activar', false, function () { setStatus(u, 'active', 'Usuario activado correctamente', '¿Deseas activar a este usuario y permitirle utilizar la plataforma?', 'Activar usuario'); }));
-      if (st === 'active') acts.appendChild(actBtn('Suspender', true, function () { setStatus(u, 'suspended', 'Usuario suspendido correctamente', 'Este usuario no podrá acceder a la plataforma hasta que vuelva a ser activado. ¿Deseas continuar?', 'Suspender acceso'); }));
+      if (st === 'active') acts.appendChild(actBtn('Suspender', true, function () { deactivateOrDelete(u, 'suspended'); }));
       if (st === 'suspended') acts.appendChild(actBtn('Reactivar', false, function () { setStatus(u, 'active', 'Usuario reactivado correctamente', '¿Reactivar el acceso de este usuario?', 'Reactivar usuario'); }));
-      if (st !== 'deleted') acts.appendChild(actBtn('Eliminar', true, function () { deleteUser(u); }));
+      if (st !== 'deleted') acts.appendChild(actBtn('Eliminar', true, function () { deactivateOrDelete(u, 'deleted'); }));
       if (st === 'deleted') acts.appendChild(actBtn('Restaurar', false, function () { setStatus(u, 'suspended', 'Usuario restaurado (queda suspendido)', '¿Restaurar a este usuario? Quedará suspendido hasta que lo actives.', 'Restaurar'); }));
       tdA.appendChild(acts);
       [tdU, tdS, tdR, tdD, tdL, tdP, tdA].forEach(function (td) { tr.appendChild(td); });
@@ -574,11 +576,68 @@
     });
   }
 
+  // Desactivar (suspender) o eliminar (lógico) con reasignación previa de tareas
+  // activas y protección del historial (§14-16, §24).
+  async function deactivateOrDelete(u, mode) {
+    const isDelete = mode === 'deleted';
+    const { data: act, error } = await sb.rpc('admin_user_activity', { p_user: u.id });
+    if (error) { toast('No se pudo leer la actividad del usuario.', 'err'); return; }
+    const a = act || {}; const activas = a.active || 0; const owned = a.owned_boards || 0;
+
+    const ov = elem('div', 'uxo'); const m = elem('div', 'uxm');
+    m.appendChild(elem('h3', 'uxm-title', isDelete ? 'Eliminar usuario' : 'Suspender usuario'));
+    let html = '<b>' + escapeHtml(u.full_name || u.email) + '</b><br>' + escapeHtml(u.email) + '<br><br>';
+    html += 'Actividad registrada: <b>' + activas + '</b> activa(s), <b>' + (a.completed || 0) + '</b> completada(s).<br><br>';
+    if (isDelete && (a.total || 0) > 0) {
+      html += '<span style="color:#ffb020">Este usuario tiene actividad registrada. Para conservar el historial recomendamos <b>suspenderlo</b> en lugar de eliminarlo.</span><br><br>';
+    }
+    if (isDelete && owned > 0) {
+      html += '<span style="color:#ff8a8a">Es dueño de ' + owned + ' proyecto(s); transfiere la propiedad antes de eliminar.</span><br><br>';
+    }
+    html += isDelete
+      ? 'Eliminar es un <b>borrado lógico</b>: pierde acceso y se oculta de las listas, pero NO se borran sus tareas, fechas ni su autoría/participación histórica.'
+      : 'Al suspender: no podrá iniciar sesión ni recibir <b>nuevas</b> tareas. Sus tareas históricas y su participación se conservan.';
+    const msg = elem('div', 'uxm-msg'); msg.innerHTML = html; m.appendChild(msg);
+
+    let reassignSel = null;
+    if (activas > 0) {
+      const wrap = elem('div', 'uxf'); wrap.style.cssText = 'margin:4px 0 2px';
+      wrap.appendChild(elem('label', null, 'Reasignar ' + activas + ' tarea(s) activa(s) a:'));
+      const sel = document.createElement('select'); sel.className = 'role-sel';
+      const o0 = elem('option', null, '— No reasignar —'); o0.value = ''; sel.appendChild(o0);
+      USERS.filter(function (x) { return x.id !== u.id && (x.status || 'active') === 'active'; })
+        .forEach(function (x) { const o = elem('option', null, (x.full_name || x.email)); o.value = x.id; sel.appendChild(o); });
+      wrap.appendChild(sel); m.appendChild(wrap); reassignSel = sel;
+    }
+
+    const acts = elem('div', 'uxm-acts');
+    const cancel = elem('button', 'uxbtn', 'Cancelar'); cancel.addEventListener('click', function () { ov.remove(); });
+    const ok = elem('button', 'uxbtn danger', isDelete ? 'Eliminar usuario' : 'Suspender acceso');
+    ok.addEventListener('click', async function () {
+      ok.disabled = true;
+      try {
+        if (reassignSel && reassignSel.value) {
+          const { data: rr, error: e1 } = await sb.rpc('admin_reassign_user_tasks', { p_from: u.id, p_to: reassignSel.value });
+          if (e1) { toast(e1.message || 'No se pudo reasignar.', 'err'); ok.disabled = false; return; }
+          toast('Reasignadas ' + ((rr && rr.reassigned) || 0) + ' tarea(s) activa(s).', 'ok');
+        }
+        const { error: e2 } = await sb.rpc('admin_set_user_status', { p_user: u.id, p_status: mode });
+        if (e2) { toast(e2.message || 'No se pudo actualizar.', 'err'); ok.disabled = false; return; }
+        toast(isDelete ? 'Usuario eliminado correctamente' : 'Usuario suspendido correctamente', 'ok');
+        ov.remove(); loadUsers(); loadAudit();
+      } catch (err) { toast('Error inesperado.', 'err'); ok.disabled = false; }
+    });
+    acts.appendChild(cancel); acts.appendChild(ok); m.appendChild(acts); ov.appendChild(m);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov); setTimeout(function () { ok.focus(); }, 0);
+  }
+
   // ---------------- Auditoría (§20) ----------------
   function auditText(ev) {
     const d = ev.detail || {};
     switch (ev.action) {
       case 'user_status': return 'Cambió estado de un usuario: ' + (STATUS_LABEL[d.from] || d.from || '?') + ' → ' + (STATUS_LABEL[d.to] || d.to || '?');
+      case 'reassign_tasks': return 'Reasignó ' + (d.count != null ? d.count : '?') + ' tarea(s) activa(s) a otro usuario';
       case 'member_add': return 'Agregó un miembro a un proyecto (' + roleShort(d.role) + ')';
       case 'member_remove': return 'Quitó un miembro de un proyecto';
       case 'member_role': return 'Cambió el rol de un miembro (' + roleShort(d.role) + ')';
