@@ -914,6 +914,14 @@
 
   async function bootstrap() {
     await loadBoardsList();
+    // Defensa: si no hay tableros visibles, no reventar en boards[0].id.
+    if (!boards.length) {
+      currentBoard = null; items = []; byId = {}; kidsOf = {};
+      renderBoardPicker(); saveStatusEl.textContent = '';
+      if (typeof toast === 'function') toast('Aún no tienes proyectos compartidos. Pide a tu administrador que te agregue.', 'ok');
+      render();
+      return;
+    }
     const lastId = localStorage.getItem('lastBoard_' + currentUser.id);
     const found = boards.find(function (b) { return b.id === lastId; });
     await switchBoard(found ? found.id : boards[0].id);
