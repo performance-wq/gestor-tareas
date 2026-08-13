@@ -1027,6 +1027,9 @@
         members.push({ id: p.id, email: p.email, full_name: p.full_name, isOwner: false, role: r.role || 'member' });
       });
     }
+    // Dedup final por id (a prueba de carreras: onAuthStateChange puede disparar
+    // bootstrap dos veces y solapar dos loadMembers). El dueño tiene prioridad.
+    const vistos = {}; members = members.filter(function (m) { if (vistos[m.id]) return false; vistos[m.id] = 1; return true; });
     // Rol del usuario actual en este board.
     const meM = members.find(function (m) { return m.id === currentUser.id; });
     myRole = (ownerId === currentUser.id) ? 'owner' : (meM ? meM.role : 'viewer');
