@@ -533,18 +533,23 @@
       const tdU = document.createElement('td');
       tdU.innerHTML = '<div>' + escapeHtml(u.email) + '</div>' + (u.full_name ? '<div class="hint">' + escapeHtml(u.full_name) + '</div>' : '') + (u.account_name ? '<div class="hint">' + escapeHtml(u.account_name) + '</div>' : '');
       const tdS = document.createElement('td'); tdS.appendChild(elem('span', 'pill ' + st, STATUS_LABEL[st] || st));
-      const tdR = document.createElement('td'); tdR.className = 'hide-sm'; tdR.innerHTML = '<span class="rolechip">' + (u.role === 'owner' ? 'Administrador' : 'Cliente') + '</span>';
+      const tdR = document.createElement('td'); tdR.className = 'hide-sm'; tdR.innerHTML = '<span class="rolechip">' + (u.role === 'owner' ? 'Administrador / Dueño' : 'Cliente') + '</span>';
       const tdD = document.createElement('td'); tdD.className = 'hide-sm muted-cell'; tdD.textContent = fmtDate(u.created_at);
       const tdL = document.createElement('td'); tdL.className = 'hide-sm muted-cell'; tdL.textContent = fmtDateTime(u.last_sign_in_at);
       const tdP = document.createElement('td');
       (u.projects || []).forEach(function (pr) { tdP.appendChild(elem('span', 'proj-chip', pr.name + ' · ' + roleShort(pr.role))); });
       if (!(u.projects || []).length) tdP.innerHTML = '<span class="hint">—</span>';
       const tdA = document.createElement('td'); const acts = elem('div', 'row-acts');
-      if (st === 'pending') acts.appendChild(actBtn('Activar', false, function () { setStatus(u, 'active', 'Usuario activado correctamente', '¿Deseas activar a este usuario y permitirle utilizar la plataforma?', 'Activar usuario'); }));
-      if (st === 'active') acts.appendChild(actBtn('Suspender', true, function () { deactivateOrDelete(u, 'suspended'); }));
-      if (st === 'suspended') acts.appendChild(actBtn('Reactivar', false, function () { setStatus(u, 'active', 'Usuario reactivado correctamente', '¿Reactivar el acceso de este usuario?', 'Reactivar usuario'); }));
-      if (st !== 'deleted') acts.appendChild(actBtn('Eliminar', true, function () { deactivateOrDelete(u, 'deleted'); }));
-      if (st === 'deleted') acts.appendChild(actBtn('Restaurar', false, function () { setStatus(u, 'suspended', 'Usuario restaurado (queda suspendido)', '¿Restaurar a este usuario? Quedará suspendido hasta que lo actives.', 'Restaurar'); }));
+      if (u.role === 'owner') {
+        // §6: el administrador principal no se puede suspender ni eliminar.
+        acts.appendChild(elem('span', 'hint', 'Administrador principal'));
+      } else {
+        if (st === 'pending') acts.appendChild(actBtn('Activar', false, function () { setStatus(u, 'active', 'Usuario activado correctamente', '¿Deseas activar a este usuario y permitirle utilizar la plataforma?', 'Activar usuario'); }));
+        if (st === 'active') acts.appendChild(actBtn('Suspender', true, function () { deactivateOrDelete(u, 'suspended'); }));
+        if (st === 'suspended') acts.appendChild(actBtn('Reactivar', false, function () { setStatus(u, 'active', 'Usuario reactivado correctamente', '¿Reactivar el acceso de este usuario?', 'Reactivar usuario'); }));
+        if (st !== 'deleted') acts.appendChild(actBtn('Eliminar', true, function () { deactivateOrDelete(u, 'deleted'); }));
+        if (st === 'deleted') acts.appendChild(actBtn('Restaurar', false, function () { setStatus(u, 'suspended', 'Usuario restaurado (queda suspendido)', '¿Restaurar a este usuario? Quedará suspendido hasta que lo actives.', 'Restaurar'); }));
+      }
       tdA.appendChild(acts);
       [tdU, tdS, tdR, tdD, tdL, tdP, tdA].forEach(function (td) { tr.appendChild(td); });
       tbody.appendChild(tr);

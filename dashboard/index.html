@@ -773,6 +773,7 @@
   let kidsOf = {};       // parent_id ('__root' si raíz) -> [filas ordenadas]
   let isAdmin = false;   // puede administrar el board (dueño o admin de proyecto)
   let myRole = 'viewer'; // 'owner' | 'admin' | 'member' | 'viewer'
+  let isPlatformOwner = false; // administrador/dueño del workspace (profiles.role='owner')
   let view = 'list';     // 'list' | 'dashboard'
   let openHistoryId = null;
 
@@ -900,6 +901,14 @@
       authScreen.classList.add('hidden');
       appScreen.style.display = 'block';
       userEmailEl.textContent = currentUser.email;
+      // ¿Es el administrador/dueño del workspace? Solo él crea/elimina proyectos.
+      try {
+        const { data: prof } = await sb.from('profiles').select('role').eq('id', currentUser.id).maybeSingle();
+        isPlatformOwner = !!prof && prof.role === 'owner';
+      } catch (e) { isPlatformOwner = false; }
+      // §2/§13: un miembro no ve crear/eliminar proyecto.
+      newBoardBtn.hidden = !isPlatformOwner;
+      deleteBoardBtn.hidden = !isPlatformOwner;
       bootstrap();
     } else {
       currentUser = null;
@@ -931,7 +940,9 @@
     const { data, error } = await sb.from('boards').select('id, name, owner_id').order('name');
     if (error) { saveStatusEl.textContent = 'Error: ' + error.message; boards = []; return; }
     boards = data || [];
-    if (!boards.length) {
+    // Solo el administrador arranca con un tablero propio si no tiene ninguno.
+    // Un miembro NUNCA auto-crea un proyecto/workspace (§13).
+    if (!boards.length && isPlatformOwner) {
       const { data: newBoard, error: insErr } = await sb
         .from('boards')
         .insert({ owner_id: currentUser.id, name: 'Mis tareas', data: [] })
