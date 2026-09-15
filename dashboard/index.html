@@ -1041,6 +1041,10 @@
   function rootItems() { return kidsOf['__root'] || []; }
   function isLeaf(r) { return childrenOf(r.id).length === 0; }
   function flatItems() { return items.slice(); }
+  // Cuenta TODA la descendencia (subtareas de cualquier nivel) de un nodo.
+  function descendantCount(id) {
+    let n = 0; childrenOf(id).forEach(function (c) { n += 1 + descendantCount(c.id); }); return n;
+  }
 
   // ---------------- Sharing / members ----------------
 
@@ -1625,18 +1629,24 @@
   // Modal de eliminación (§3,4): confirmación con estilo de advertencia + toast.
   function openDeleteModal(task) {
     const isSub = !!task.parent_id;
-    const kids = childrenOf(task.id).length;
-    let msg = '¿Seguro que deseas eliminar esta ' + (isSub ? 'subtarea' : 'tarea') + '?<br><b>' + escapeHtml(task.title || '(sin título)') + '</b>';
-    if (kids) msg += '<br><br>Esta tarea contiene ' + kids + ' subtarea(s). Si continúas, también se eliminarán.';
-    msg += '<br><span style="opacity:.75">Queda registrada en el historial y no se puede deshacer.</span>';
+    const total = descendantCount(task.id);
+    const isGroup = total > 0;
+    const nombre = '<b>' + escapeHtml(task.title || '(sin título)') + '</b>';
+    let msg;
+    if (isGroup) {
+      msg = '¿Eliminar ' + nombre + '?<br><br>Esta acción eliminará también <b>todas las tareas y subtareas</b> contenidas dentro de este grupo (' + total + ' en total).<br><br><span style="opacity:.75">Esta acción no se puede deshacer.</span>';
+    } else {
+      msg = '¿Seguro que deseas eliminar esta ' + (isSub ? 'subtarea' : 'tarea') + '?<br>' + nombre + '<br><br><span style="opacity:.75">Queda registrada en el historial y no se puede deshacer.</span>';
+    }
     confirmDialog({
-      title: isSub ? 'Eliminar subtarea' : 'Eliminar tarea',
-      message: msg, danger: true, okText: isSub ? 'Eliminar subtarea' : 'Eliminar tarea',
+      title: isGroup ? 'Eliminar grupo' : (isSub ? 'Eliminar subtarea' : 'Eliminar tarea'),
+      message: msg, danger: true,
+      okText: isGroup ? 'Eliminar definitivamente' : (isSub ? 'Eliminar subtarea' : 'Eliminar tarea'),
       onOk: async function () {
         const { error } = await sb.rpc('task_delete', { p_id: task.id });
         if (error) { toast(error.message || 'No se pudo eliminar.', 'err'); return; }
         await loadItems(); render();
-        toast((isSub ? 'Subtarea' : 'Tarea') + ' eliminada correctamente', 'ok');
+        toast((isGroup ? 'Grupo' : (isSub ? 'Subtarea' : 'Tarea')) + ' eliminado correctamente', 'ok');
       }
     });
   }
