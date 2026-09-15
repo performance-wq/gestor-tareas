@@ -511,23 +511,28 @@
   function actBtn(txt, danger, fn) { const b = elem('button', 'btn' + (danger ? ' danger' : ''), txt); b.addEventListener('click', fn); return b; }
 
   let USERS = [];
+  let showDeleted = false;
   async function loadUsers() {
     const box = $('usersBox');
     const { data, error } = await sb.rpc('admin_list_users');
     if (error) { box.innerHTML = '<div class="msg error">No se pudieron cargar los usuarios.</div>'; return; }
     const rows = (data || []).slice();
     USERS = rows;
+    const deletedRows = rows.filter(function (u) { return (u.status || 'active') === 'deleted'; });
     const visibles = rows.filter(function (u) { return (u.status || 'active') !== 'deleted'; });
-    $('clientCount').textContent = rows.length ? '· ' + visibles.length + ' visible(s), ' + rows.length + ' en total' : '';
+    $('clientCount').textContent = visibles.length ? '· ' + visibles.length + ' usuario(s)' + (deletedRows.length ? ' · ' + deletedRows.length + ' eliminado(s)' : '') : '';
     if (!rows.length) { box.innerHTML = '<div class="empty">Todavía no hay usuarios. Crea el primero arriba.</div>'; return; }
 
-    rows.sort(function (a, b) { return ((a.status === 'deleted' ? 1 : 0) - (b.status === 'deleted' ? 1 : 0)) || ((a.email || '') > (b.email || '') ? 1 : -1); });
+    // Los eliminados NO se muestran por defecto (§: deben salir del panel); se ven
+    // solo con el toggle "Ver eliminados" para poder restaurar si hace falta.
+    const toRender = (showDeleted ? rows : visibles).slice();
+    toRender.sort(function (a, b) { return ((a.status === 'deleted' ? 1 : 0) - (b.status === 'deleted' ? 1 : 0)) || ((a.email || '') > (b.email || '') ? 1 : -1); });
     const table = elem('table');
     const thead = document.createElement('thead');
     thead.innerHTML = '<tr><th>Usuario</th><th>Estado</th><th class="hide-sm">Rol</th><th class="hide-sm">Registro</th><th class="hide-sm">Último acceso</th><th>Proyectos</th><th></th></tr>';
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
-    rows.forEach(function (u) {
+    toRender.forEach(function (u) {
       const st = u.status || 'active';
       const tr = document.createElement('tr');
       const tdU = document.createElement('td');
@@ -555,6 +560,11 @@
       tbody.appendChild(tr);
     });
     table.appendChild(tbody); box.innerHTML = ''; box.appendChild(table);
+    if (deletedRows.length) {
+      const foot = elem('div'); foot.style.cssText = 'margin-top:12px';
+      foot.appendChild(actBtn(showDeleted ? 'Ocultar eliminados' : 'Ver eliminados (' + deletedRows.length + ')', false, function () { showDeleted = !showDeleted; loadUsers(); }));
+      box.appendChild(foot);
+    }
   }
 
   function setStatus(u, status, okMsg, confirmMsg, okText) {
